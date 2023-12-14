@@ -192,14 +192,14 @@ namespace RouteManagerUI
                     builder.Rebuild();
 
                 }
-            }, callInitial: false));
+            }, callInitial: false));    
 
             RouteManagerPlugin.OnNeedsRebuildChanged += () =>
             {
                 if (RouteManagerPlugin.NeedsRebuild)
                 {
                     // Logic to rebuild the UI
-                    builder.Rebuild();
+                    builder.Rebuild(); // this should be rebuilding the UI
                     RouteManagerPlugin.NeedsRebuild = false; // Reset the flag after rebuild
                 }
             };
