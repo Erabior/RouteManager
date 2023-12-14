@@ -129,38 +129,7 @@ namespace RouteManagerUI
 {
     public static class RouteManagerPlugin
     {
-        public static bool IsRouteModeActive { get; set; } = false;
-
-        private static bool _needsRebuild = false;
-        public static event Action OnNeedsRebuildChanged;
-        public static void Initialize()
-        {
-            OnNeedsRebuildChanged -= RebuildUI; // Unsubscribe first to avoid duplicates
-            OnNeedsRebuildChanged += RebuildUI; // Subscribe to the event
-        }
-
-        private static void RebuildUI()
-        {
-            if (NeedsRebuild)
-            {
-                // Logic to rebuild the UI
-                // Ensure you have access to the `builder` object here
-                Debug.Log("Rebuilding UI due to NeedsRebuild");
-                NeedsRebuild = false; // Reset the flag after rebuild
-            }
-        }
-        public static bool NeedsRebuild
-        {
-            get => _needsRebuild;
-            set
-            {
-                if (_needsRebuild != value)
-                {
-                    _needsRebuild = value;
-                    OnNeedsRebuildChanged?.Invoke();
-                }
-            }
-        }
+        //likley put control vars here
     }
 
 
@@ -190,189 +159,125 @@ namespace RouteManagerUI
                 if (Mode() != mode2)
                 {
                     builder.Rebuild();
-
                 }
-            }, callInitial: false));    
-
-            RouteManagerPlugin.OnNeedsRebuildChanged += () =>
-            {
-                if (RouteManagerPlugin.NeedsRebuild)
-                {
-                    // Logic to rebuild the UI
-                    builder.Rebuild(); // this should be rebuilding the UI
-                    RouteManagerPlugin.NeedsRebuild = false; // Reset the flag after rebuild
-                }
-            };
-
+            }, callInitial: false));
             builder.AddField("Mode", builder.ButtonStrip(delegate (UIPanelBuilder builder)
             {
                 builder.AddButtonSelectable("Manual", mode2 == AutoEngineerMode.Off, delegate
                 {
                     SetOrdersValue(AutoEngineerMode.Off, null, null, null);
-                    if (RouteManagerPlugin.IsRouteModeActive)
-                    {
-                        RouteManagerPlugin.IsRouteModeActive = false;
-                        RouteManagerPlugin.NeedsRebuild = true;
-                    }
-                    Debug.Log("AutoEngineer Off\tRoute Mode Inactive");
                 });
                 builder.AddButtonSelectable("Road", mode2 == AutoEngineerMode.Road, delegate
                 {
                     SetOrdersValue(AutoEngineerMode.Road, null, null, null);
-                    if (RouteManagerPlugin.IsRouteModeActive)
-                    {
-                        RouteManagerPlugin.IsRouteModeActive = false;
-                        RouteManagerPlugin.NeedsRebuild = true;
-                    }
-                    Debug.Log("AutoEngineer Road\tRoute Mode Inactive");
                 });
                 builder.AddButtonSelectable("Yard", mode2 == AutoEngineerMode.Yard, delegate
                 {
                     SetOrdersValue(AutoEngineerMode.Yard, null, null, null);
-                    if (RouteManagerPlugin.IsRouteModeActive)
-                    {
-                        RouteManagerPlugin.IsRouteModeActive = false;
-                        RouteManagerPlugin.NeedsRebuild = true;
-                    }
-
-                    Debug.Log("AutoEngineer Yard\tRoute Mode Inactive");
-                });
-                builder.AddButtonSelectable("Route", mode2 == AutoEngineerMode.Off, delegate
-                {
-                    SetOrdersValue(AutoEngineerMode.Off, null, null, null);
-                    RouteManagerPlugin.IsRouteModeActive = true;
-                    RouteManagerPlugin.NeedsRebuild = true;
-                    Debug.Log("AutoEngineer Off\tRoute Mode Active");
                 });
             }));
-            Debug.Log("checking if route mode is active Autoengineer: " + mode2 + "\tIs Route Active:" + RouteManagerPlugin.IsRouteModeActive);
-            if (RouteManagerPlugin.IsRouteModeActive)
+            if (!persistence.Orders.Enabled)
             {
-                Debug.Log("It was active");
-                Debug.Log("before route menu built Checking for Autoengineer: " + mode2 + "\tIs Route Active:" + RouteManagerPlugin.IsRouteModeActive);
-                if (mode2 == AutoEngineerMode.Off && RouteManagerPlugin.IsRouteModeActive)
-                {
-                    int num = MaxSpeedMphForMode(mode2);
-                    RectTransform control = builder.AddSlider(() => persistence.Orders.MaxSpeedMph / 5, delegate
-                    {
-                        int maxSpeedMph4 = persistence.Orders.MaxSpeedMph;
-                        return maxSpeedMph4.ToString();
-                    }, delegate (float value)
-                    {
-                        int? maxSpeedMph3 = (int)(value * 5f);
-                        SetOrdersValue(null, null, maxSpeedMph3, null);
-                    }, 0f, num / 5, wholeNumbers: true);
-                    builder.AddField("Max Speed", control);
-
-                    Debug.Log("Building Route Mode Menu");
-                    // Retrieve and prepare the list of all available stations
-                    var stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
-                    var orderedStops = new string[] { "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "almond", "nantahala", "topton", "rhodo", "andrews", "cochran", "alarka" }
-                                       .Select(id => stopsLookup[id])
-                                       .Where(ps => !ps.ProgressionDisabled)
-                                       .ToList();
-
-                    // Create a scrollable view to list the stations
-                    builder.VScrollView(delegate (UIPanelBuilder builder)
-                    {
-                        foreach (PassengerStop stop in orderedStops)
-                        {
-                            builder.HStack(delegate (UIPanelBuilder hstack)
-                            {
-                                // Add a checkbox for each station
-                                hstack.AddToggle(() => StationManager.IsStationSelected(stop), isOn => StationManager.SetStationSelected(stop, isOn));
-
-                                // Add a label next to the checkbox
-                                hstack.AddLabel(stop.name);
-                            });
-                        }
-                    });
-                }
+                builder.AddExpandingVerticalSpacer();
+                return false;
             }
-            else
+            builder.AddField("Direction", builder.ButtonStrip(delegate (UIPanelBuilder builder)
             {
-                Debug.Log("It was not active");
-                if (!persistence.Orders.Enabled)
+                builder.AddObserver(persistence.ObserveOrders(delegate
                 {
-                    builder.AddExpandingVerticalSpacer();
-                    return false;
-                }
-                builder.AddField("Direction", builder.ButtonStrip(delegate (UIPanelBuilder builder)
+                    builder.Rebuild();
+                }, callInitial: false));
+                builder.AddButtonSelectable("Reverse", !persistence.Orders.Forward, delegate
                 {
-                    builder.AddObserver(persistence.ObserveOrders(delegate
-                    {
-                        builder.Rebuild();
-                    }, callInitial: false));
-                    builder.AddButtonSelectable("Reverse", !persistence.Orders.Forward, delegate
-                    {
-                        bool? forward3 = false;
-                        SetOrdersValue(null, forward3, null, null);
-                    });
-                    builder.AddButtonSelectable("Forward", persistence.Orders.Forward, delegate
-                    {
-                        bool? forward2 = true;
-                        SetOrdersValue(null, forward2, null, null);
-                    });
-                }));
-                if (mode2 == AutoEngineerMode.Road)
+                    bool? forward3 = false;
+                    SetOrdersValue(null, forward3, null, null);
+                });
+                builder.AddButtonSelectable("Forward", persistence.Orders.Forward, delegate
                 {
-                    int num = MaxSpeedMphForMode(mode2);
-                    RectTransform control = builder.AddSlider(() => persistence.Orders.MaxSpeedMph / 5, delegate
-                    {
-                        int maxSpeedMph4 = persistence.Orders.MaxSpeedMph;
-                        return maxSpeedMph4.ToString();
-                    }, delegate (float value)
-                    {
-                        int? maxSpeedMph3 = (int)(value * 5f);
-                        SetOrdersValue(null, null, maxSpeedMph3, null);
-                    }, 0f, num / 5, wholeNumbers: true);
-                    builder.AddField("Max Speed", control);
-                }
-                if (mode2 == AutoEngineerMode.Yard)
+                    bool? forward2 = true;
+                    SetOrdersValue(null, forward2, null, null);
+                });
+            }));
+            if (mode2 == AutoEngineerMode.Road)
+            {
+                int num = MaxSpeedMphForMode(mode2);
+                RectTransform control = builder.AddSlider(() => persistence.Orders.MaxSpeedMph / 5, delegate
                 {
-                    RectTransform control2 = builder.ButtonStrip(delegate (UIPanelBuilder builder)
+                    int maxSpeedMph4 = persistence.Orders.MaxSpeedMph;
+                    return maxSpeedMph4.ToString();
+                }, delegate (float value)
+                {
+                    int? maxSpeedMph3 = (int)(value * 5f);
+                    SetOrdersValue(null, null, maxSpeedMph3, null);
+                }, 0f, num / 5, wholeNumbers: true);
+                builder.AddField("Max Speed", control);
+
+                var stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
+                var orderedStops = new string[] { "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "almond", "nantahala", "topton", "rhodo", "andrews", "cochran", "alarka" }
+                                   .Select(id => stopsLookup[id])
+                                   .Where(ps => !ps.ProgressionDisabled)
+                                   .ToList();
+
+                // Create a scrollable view to list the stations
+                builder.VScrollView(delegate (UIPanelBuilder builder)
+                {
+                    foreach (PassengerStop stop in orderedStops)
                     {
-                        builder.AddButton("Stop", delegate
+                        builder.HStack(delegate (UIPanelBuilder hstack)
                         {
-                            float? distance8 = 0f;
-                            SetOrdersValue(null, null, null, distance8);
+                            // Add a checkbox for each station
+                            hstack.AddToggle(() => StationManager.IsStationSelected(stop), isOn => StationManager.SetStationSelected(stop, isOn));
+
+                            // Add a label next to the checkbox
+                            hstack.AddLabel(stop.name);
                         });
-                        builder.AddButton("½", delegate
-                        {
-                            float? distance7 = 6.1f;
-                            SetOrdersValue(null, null, null, distance7);
-                        });
-                        builder.AddButton("1", delegate
-                        {
-                            float? distance6 = 12.2f;
-                            SetOrdersValue(null, null, null, distance6);
-                        });
-                        builder.AddButton("2", delegate
-                        {
-                            float? distance5 = 24.4f;
-                            SetOrdersValue(null, null, null, distance5);
-                        });
-                        builder.AddButton("5", delegate
-                        {
-                            float? distance4 = 61f;
-                            SetOrdersValue(null, null, null, distance4);
-                        });
-                        builder.AddButton("10", delegate
-                        {
-                            float? distance3 = 122f;
-                            SetOrdersValue(null, null, null, distance3);
-                        });
-                        builder.AddButton("20", delegate
-                        {
-                            float? distance2 = 244f;
-                            SetOrdersValue(null, null, null, distance2);
-                        });
-                    }, 4);
-                    builder.AddField("Car Lengths", control2);
-                }
+                    }
+                });
+
             }
 
-
+            if (mode2 == AutoEngineerMode.Yard)
+            {
+                RectTransform control2 = builder.ButtonStrip(delegate (UIPanelBuilder builder)
+                {
+                    builder.AddButton("Stop", delegate
+                    {
+                        float? distance8 = 0f;
+                        SetOrdersValue(null, null, null, distance8);
+                    });
+                    builder.AddButton("½", delegate
+                    {
+                        float? distance7 = 6.1f;
+                        SetOrdersValue(null, null, null, distance7);
+                    });
+                    builder.AddButton("1", delegate
+                    {
+                        float? distance6 = 12.2f;
+                        SetOrdersValue(null, null, null, distance6);
+                    });
+                    builder.AddButton("2", delegate
+                    {
+                        float? distance5 = 24.4f;
+                        SetOrdersValue(null, null, null, distance5);
+                    });
+                    builder.AddButton("5", delegate
+                    {
+                        float? distance4 = 61f;
+                        SetOrdersValue(null, null, null, distance4);
+                    });
+                    builder.AddButton("10", delegate
+                    {
+                        float? distance3 = 122f;
+                        SetOrdersValue(null, null, null, distance3);
+                    });
+                    builder.AddButton("20", delegate
+                    {
+                        float? distance2 = 244f;
+                        SetOrdersValue(null, null, null, distance2);
+                    });
+                }, 4);
+                builder.AddField("Car Lengths", control2);
+            }
             builder.AddExpandingVerticalSpacer();
             builder.AddField("Status", () => persistence.PlannerStatus, UIPanelBuilder.Frequency.Periodic);
             static int MaxSpeedMphForMode(AutoEngineerMode mode)
@@ -420,8 +325,6 @@ namespace RouteManagerUI
                 int maxSpeedMph2 = Mathf.Min(maxSpeedMph ?? orders.MaxSpeedMph, MaxSpeedMphForMode(mode3));
                 SendAutoEngineerCommand(mode3, forward ?? orders.Forward, maxSpeedMph2, distance);
             }
-
-
             return false; // Prevent the original method from running
         }
 
@@ -429,6 +332,61 @@ namespace RouteManagerUI
 }
 
 /*
+
+if (RouteManagerPlugin.IsRouteModeActive)
+            {
+                Debug.Log("It was active");
+                Debug.Log("before route menu built Checking for Autoengineer: " + mode2 + "\tIs Route Active:" + RouteManagerPlugin.IsRouteModeActive);
+                if (mode2 == AutoEngineerMode.Off && RouteManagerPlugin.IsRouteModeActive)
+                {
+                    int num = MaxSpeedMphForMode(mode2);
+                    RectTransform control = builder.AddSlider(() => persistence.Orders.MaxSpeedMph / 5, delegate
+                    {
+                        int maxSpeedMph4 = persistence.Orders.MaxSpeedMph;
+                        return maxSpeedMph4.ToString();
+                    }, delegate (float value)
+                    {
+                        int? maxSpeedMph3 = (int)(value * 5f);
+                        SetOrdersValue(null, null, maxSpeedMph3, null);
+                    }, 0f, num / 5, wholeNumbers: true);
+                    builder.AddField("Max Speed", control);
+
+                    Debug.Log("Building Route Mode Menu");
+                    // Retrieve and prepare the list of all available stations
+                    var stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
+                    var orderedStops = new string[] { "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "almond", "nantahala", "topton", "rhodo", "andrews", "cochran", "alarka" }
+                                       .Select(id => stopsLookup[id])
+                                       .Where(ps => !ps.ProgressionDisabled)
+                                       .ToList();
+
+                    // Create a scrollable view to list the stations
+                    builder.VScrollView(delegate (UIPanelBuilder builder)
+                    {
+                        foreach (PassengerStop stop in orderedStops)
+                        {
+                            builder.HStack(delegate (UIPanelBuilder hstack)
+                            {
+                                // Add a checkbox for each station
+                                hstack.AddToggle(() => StationManager.IsStationSelected(stop), isOn => StationManager.SetStationSelected(stop, isOn));
+
+                                // Add a label next to the checkbox
+                                hstack.AddLabel(stop.name);
+                            });
+                        }
+                    });
+                }
+
+
+
+
+
+
+
+
+
+
+
+
 
 private void PopulatePassengerCarPanel(UIPanelBuilder builder)
 	{
