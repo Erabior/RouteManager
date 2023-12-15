@@ -15,6 +15,11 @@ using System.Linq;
 using Model;
 using System.Reflection;
 using static System.Runtime.CompilerServices.RuntimeHelpers;
+using Game;
+using Helpers;
+using Serilog;
+using RouteManagerController;
+using Track;
 
 namespace RouteManager
 {
@@ -56,6 +61,35 @@ namespace RouteManager
             }
         }
     }
+    [HarmonyPatch(typeof(FlarePickable), nameof(FlarePickable.Configure))]
+    internal static class flarePickable
+    {
+        private static void Postfix(FlarePickable __instance)
+        {
+            Log.Information("Flare {FlareId} is at {Position}", __instance.FlareId, WorldTransformer.WorldToGame(__instance.transform.position));
+        }
+    }
+
+    [HarmonyPatch(typeof(TrainController))]
+    public static class TrainControllerPatch
+    {
+        [HarmonyPostfix, HarmonyPatch("GetCenterPointOfCar")]
+        public static void GetCenterPointOfCarPostfix(TrainController __instance, string carId, ref Vector3? __result)
+        {
+            var carLookupField = AccessTools.Field(typeof(TrainController), "_carLookup");
+            var carLookup = (Dictionary<string, Car>)carLookupField.GetValue(__instance);
+
+            if (carLookup != null && carLookup.TryGetValue(carId, out Car car))
+            {
+                __result = car.GetCenterPosition(__instance.graph);
+            }
+            else
+            {
+                __result = null;
+            }
+        }
+    }
+
 }
 
 public static class StationManager
@@ -76,64 +110,71 @@ public static class StationManager
         return stationSelections.TryGetValue(stop.identifier, out bool isSelected) && isSelected;
     }
 
+    public static bool IsAnyStationSelected(List<PassengerStop> stations)
+    {
+        return stations.Any(stop => stationSelections.TryGetValue(stop.identifier, out bool isSelected) && isSelected);
+    }
+
     public static void SetStationSelected(PassengerStop stop, bool isSelected)
     {
         stationSelections[stop.identifier] = isSelected;
     }
 }
 
-namespace RouteManager
+
+namespace RouteManagerController
 {
-    [HarmonyPatch(typeof(GameInput))] // Specify the class you are patching
-    [HarmonyPatch("Update")] // Specify the method you are patching
-    public static class GameInputUpdatePatch
+
+    public static class RouteManagerPlugin
     {
-        // This is the postfix method. It will be called after GameInput's Update method
-        public static void Postfix()
+        //likley put control vars here
+    }
+    public class ManagedTrains
+    {
+        public static Graph graph { get; set; }
+
+        // A dictionary mapping cars to a list of selected stations.
+        public static Dictionary<Car, List<PassengerStop>> SelectedStations { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
+
+        // Method to update the selected stations for a car
+        public static void UpdateSelectedStations(Car car, List<PassengerStop> selectedStops)
         {
-            if (Input.GetKeyDown(KeyCode.F9))
+            if (car == null)
             {
-                // Call ProcessPassengerStops method
-                ProcessPassengerStops();
+                throw new ArgumentNullException(nameof(car));
             }
+
+            SelectedStations[car] = selectedStops;
         }
 
-        private static void ProcessPassengerStops()
-        {
-            var allStops = PassengerStop.FindAll();
-            var stopMapping = new Dictionary<string, Vector3>();
 
-            foreach (var stop in allStops)
+        public static void PrintCarInfo(Car car)
+        {
+            if (car == null)
             {
-                // Check if the stop is not null, has a valid identifier, and is active
-                if (stop != null && !string.IsNullOrEmpty(stop.identifier) && stop.gameObject.activeInHierarchy)
-                {
-                    try
-                    {
-                        Vector3 centerPoint = stop.CenterPoint; // Assuming CenterPoint is a property of PassengerStop
-                        stopMapping[stop.identifier] = centerPoint;
-                        Dispatcher.mls.LogInfo($"Identifier: {stop.identifier}, CenterPoint: {centerPoint}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Dispatcher.mls.LogError($"Error processing stop '{stop.identifier}': {ex.Message}");
-                    }
-                }
+                Debug.Log("Car is null");
+                return;
+            }
+
+            // Retrieve saved stations for this car from ManagedTrains
+            if (ManagedTrains.SelectedStations.TryGetValue(car, out List<PassengerStop> selectedStations))
+            {
+                string stationNames = string.Join(", ", selectedStations.Select(s => s.name));
+                Vector3? centerPoint = car.GetCenterPosition(graph); // Assuming GetCenterPosition exists
+
+                Debug.Log($"Car ID: {car.id}, Selected Stations: {stationNames}, Center Position: {centerPoint}");
+            }
+            else
+            {
+                Debug.Log("No stations selected for this car.");
             }
         }
     }
 }
 
-
 namespace RouteManagerUI
 {
-    public static class RouteManagerPlugin
-    {
-        //likley put control vars here
-    }
-
-
-
+    
     [HarmonyPatch(typeof(CarInspector), "PopulateAIPanel")]
     public static class CarInspectorPopulateAIPanelPatch
     {
@@ -175,6 +216,7 @@ namespace RouteManagerUI
                 {
                     SetOrdersValue(AutoEngineerMode.Yard, null, null, null);
                 });
+                
             }));
             if (!persistence.Orders.Enabled)
             {
@@ -226,13 +268,25 @@ namespace RouteManagerUI
                         builder.HStack(delegate (UIPanelBuilder hstack)
                         {
                             // Add a checkbox for each station
-                            hstack.AddToggle(() => StationManager.IsStationSelected(stop), isOn => StationManager.SetStationSelected(stop, isOn));
+                            hstack.AddToggle(() => StationManager.IsStationSelected(stop), isOn =>
+                            {
+                                StationManager.SetStationSelected(stop, isOn);
+                                UpdateManagedTrainsSelectedStations(car); // Update when checkbox state changes
+                            });
 
                             // Add a label next to the checkbox
                             hstack.AddLabel(stop.name);
                         });
                     }
                 });
+
+                bool anyStationSelected = StationManager.IsAnyStationSelected(orderedStops);
+
+                // If any station is selected, add a button to the UI
+                if (anyStationSelected)
+                {
+                    builder.AddButton("Print Car Info", () => ManagedTrains.PrintCarInfo(car));
+                }
 
             }
 
@@ -326,6 +380,16 @@ namespace RouteManagerUI
                 SendAutoEngineerCommand(mode3, forward ?? orders.Forward, maxSpeedMph2, distance);
             }
             return false; // Prevent the original method from running
+        }
+
+        private static void UpdateManagedTrainsSelectedStations(Car car)
+        {
+            // Get the list of all selected stations
+            var allStops = PassengerStop.FindAll();
+            var selectedStations = allStops.Where(StationManager.IsStationSelected).ToList();
+
+            // Update the ManagedTrains with the selected stations for this car
+            ManagedTrains.UpdateSelectedStations(car, selectedStations);
         }
 
     }
