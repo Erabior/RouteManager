@@ -20,6 +20,7 @@ using Helpers;
 using Serilog;
 using RouteManagerController;
 using Track;
+using System.Collections;
 
 namespace RouteManager
 {
@@ -113,6 +114,27 @@ public static class StationManager
 {
     private static Dictionary<string, bool> stationSelections = new Dictionary<string, bool>();
 
+    public static Dictionary<string, StationData> Stations = new Dictionary<string, StationData>
+    {
+        { "sylva", new StationData(24634.5f, 620.57f, -941.23f, 24563.24f, 620.57f, -935.94f, 24598.87f, 620.57f, -938.585f, 71.45608232f) },
+        { "dillsboro", new StationData(22379.87f, 603.17f, -1410.88f, 22326.76f, 603.17f, -1434.12f, 22353.315f, 603.17f, -1422.5f, 57.9721459f) },
+        { "wilmot", new StationData(16511.31f, 569.97f, 2326.23f, 16493.52f, 569.97f, 2329.14f, 16502.415f, 569.97f, 2327.685f, 18.0264306f) },
+        { "whittier", new StationData(12267.1f, 561.45f, 5864.33f, 12279.19f, 561.45f, 5893.68f, 12273.145f, 561.45f, 5879.005f, 31.74256763f) },
+        { "ela", new StationData(9569.54f, 546.61f, 7404.1f, 9554.41f, 546.61f, 7409.92f, 9561.975f, 546.61f, 7407.01f, 16.21077728f) },
+        { "bryson", new StationData(4530.43f, 528.97f, 5428.56f, 4473.52f, 528.97f, 5407.87f, 4501.975f, 528.97f, 5418.215f, 60.55430786f) },
+        { "hemingway", new StationData(2820.64f, 578.52f, 3079.64f, 2815.72f, 578.54f, 3055.54f, 2818.18f, 578.53f, 3067.59f, 24.59708926f) },
+        { "alarkajct", new StationData(1745.6f, 590.23f, 1503.32f, 1737.93f, 589.78f, 1425.91f, 1741.765f, 590.005f, 1464.615f, 77.79035609f) },
+        { "cochran", new StationData(1996.88f, 591.62f, -205.13f, 2007.29f, 591.85f, -218.98f, 2002.085f, 591.735f, -212.055f, 17.32753589f) },
+        { "alarka", new StationData(4170.52f, 644.81f, -3113.05f, 4201.17f, 645.24f, -3140.48f, 4185.845f, 645.025f, -3126.765f, 41.13407711f) },
+        { "almond", new StationData(-6340.3f, 524.97f, -1291.01f, -6316.44f, 524.97f, -1347.1f, -6328.37f, 524.97f, -1319.055f, 60.95398018f) },
+        { "nantahala", new StationData(-15594.29f, 595.2f, -10588.8f, -15642.63f, 595.51f, -10646.29f, -15618.46f, 595.355f, -10617.545f, 75.11292698f) },
+        { "topton", new StationData(-18969.52f, 793.22f, -15217.75f, -18977.49f, 792.7f, -15231.27f, -18973.505f, 792.96f, -15224.51f, 15.70292011f) },
+        { "rhodo", new StationData(-22993.12f, 653.53f, -18005.08f, -23014.11f, 653.15f, -18030.5f, -23003.615f, 653.34f, -18017.79f, 32.96818011f) },
+        { "andrews", new StationData(-29923.78f, 538.97f, -20057.8f, -29990.74f, 538.97f, -20092.33f, -29957.26f, 538.97f, -20075.065f, 75.33898393f) }
+
+    };
+
+    
     public static void InitializeStationSelections()
     {
         var allStops = PassengerStop.FindAll();
@@ -136,25 +158,18 @@ public static class StationManager
     {
         stationSelections[stop.identifier] = isSelected;
     }
-
-    public static Dictionary<string, StationData> Stations = new Dictionary<string, StationData>
+    public static bool IsAnyStationSelectedForLocomotive(Car locomotive)
     {
-        { "sylva", new StationData(24634.5f, 620.57f, -941.23f, 24563.24f, 620.57f, -935.94f, 24598.87f, 620.57f, -938.585f, 71.45608232f) },
-        { "andrews", new StationData(-29923.78f, 538.97f, -20057.8f, -29990.74f, 538.97f, -20092.33f, -29957.26f, 538.97f, -20075.065f, 75.33898393f) },
-        { "almond", new StationData(-6340.3f, 524.97f, -1291.01f, -6316.44f, 524.97f, -1347.1f, -6328.37f, 524.97f, -1319.055f, 60.95398018f) },
-        { "hemingway", new StationData(2820.64f, 578.52f, 3079.64f, 2815.72f, 578.54f, 3055.54f, 2818.18f, 578.53f, 3067.59f, 24.59708926f) },
-        { "whittier", new StationData(12267.1f, 561.45f, 5864.33f, 12279.19f, 561.45f, 5893.68f, 12273.145f, 561.45f, 5879.005f, 31.74256763f) },
-        { "cochran", new StationData(1996.88f, 591.62f, -205.13f, 2007.29f, 591.85f, -218.98f, 2002.085f, 591.735f, -212.055f, 17.32753589f) },
-        { "alarka", new StationData(4170.52f, 644.81f, -3113.05f, 4201.17f, 645.24f, -3140.48f, 4185.845f, 645.025f, -3126.765f, 41.13407711f) },
-        { "rhodo", new StationData(-22993.12f, 653.53f, -18005.08f, -23014.11f, 653.15f, -18030.5f, -23003.615f, 653.34f, -18017.79f, 32.96818011f) },
-        { "dillsboro", new StationData(22379.87f, 603.17f, -1410.88f, 22326.76f, 603.17f, -1434.12f, 22353.315f, 603.17f, -1422.5f, 57.9721459f) },
-        { "bryson", new StationData(4530.43f, 528.97f, 5428.56f, 4473.52f, 528.97f, 5407.87f, 4501.975f, 528.97f, 5418.215f, 60.55430786f) },
-        { "ela", new StationData(9569.54f, 546.61f, 7404.1f, 9554.41f, 546.61f, 7409.92f, 9561.975f, 546.61f, 7407.01f, 16.21077728f) },
-        { "alarkajct", new StationData(1745.6f, 590.23f, 1503.32f, 1737.93f, 589.78f, 1425.91f, 1741.765f, 590.005f, 1464.615f, 77.79035609f) },
-        { "nantahala", new StationData(-15594.29f, 595.2f, -10588.8f, -15642.63f, 595.51f, -10646.29f, -15618.46f, 595.355f, -10617.545f, 75.11292698f) },
-        { "topton", new StationData(-18969.52f, 793.22f, -15217.75f, -18977.49f, 792.7f, -15231.27f, -18973.505f, 792.96f, -15224.51f, 15.70292011f) },
-        { "wilmot", new StationData(16511.31f, 569.97f, 2326.23f, 16493.52f, 569.97f, 2329.14f, 16502.415f, 569.97f, 2327.685f, 18.0264306f) }
-    };
+        // Check if the locomotive exists in the SelectedStations dictionary
+        if (ManagedTrains.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStations))
+        {
+            // Return true if there is at least one selected station
+            return selectedStations.Any();
+        }
+
+        // Return false if the locomotive is not found or no stations are selected
+        return false;
+    }
 }
 
 
@@ -165,14 +180,48 @@ namespace RouteManagerController
     {
         //likley put control vars here
     }
-    public class ManagedTrains
+    public class ManagedTrains : MonoBehaviour
     {
+
+        public static ManagedTrains Instance { get; private set; }
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(this.gameObject);
+                return;
+            }
+
+            Instance = this;
+            // Other initialization code...
+        }
+
+
+        private bool transitMode = false;
+        private bool loadingMode = false;
+        private float RMmaxSpeed = 0f;
         public static Graph graph { get; set; }
 
         // A dictionary mapping cars to a list of selected stations.
         public static Dictionary<Car, List<PassengerStop>> SelectedStations { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
 
+        public static Dictionary<Car, bool> LocomotiveDirections { get; private set; } = new Dictionary<Car, bool>();
+
+        public static Dictionary<Car, string> LocomotiveDestination { get; private set; } = new Dictionary<Car, string>();
         // Method to update the selected stations for a car
+
+        private static Dictionary<Car, bool> locomotiveCoroutines = new Dictionary<Car, bool>();
+
+        public void StartRouteManagerRoutine(Car locomotive)
+        {
+            if (!locomotiveCoroutines.TryGetValue(locomotive, out bool isRunning) || !isRunning)
+            {
+                locomotiveCoroutines[locomotive] = true;
+                // Assuming 'Instance' is a MonoBehaviour to start the coroutine
+                Instance.StartCoroutine(AutoEngineerControlRoutine(locomotive));
+            }
+        }
         public static void UpdateSelectedStations(Car car, List<PassengerStop> selectedStops)
         {
             if (car == null)
@@ -204,6 +253,116 @@ namespace RouteManagerController
             {
                 Debug.Log("No stations selected for this car.");
             }
+        }
+
+
+        public static bool IsDirectionForward { get; set; } = true;
+
+        private static readonly List<string> orderedStations = new List<string>
+    {
+        "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka",
+        "almond", "nantahala", "topton", "rhodo", "andrews"
+    };
+
+        // Method to get the next destination station
+        public static string GetNextDestination(Car locomotive, string currentStation, bool isForward)
+        {
+            if (SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStops) && selectedStops.Count > 0)
+            {
+                int currentIndex = orderedStations.IndexOf(currentStation);
+                if (currentIndex == -1)
+                {
+                    return selectedStops.First().identifier; // If no current station, return the first selected station
+                }
+
+                if (isForward)
+                {
+                    for (int i = currentIndex + 1; i < orderedStations.Count; i++)
+                    {
+                        if (selectedStops.Any(stop => stop.identifier == orderedStations[i]))
+                        {
+                            return orderedStations[i]; // Return next selected station in forward direction
+                        }
+                    }
+
+                    // If at the end of the line, reverse direction
+                    LocomotiveDirections[locomotive] = !LocomotiveDirections[locomotive];
+                    return GetNextDestination(locomotive, currentStation, false);
+                }
+                else
+                {
+                    for (int i = currentIndex - 1; i >= 0; i--)
+                    {
+                        if (selectedStops.Any(stop => stop.identifier == orderedStations[i]))
+                        {
+                            return orderedStations[i]; // Return next selected station in reverse direction
+                        }
+                    }
+
+                    // If at the beginning of the line, reverse direction
+                    LocomotiveDirections[locomotive] = !LocomotiveDirections[locomotive];
+                    return GetNextDestination(locomotive, currentStation, true);
+                }
+            }
+
+            return null; // No next destination
+        }
+        private static float GetDistanceToDest(Car locomotive)
+        {
+            string destination = LocomotiveDestination[locomotive];
+            Vector3 locomotivePosition = locomotive.GetCenterPosition(graph);
+            Vector3 destCenter = StationManager.Stations[destination].Center;
+            float distance = Vector3.Distance(locomotivePosition, destCenter);
+            return distance;
+        }
+
+        private IEnumerator AutoEngineerControlRoutine(Car locomotive)
+        {
+            while (StationManager.IsAnyStationSelectedForLocomotive(locomotive))
+            {
+                if (transitMode)
+                {
+                    
+                    while (transitMode)
+                    {
+                        float distanceToStation = GetDistanceToDest(locomotive);
+
+                        if (distanceToStation > 125)
+                        {
+                            yield return new WaitForSeconds(20);
+                            RMmaxSpeed = 45;
+                        }
+                        else if (distanceToStation <= 125 && distanceToStation > 25)
+                        {
+                            yield return new WaitForSeconds(2);
+                            RMmaxSpeed = distanceToStation / 3;
+                        }
+                        else if (distanceToStation <= 25 && distanceToStation > 2.5)
+                        {
+                            yield return new WaitForSeconds(0.5f);
+                            RMmaxSpeed = distanceToStation / 3;
+                        }
+                        else if (distanceToStation <= 2.5)
+                        {
+                            RMmaxSpeed = 0;
+                            loadingMode = true;
+                            transitMode = false;
+                            break; // Exit the while loop
+                        }
+                        int RMmaxSpeedint = (int)RMmaxSpeed;
+                        StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocomotiveDirections[locomotive], RMmaxSpeedint, null));
+                    }
+                }
+
+                if (loadingMode)
+                {
+                    yield return new WaitForSeconds(20);
+                }
+                
+
+                yield return null; // This ensures the coroutine yields properly
+            }
+
         }
     }
 }
@@ -268,16 +427,25 @@ namespace RouteManagerUI
                 builder.AddButtonSelectable("Reverse", !persistence.Orders.Forward, delegate
                 {
                     bool? forward3 = false;
-                    SetOrdersValue(null, forward3, null, null);
+                    if (!StationManager.IsAnyStationSelectedForLocomotive(car))
+                    {
+                        SetOrdersValue(null, forward3, null, null);
+                    }
+                    
                 });
                 builder.AddButtonSelectable("Forward", persistence.Orders.Forward, delegate
                 {
                     bool? forward2 = true;
-                    SetOrdersValue(null, forward2, null, null);
+                    if (!StationManager.IsAnyStationSelectedForLocomotive(car))
+                    {
+                        SetOrdersValue(null, forward2, null, null);
+                    }
+                    
                 });
             }));
             if (mode2 == AutoEngineerMode.Road)
             {
+                
                 int num = MaxSpeedMphForMode(mode2);
                 RectTransform control = builder.AddSlider(() => persistence.Orders.MaxSpeedMph / 5, delegate
                 {
@@ -286,7 +454,12 @@ namespace RouteManagerUI
                 }, delegate (float value)
                 {
                     int? maxSpeedMph3 = (int)(value * 5f);
-                    SetOrdersValue(null, null, maxSpeedMph3, null);
+                    if (!StationManager.IsAnyStationSelectedForLocomotive(car))
+                    {
+                        SetOrdersValue(null, null, maxSpeedMph3, null);
+                    }
+
+
                 }, 0f, num / 5, wholeNumbers: true);
                 builder.AddField("Max Speed", control);
 
@@ -316,7 +489,7 @@ namespace RouteManagerUI
                     }
                 });
 
-                bool anyStationSelected = StationManager.IsAnyStationSelected(orderedStops);
+                //bool anyStationSelected = StationManager.IsAnyStationSelected(orderedStops);
 
                 // If any station is selected, add a button to the UI
                 /*if (anyStationSelected)
@@ -415,6 +588,11 @@ namespace RouteManagerUI
                 int maxSpeedMph2 = Mathf.Min(maxSpeedMph ?? orders.MaxSpeedMph, MaxSpeedMphForMode(mode3));
                 SendAutoEngineerCommand(mode3, forward ?? orders.Forward, maxSpeedMph2, distance);
             }
+
+            ManagedTrains.Instance.StartRouteManagerRoutine(car);
+
+
+
             return false; // Prevent the original method from running
         }
 
