@@ -18,9 +18,46 @@ using static System.Runtime.CompilerServices.RuntimeHelpers;
 using Game;
 using Helpers;
 using Serilog;
-using RouteManagerController;
 using Track;
 using System.Collections;
+using static ManagedTrains;
+using System.Security.Cryptography;
+using Character;
+
+/*
+ * I need to create an class containigng an object and method that can be used to pass the car object of controlled locomotives to the already started coroutine
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ */
+
+
+
+
+
+
+
+
+
+
+
+
 
 namespace RouteManager
 {
@@ -39,9 +76,10 @@ namespace RouteManager
             harmony.PatchAll();
             mls = Logger;
             mls.LogInfo("Dispatcher Mod Loaded - Awake method called.");
-
+            
 
         }
+        
 
     }
 
@@ -71,6 +109,97 @@ namespace RouteManager
         }
     }
 
+
+
+
+    [HarmonyPatch(typeof(PlayerController), "Update")]
+    public class RouteAI : MonoBehaviour
+    {
+        void Postfix()
+        {
+            if (LocoTelem.locomotiveCoroutines.Count >= 1)
+            {
+                Debug.Log("There is data in locomotiveCoroutines");
+                var keys = LocoTelem.locomotiveCoroutines.Keys.ToArray();
+
+                for (int i = 0; i < keys.Count(); i++)
+                {
+                    if (!LocoTelem.locomotiveCoroutines[keys[i]])
+                    {
+                        LocoTelem.locomotiveCoroutines[keys[i]] = true;
+                        StartCoroutine(AutoEngineerControlRoutine(keys[i]));
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log("No key in locomotiveCoroutines: there are no locomotives that require the extended logic");
+            }
+
+        }
+
+        private IEnumerator AutoEngineerControlRoutine(Car locomotive)
+        {
+
+            ManagedTrains.GetNextDestination(locomotive);
+
+            Debug.Log($"Entered Coroutine for {locomotive.id} - is any station selected {StationManager.IsAnyStationSelectedForLocomotive(locomotive)}");
+
+            bool transitMode = true;
+            bool loadingMode = false;
+            float RMmaxSpeed = 0;
+
+            while (StationManager.IsAnyStationSelectedForLocomotive(locomotive))
+            {
+                if (transitMode)
+                {
+                    Debug.Log("14");
+                    while (transitMode)
+                    {
+                        float distanceToStation = ManagedTrains.GetDistanceToDest(locomotive);
+                        Debug.Log($"15 distance to station: {distanceToStation}");
+                        if (distanceToStation > 125)
+                        {
+                            yield return new WaitForSeconds(20);
+                            RMmaxSpeed = 45;
+                        }
+                        else if (distanceToStation <= 125 && distanceToStation > 25)
+                        {
+                            yield return new WaitForSeconds(2);
+                            RMmaxSpeed = distanceToStation / 3f;
+                        }
+                        else if (distanceToStation <= 25 && distanceToStation > 2.5)
+                        {
+                            yield return new WaitForSeconds(0.5f);
+                            RMmaxSpeed = distanceToStation / 3f;
+                        }
+                        else if (distanceToStation <= 2.5)
+                        {
+                            RMmaxSpeed = 0;
+                            loadingMode = true;
+                            transitMode = false;
+                            break; // Exit the while loop
+                        }
+                        Debug.Log($"16 speed: {RMmaxSpeed}");
+                        int RMmaxSpeedint = (int)RMmaxSpeed;
+                        StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.LocomotiveDirections[locomotive], RMmaxSpeedint, null));
+                    }
+                }
+
+                if (loadingMode)
+                {
+                    yield return new WaitForSeconds(20);
+                }
+
+
+                yield return null; // This ensures the coroutine yields properly
+            }
+
+
+        }
+
+    }
+
     public static class TrainControllerPatch
     {
         public static Vector3? GetCenterPointOfCar(TrainController trainController, string carId)
@@ -92,6 +221,208 @@ namespace RouteManager
     }
 
 }
+
+public class ManagedTrains : MonoBehaviour
+{
+
+    // Rest of your ManagedTrains code...
+
+    public class LocoTelem
+    {
+        public static Dictionary<Car, float> RMMaxSpeed { get; private set; } = new Dictionary<Car, float>();
+        public static Dictionary<Car, bool> TransitMode { get; private set; } = new Dictionary<Car, bool>();
+        public static Dictionary<Car, List<PassengerStop>> SelectedStations { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
+        public static Dictionary<Car, bool> LocomotiveDirections { get; private set; } = new Dictionary<Car, bool>();
+        public static Dictionary<Car, string> LocomotiveDestination { get; private set; } = new Dictionary<Car, string>();
+        public static Dictionary<Car, bool> locomotiveCoroutines { get; private set; } = new Dictionary<Car, bool>();
+
+    }
+
+   
+    public static Graph graph { get; set; }
+
+    // A dictionary mapping cars to a list of selected stations.
+   
+
+
+    public static void InitializeLocomotive(Car locomotive)
+    {
+        if (!LocoTelem.LocomotiveDirections.ContainsKey(locomotive))
+        {
+            // Default direction is true
+            LocoTelem.LocomotiveDirections[locomotive] = true;
+        }
+
+        if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
+        {
+            // Get the first selected station for this locomotive, if any
+            if (LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStops) && selectedStops.Any())
+            {
+                LocoTelem.LocomotiveDestination[locomotive] = selectedStops.First().identifier;
+            }
+            else
+            {
+                LocoTelem.LocomotiveDestination[locomotive] = "whittier"; // No stations selected, set to whittier
+            }
+        }
+    }
+
+
+    public static void UpdateSelectedStations(Car car, List<PassengerStop> selectedStops)
+    {
+        if (car == null)
+        {
+            throw new ArgumentNullException(nameof(car));
+        }
+
+        LocoTelem.SelectedStations[car] = selectedStops;
+    }
+
+
+    public static void PrintCarInfo(Car car)
+    {
+        if (car == null)
+        {
+            Debug.Log("Car is null");
+            return;
+        }
+        Debug.Log("18");
+        // Retrieve saved stations for this car from ManagedTrains
+        if (ManagedTrains.LocoTelem.SelectedStations.TryGetValue(car, out List<PassengerStop> selectedStations))
+        {
+            string stationNames = string.Join(", ", selectedStations.Select(s => s.name));
+            Vector3? centerPoint = car.GetCenterPosition(graph); // Assuming GetCenterPosition exists
+
+            Debug.Log($"Car ID: {car.id}, Selected Stations: {stationNames}, Center Position: {centerPoint}");
+        }
+        else
+        {
+            Debug.Log("No stations selected for this car.");
+        }
+        Debug.Log("19");
+
+        if (ManagedTrains.LocoTelem.LocomotiveDestination.TryGetValue(car, out string dest))
+        {
+
+            Debug.Log($"destination: {dest}");
+        }
+        else
+        {
+            Debug.Log("No destination for this car.");
+        }
+        Debug.Log("20");
+        //Debug.Log($"Rotation: {car.GetCenterRotation(graph)}");
+    }
+
+
+    public static bool IsDirectionForward { get; set; } = true;
+
+    private static readonly List<string> orderedStations = new List<string>
+    {
+        "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka",
+        "almond", "nantahala", "topton", "rhodo", "andrews"
+    };
+
+    // Method to get the next destination station
+    public static string GetNextDestination(Car locomotive)
+    {
+        string currentStation = null;
+
+        if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
+        {
+            Debug.Log($"LocomotiveDestination does not contain key: {locomotive}");
+            currentStation = null;
+        }
+        else
+        {
+            currentStation = LocoTelem.LocomotiveDestination[locomotive];
+        }
+        if (!LocoTelem.LocomotiveDirections.ContainsKey(locomotive))
+        {
+            LocoTelem.LocomotiveDirections[locomotive] = true;
+        }
+        bool isForward = LocoTelem.LocomotiveDirections[locomotive];
+
+
+
+
+        if (LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStops) && selectedStops.Count > 0)
+        {
+            int currentIndex = orderedStations.IndexOf(currentStation);
+            if (currentIndex == -1)
+            {
+                return selectedStops.First().identifier; // If no current station, return the first selected station
+            }
+
+            if (isForward)
+            {
+                for (int i = currentIndex + 1; i < orderedStations.Count; i++)
+                {
+                    if (selectedStops.Any(stop => stop.identifier == orderedStations[i]))
+                    {
+                        return orderedStations[i]; // Return next selected station in forward direction
+                    }
+                }
+
+                // If at the end of the line, reverse direction
+                LocoTelem.LocomotiveDirections[locomotive] = !LocoTelem.LocomotiveDirections[locomotive];
+                return GetNextDestination(locomotive);
+            }
+            else
+            {
+                for (int i = currentIndex - 1; i >= 0; i--)
+                {
+                    if (selectedStops.Any(stop => stop.identifier == orderedStations[i]))
+                    {
+                        return orderedStations[i]; // Return next selected station in reverse direction
+                    }
+                }
+
+                // If at the beginning of the line, reverse direction
+                LocoTelem.LocomotiveDirections[locomotive] = !LocoTelem.LocomotiveDirections[locomotive];
+                return GetNextDestination(locomotive);
+            }
+        }
+
+        return null; // No next destination
+    }
+    public static float GetDistanceToDest(Car locomotive)
+    {
+        // Check if the locomotive is null
+        if (locomotive == null)
+        {
+            Debug.LogError("Locomotive is null in GetDistanceToDest.");
+            return 0f; // Return a default value or handle this case as needed
+        }
+
+        // Check if the locomotive key exists in the LocomotiveDestination dictionary
+        if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
+        {
+            Debug.LogError($"LocomotiveDestination does not contain key: {locomotive}");
+            return 0f; // Or handle this scenario appropriately
+        }
+
+        string destination = LocoTelem.LocomotiveDestination[locomotive];
+        if (destination == null)
+        {
+            Debug.LogError("Destination is null for locomotive.");
+            return 0f; // Handle null destination
+        }
+
+        Vector3 locomotivePosition = locomotive.GetCenterPosition(graph);
+        if (!StationManager.Stations.ContainsKey(destination))
+        {
+            Debug.LogError($"Station not found for destination: {destination}");
+            return 0f; // Handle missing station
+        }
+
+        Vector3 destCenter = StationManager.Stations[destination].Center;
+        return Vector3.Distance(locomotivePosition, destCenter);
+    }
+
+
+}
+
 
 
 public class StationData
@@ -161,7 +492,7 @@ public static class StationManager
     public static bool IsAnyStationSelectedForLocomotive(Car locomotive)
     {
         // Check if the locomotive exists in the SelectedStations dictionary
-        if (ManagedTrains.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStations))
+        if (LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStations))
         {
             // Return true if there is at least one selected station
             return selectedStations.Any();
@@ -172,360 +503,11 @@ public static class StationManager
     }
 }
 
-
-namespace RouteManagerController
-{
-
-    public static class RouteManagerPlugin
-    {
-        //likley put control vars here
-    }
-    public class ManagedTrains : MonoBehaviour
-    {
-
-        public static ManagedTrains Instance { get; private set; }
-
-        // This method can be called to ensure that the instance is set up correctly.
-        public static void EnsureInstance()
-        {
-            if (Instance == null)
-            {
-                // Find the GameObject named "ManagedTrainsObject" or create it.
-                GameObject managedTrainsObject = GameObject.Find("ManagedTrainsObject");
-                if (managedTrainsObject == null)
-                {
-                    managedTrainsObject = new GameObject("ManagedTrainsObject");
-                    // Optionally, make this object persistent between scenes
-                    // DontDestroyOnLoad(managedTrainsObject);
-                }
-
-                // Add ManagedTrains component if it doesn't exist.
-                Instance = managedTrainsObject.GetComponent<ManagedTrains>();
-                if (Instance == null)
-                {
-                    Instance = managedTrainsObject.AddComponent<ManagedTrains>();
-                }
-            }
-        }
-
-
-        private void Awake()
-        {
-            if (Instance != null && Instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            Instance = this;
-            // Other initialization code...
-        }
-
-        // Rest of your ManagedTrains code...
-    
-
-
-        private bool transitMode = true;
-        private bool loadingMode = false;
-        private float RMmaxSpeed = 0f;
-        public static Graph graph { get; set; }
-
-        // A dictionary mapping cars to a list of selected stations.
-        public static Dictionary<Car, List<PassengerStop>> SelectedStations { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
-
-        public static Dictionary<Car, bool> LocomotiveDirections { get; private set; } = new Dictionary<Car, bool>();
-
-        public static Dictionary<Car, string> LocomotiveDestination { get; private set; } = new Dictionary<Car, string>();
-        // Method to update the selected stations for a car
-
-        private static Dictionary<Car, bool> locomotiveCoroutines = new Dictionary<Car, bool>();
-
-        private Dictionary<Car, Coroutine> activeCoroutines = new Dictionary<Car, Coroutine>();
-
-
-        public static void InitializeLocomotive(Car locomotive)
-        {
-            if (!LocomotiveDirections.ContainsKey(locomotive))
-            {
-                // Default direction is true
-                LocomotiveDirections[locomotive] = true;
-            }
-
-            if (!LocomotiveDestination.ContainsKey(locomotive))
-            {
-                // Get the first selected station for this locomotive, if any
-                if (SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStops) && selectedStops.Any())
-                {
-                    LocomotiveDestination[locomotive] = selectedStops.First().identifier;
-                }
-                else
-                {
-                    LocomotiveDestination[locomotive] = "whittier"; // No stations selected, set to whittier
-                }
-            }
-        }
-
-        public void StartRouteManagerRoutine(Car locomotive)
-        {
-            if (locomotive != null)
-            {
-                // Safe to access or set members of car
-                InitializeLocomotive(locomotive);
-                if (!locomotiveCoroutines.TryGetValue(locomotive, out bool isRunning) || !isRunning)
-                {
-                    locomotiveCoroutines[locomotive] = true;
-                    Coroutine coroutine = StartCoroutine(AutoEngineerControlRoutine(locomotive));
-                    activeCoroutines[locomotive] = coroutine;
-                    Debug.Log("Starting new Route Manager Routine for locomotive");
-                }
-                else
-                {
-                    Debug.Log("Route Manager Routine is already running for this locomotive");
-                }
-            }
-            else
-            {
-                Debug.Log("Route Manager Routine is already running for this locomotive");
-            }
-        }
-        public void StopRouteManagerRoutine(Car locomotive)
-        {
-            if (locomotive != null)
-            {
-                // Safe to access or set members of car
-
-            }
-            else
-            {
-                Debug.Log("car is null");
-            }
-
-            if (activeCoroutines.TryGetValue(locomotive, out Coroutine coroutine))
-            {
-                StopCoroutine(coroutine);
-                activeCoroutines.Remove(locomotive);
-                locomotiveCoroutines[locomotive] = false;
-                locomotiveCoroutines.Remove(locomotive);
-            }
-        }
-        public static void UpdateSelectedStations(Car car, List<PassengerStop> selectedStops)
-        {
-            if (car == null)
-            {
-                throw new ArgumentNullException(nameof(car));
-            }
-
-            SelectedStations[car] = selectedStops;
-        }
-
-
-        public static void PrintCarInfo(Car car)
-        {
-            if (car == null)
-            {
-                Debug.Log("Car is null");
-                return;
-            }
-            Debug.Log("18");
-            // Retrieve saved stations for this car from ManagedTrains
-            if (ManagedTrains.SelectedStations.TryGetValue(car, out List<PassengerStop> selectedStations))
-            {
-                string stationNames = string.Join(", ", selectedStations.Select(s => s.name));
-                Vector3? centerPoint = car.GetCenterPosition(graph); // Assuming GetCenterPosition exists
-
-                Debug.Log($"Car ID: {car.id}, Selected Stations: {stationNames}, Center Position: {centerPoint}");
-            }
-            else
-            {
-                Debug.Log("No stations selected for this car.");
-            }
-            Debug.Log("19");
-
-            if (ManagedTrains.LocomotiveDestination.TryGetValue(car, out string dest))
-            {
-
-                Debug.Log($"destination: {dest}");
-            }
-            else
-            {
-                Debug.Log("No destination for this car.");
-            }
-            Debug.Log("20");
-            //Debug.Log($"Rotation: {car.GetCenterRotation(graph)}");
-        }
-
-
-        public static bool IsDirectionForward { get; set; } = true;
-
-        private static readonly List<string> orderedStations = new List<string>
-    {
-        "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka",
-        "almond", "nantahala", "topton", "rhodo", "andrews"
-    };
-
-        // Method to get the next destination station
-        public static string GetNextDestination(Car locomotive)
-        {
-            string currentStation = null;
-
-            if (!LocomotiveDestination.ContainsKey(locomotive))
-            {
-                Debug.Log($"LocomotiveDestination does not contain key: {locomotive}");
-                currentStation = null;
-            }
-            else
-            {
-                currentStation = LocomotiveDestination[locomotive];
-            }
-            if (!LocomotiveDirections.ContainsKey(locomotive))
-            {
-                LocomotiveDirections[locomotive] = true;
-            }
-            bool isForward = LocomotiveDirections[locomotive];
-
-
-
-
-            if (SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStops) && selectedStops.Count > 0)
-            {
-                int currentIndex = orderedStations.IndexOf(currentStation);
-                if (currentIndex == -1)
-                {
-                    return selectedStops.First().identifier; // If no current station, return the first selected station
-                }
-               
-                if (isForward)
-                {
-                    for (int i = currentIndex + 1; i < orderedStations.Count; i++)
-                    {
-                        if (selectedStops.Any(stop => stop.identifier == orderedStations[i]))
-                        {
-                            return orderedStations[i]; // Return next selected station in forward direction
-                        }
-                    }
-
-                    // If at the end of the line, reverse direction
-                    LocomotiveDirections[locomotive] = !LocomotiveDirections[locomotive];
-                    return GetNextDestination(locomotive);
-                }
-                else
-                {
-                    for (int i = currentIndex - 1; i >= 0; i--)
-                    {
-                        if (selectedStops.Any(stop => stop.identifier == orderedStations[i]))
-                        {
-                            return orderedStations[i]; // Return next selected station in reverse direction
-                        }
-                    }
-
-                    // If at the beginning of the line, reverse direction
-                    LocomotiveDirections[locomotive] = !LocomotiveDirections[locomotive];
-                    return GetNextDestination(locomotive);
-                }
-            }
-
-            return null; // No next destination
-        }
-        private static float GetDistanceToDest(Car locomotive)
-{
-    // Check if the locomotive is null
-    if (locomotive == null)
-    {
-        Debug.LogError("Locomotive is null in GetDistanceToDest.");
-        return 0f; // Return a default value or handle this case as needed
-    }
-
-    // Check if the locomotive key exists in the LocomotiveDestination dictionary
-    if (!LocomotiveDestination.ContainsKey(locomotive))
-    {
-        Debug.LogError($"LocomotiveDestination does not contain key: {locomotive}");
-        return 0f; // Or handle this scenario appropriately
-    }
-
-    string destination = LocomotiveDestination[locomotive];
-    if(destination == null)
-    {
-        Debug.LogError("Destination is null for locomotive.");
-        return 0f; // Handle null destination
-    }
-
-    Vector3 locomotivePosition = locomotive.GetCenterPosition(graph);
-    if (!StationManager.Stations.ContainsKey(destination))
-    {
-        Debug.LogError($"Station not found for destination: {destination}");
-        return 0f; // Handle missing station
-    }
-
-    Vector3 destCenter = StationManager.Stations[destination].Center;
-    return Vector3.Distance(locomotivePosition, destCenter);
-}
-
-        private IEnumerator AutoEngineerControlRoutine(Car locomotive)
-        {
-
-            GetNextDestination(locomotive);
-
-            Debug.Log($"17 is any station selected {StationManager.IsAnyStationSelectedForLocomotive(locomotive)}");
-
-            transitMode = true;
-            loadingMode = false;
-
-            while (StationManager.IsAnyStationSelectedForLocomotive(locomotive))
-            {
-                if (transitMode)
-                {
-                    Debug.Log("14");
-                    while (transitMode)
-                    {
-                        float distanceToStation = GetDistanceToDest(locomotive);
-                        Debug.Log($"15 distance to station: {distanceToStation}");
-                        if (distanceToStation > 125)
-                        {
-                            yield return new WaitForSeconds(20);
-                            RMmaxSpeed = 45;
-                        }
-                        else if (distanceToStation <= 125 && distanceToStation > 25)
-                        {
-                            yield return new WaitForSeconds(2);
-                            RMmaxSpeed = distanceToStation / 3;
-                        }
-                        else if (distanceToStation <= 25 && distanceToStation > 2.5)
-                        {
-                            yield return new WaitForSeconds(0.5f);
-                            RMmaxSpeed = distanceToStation / 3;
-                        }
-                        else if (distanceToStation <= 2.5)
-                        {
-                            RMmaxSpeed = 0;
-                            loadingMode = true;
-                            transitMode = false;
-                            break; // Exit the while loop
-                        }
-                        Debug.Log($"16 speed: {RMmaxSpeed}");
-                        int RMmaxSpeedint = (int)RMmaxSpeed;
-                        StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocomotiveDirections[locomotive], RMmaxSpeedint, null));
-                    }
-                }
-
-                if (loadingMode)
-                {
-                    yield return new WaitForSeconds(20);
-                }
-                
-
-                yield return null; // This ensures the coroutine yields properly
-            }
-            
-
-        }
-    }
-}
-
 namespace RouteManagerUI
 {
     
     [HarmonyPatch(typeof(CarInspector), "PopulateAIPanel")]
-    public static class CarInspectorPopulateAIPanelPatch
+    public static class CarInspectorPopulateAIPanelPatch 
     {
 
         static bool Prefix(CarInspector __instance, UIPanelBuilder builder)
@@ -575,7 +557,9 @@ namespace RouteManagerUI
                 return false;
             }
             Debug.Log("5");
-            builder.AddField("Direction", builder.ButtonStrip(delegate (UIPanelBuilder builder)
+            if (!StationManager.IsAnyStationSelectedForLocomotive(car))
+            {
+                builder.AddField("Direction", builder.ButtonStrip(delegate (UIPanelBuilder builder)
             {
                 builder.AddObserver(persistence.ObserveOrders(delegate
                 {
@@ -600,27 +584,30 @@ namespace RouteManagerUI
 
                 });
             }));
+                }
             Debug.Log("6");
             if (mode2 == AutoEngineerMode.Road)
             {
-
-                int num = MaxSpeedMphForMode(mode2);
-                RectTransform control = builder.AddSlider(() => persistence.Orders.MaxSpeedMph / 5, delegate
+                if (!StationManager.IsAnyStationSelectedForLocomotive(car))
                 {
-                    int maxSpeedMph4 = persistence.Orders.MaxSpeedMph;
-                    return maxSpeedMph4.ToString();
-                }, delegate (float value)
-                {
-                    int? maxSpeedMph3 = (int)(value * 5f);
-                    if (!StationManager.IsAnyStationSelectedForLocomotive(car))
+                    int num = MaxSpeedMphForMode(mode2);
+                    RectTransform control = builder.AddSlider(() => persistence.Orders.MaxSpeedMph / 5, delegate
                     {
-                        SetOrdersValue(null, null, maxSpeedMph3, null);
-                    }
+                        int maxSpeedMph4 = persistence.Orders.MaxSpeedMph;
+                        return maxSpeedMph4.ToString();
+                    }, delegate (float value)
+                    {
+                        int? maxSpeedMph3 = (int)(value * 5f);
+                        if (!StationManager.IsAnyStationSelectedForLocomotive(car))
+                        {
+                            SetOrdersValue(null, null, maxSpeedMph3, null);
+                        }
 
 
-                }, 0f, num / 5, wholeNumbers: true);
-                builder.AddField("Max Speed", control);
-
+                    }, 0f, num / 5, wholeNumbers: true);
+                    builder.AddField("Max Speed", control);
+                }
+                
                 var stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
                 var orderedStops = new string[] { "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka", "almond", "nantahala", "topton", "rhodo", "andrews" }
                                    .Select(id => stopsLookup[id])
@@ -753,8 +740,6 @@ namespace RouteManagerUI
             }
             Debug.Log("12");
 
-            ManagedTrains.EnsureInstance();
-
             
             return false; // Prevent the original method from running
         }
@@ -767,38 +752,10 @@ namespace RouteManagerUI
 
             // Update the ManagedTrains with the selected stations for this car
             ManagedTrains.UpdateSelectedStations(car, selectedStations);
+            LocoTelem.locomotiveCoroutines[car] = false;
 
-
-            if (StationManager.IsAnyStationSelectedForLocomotive(car))
-            {
-                Debug.Log("Starting Route Manager Routine");
-                if (ManagedTrains.Instance == null)
-                {
-                    Debug.Log("ManagedTrains.Instance is null");
-                }
-                else
-                {
-                    ManagedTrains.Instance.StartRouteManagerRoutine(car);
-                }
-            }
-            else
-            {
-                Debug.Log("Stopping Route Manager Routine");
-                if (ManagedTrains.Instance == null)
-                {
-                    Debug.Log("ManagedTrains.Instance is null");
-                }
-                else
-                {
-                    ManagedTrains.Instance.StopRouteManagerRoutine(car);
-                }
-            }
             Debug.Log("13");
         }
 
     }
 }
-
-/*
-
-*/
