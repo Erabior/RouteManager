@@ -2,7 +2,6 @@
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
-using UI;
 using RollingStock;
 using System.Collections.Generic;
 using System;
@@ -14,15 +13,12 @@ using Model.AI;
 using System.Linq;
 using Model;
 using System.Reflection;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
 using Game;
 using Helpers;
 using Serilog;
 using Track;
 using System.Collections;
 using static ManagedTrains;
-using System.Security.Cryptography;
-using Character;
 using UI.Menu;
 
 
@@ -33,8 +29,7 @@ namespace RouteManager
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
-        private const string modVersion = "1.0.0.0";
-
+        private const string modVersion = "0.7.8.5";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static ManualLogSource mls;
 
@@ -43,39 +38,8 @@ namespace RouteManager
             harmony.PatchAll();
             mls = Logger;
             mls.LogInfo("Dispatcher Mod Loaded - Awake method called.");
-
-
-        }
-
-
-    }
-
-    // Separate MonoBehaviour class for key press logging
-    public class KeyPressLogger : MonoBehaviour
-    {
-        void Update()
-        {
-            if (Input.anyKeyDown)
-            {
-                foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
-                {
-                    if (Input.GetKeyDown(keyCode))
-                    {
-                        Debug.Log("Key Pressed: " + keyCode);
-                    }
-                }
-            }
         }
     }
-    [HarmonyPatch(typeof(FlarePickable), nameof(FlarePickable.Configure))]
-    internal static class flarePickable
-    {
-        private static void Postfix(FlarePickable __instance)
-        {
-            Log.Information("Flare {FlareId} is at {Position}", __instance.FlareId, WorldTransformer.WorldToGame(__instance.transform.position));
-        }
-    }
-
 
     public class RouteAIInjector : MonoBehaviour
     {
@@ -89,7 +53,6 @@ namespace RouteManager
         }
     }
     
-
 
 
     public class RouteAI : MonoBehaviour
@@ -107,12 +70,25 @@ namespace RouteManager
                     {
                         Debug.Log($"loco {keys[i]} currently has not called a coroutine - Calling the Coroutine with {keys[i]} as an arguement");
                         LocoTelem.locomotiveCoroutines[keys[i]] = true;
+
+
+                        LocoTelem.DriveForward[keys[i]]= true;
+                        LocoTelem.LineDirectionEastWest[keys[i]] = true;
+                        LocoTelem.TransitMode[keys[i]] = true;
+                        LocoTelem.RMMaxSpeed[keys[i]] = 0;
+
                         StartCoroutine(AutoEngineerControlRoutine(keys[i]));
                     }
                     else if (LocoTelem.locomotiveCoroutines[keys[i]] && LocoTelem.SelectedStations[keys[i]].Count < 0)
                     {
                         Debug.Log($"loco {keys[i]} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {keys[i]}");
+                        LocoTelem.LocomotivePrevDestination.Remove(keys[i]);
+                        LocoTelem.LocomotiveDestination.Remove(keys[i]);
                         LocoTelem.locomotiveCoroutines.Remove(keys[i]);
+                        LocoTelem.DriveForward.Remove(keys[i]);
+                        LocoTelem.LineDirectionEastWest.Remove(keys[i]);
+                        LocoTelem.TransitMode.Remove(keys[i]);
+                        LocoTelem.RMMaxSpeed.Remove(keys[i]);
                         StopCoroutine(AutoEngineerControlRoutine(keys[i]));
                     }
                 }
@@ -127,18 +103,17 @@ namespace RouteManager
             Debug.Log($"Entered Coroutine for {locomotive.id} - is any station selected {StationManager.IsAnyStationSelectedForLocomotive(locomotive)}");
 
             ManagedTrains.GetNextDestination(locomotive);
-            bool transitMode = true;
-            bool loadingMode = false;
             float RMmaxSpeed = 0;
             float distanceToStation=0;
-            float olddist=0;
+            float olddist=float.MaxValue;
 
             while (StationManager.IsAnyStationSelectedForLocomotive(locomotive))
             {
-                if (transitMode)
+                if (LocoTelem.TransitMode[locomotive])
                 {
                     Debug.Log("starting transit mode");
-                    while (transitMode)
+                    olddist = float.MaxValue;
+                    while (LocoTelem.TransitMode[locomotive])
                     {
                         
                         bool YieldRequired = false;
@@ -164,14 +139,18 @@ namespace RouteManager
 
 
                         distanceToStation = ManagedTrains.GetDistanceToDest(locomotive);
-
+                        var velocity = locomotive.GetMotionSnapshot().Velocity;
                         if (distanceToStation > 350)
                         {
 
-                            if (distanceToStation > olddist)
+                            if (distanceToStation > olddist && velocity.magnitude > 5f)
                             {
                                 LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
                                 Debug.Log("Was driving in the wrong direction. Reversing Direction");
+                                RMmaxSpeed = 45;
+                                Debug.Log($"speed: {RMmaxSpeed}");
+                                StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
+                                yield return new WaitForSeconds(20);
                             }
 
                             RMmaxSpeed = 45;
@@ -193,16 +172,15 @@ namespace RouteManager
                             RMmaxSpeed = 5f;
                             Debug.Log($"speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], 0, null));
-                            loadingMode = true;
-                            transitMode = false;
+                            LocoTelem.TransitMode[locomotive] = false;
                             yield return new WaitForSeconds(1);
                             
                         }
                     }
                 }
-                if (loadingMode)
+                if (!LocoTelem.TransitMode[locomotive])
                 {
-                    while (loadingMode)
+                    while (!LocoTelem.TransitMode[locomotive])
                     {
                         if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
                         {
@@ -212,12 +190,24 @@ namespace RouteManager
                         Debug.Log($"about to set new destination, curent destination{LocoTelem.LocomotiveDestination[locomotive]}");
                         ManagedTrains.GetNextDestination(locomotive);
                         Debug.Log($"New destination was set, destination: {LocoTelem.LocomotiveDestination[locomotive]}");
-                        loadingMode = true;
-                        transitMode = false;
+                        LocoTelem.TransitMode[locomotive] = true;
                         yield return new WaitForSeconds(20);
                     }
-                }
-                yield return null; // This ensures the coroutine yields properly
+                }   
+            }
+            var thisTrain = locomotive.EnumerateCoupled().ToList();
+            if (LocoTelem.SelectedStations[locomotive].Count < 0)
+            {
+                Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
+                LocoTelem.LocomotivePrevDestination.Remove(locomotive);
+                LocoTelem.LocomotiveDestination.Remove(locomotive);
+                LocoTelem.locomotiveCoroutines.Remove(locomotive);
+                LocoTelem.DriveForward.Remove(locomotive);
+                LocoTelem.LineDirectionEastWest.Remove(locomotive);
+                LocoTelem.TransitMode.Remove(locomotive);
+                LocoTelem.RMMaxSpeed.Remove(locomotive);
+                StopCoroutine(AutoEngineerControlRoutine(locomotive));
+                ;
             }
         }
     }
@@ -330,6 +320,7 @@ public class ManagedTrains : MonoBehaviour
         var locationR = car.LocationR;
         var direction = car.GetCenterRotation(graph);
         Debug.Log($"LocationF {locationF} LocationR {locationR} Rotation: {direction}");
+
     }
 
 
@@ -506,7 +497,7 @@ public class ManagedTrains : MonoBehaviour
             Debug.LogError("Locomotive is null in GetDistanceToDest.");
             return 0f; // Return a default value or handle this case as needed
         }
-
+        
         // Check if the locomotive key exists in the LocomotiveDestination dictionary
         if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
         {
