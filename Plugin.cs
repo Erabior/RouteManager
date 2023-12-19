@@ -16,10 +16,12 @@ using System.Reflection;
 using Game;
 using Helpers;
 using Serilog;
+using Model.Definition;
 using Track;
 using System.Collections;
 using static ManagedTrains;
 using UI.Menu;
+using System.Runtime.CompilerServices;
 
 
 namespace RouteManager
@@ -106,6 +108,7 @@ namespace RouteManager
             float RMmaxSpeed = 0;
             float distanceToStation=0;
             float olddist=float.MaxValue;
+            LocoTelem.CenterCar[locomotive]=GetCenterCoach(locomotive);
 
             while (StationManager.IsAnyStationSelectedForLocomotive(locomotive))
             {
@@ -126,7 +129,7 @@ namespace RouteManager
                         {
                             distanceToStation = ManagedTrains.GetDistanceToDest(locomotive);
                             
-                            Debug.Log($"distance to station: {distanceToStation}");
+                            Debug.Log($"{locomotive.id} distance to station: {distanceToStation}");
                         }
                         catch
                         {
@@ -137,24 +140,32 @@ namespace RouteManager
                             yield return new WaitForSeconds(5);
                         }
 
+                        //if (LocoTelem.CenterCar.ContainsKey(locomotive))
+                        //{
+                        //    if (LocoTelem.CenterCar[locomotive] is Car)
+                        //    {
+                        //        locomotive = LocoTelem.CenterCar[locomotive];
+                        //    }
+                        //}
+
 
                         distanceToStation = ManagedTrains.GetDistanceToDest(locomotive);
-                        var velocity = locomotive.GetMotionSnapshot().Velocity;
+                        var trainVelocity = Math.Abs(locomotive.velocity* 2.23694f);
                         if (distanceToStation > 350)
                         {
 
-                            if (distanceToStation > olddist && velocity.magnitude > 5f)
+                            if (distanceToStation > olddist && (trainVelocity > 5f && trainVelocity < 15f))
                             {
                                 LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
                                 Debug.Log("Was driving in the wrong direction. Reversing Direction");
                                 RMmaxSpeed = 45;
-                                Debug.Log($"speed: {RMmaxSpeed}");
+                                Debug.Log($"{locomotive.id} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                                 StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
-                                yield return new WaitForSeconds(20);
+                                yield return new WaitForSeconds(30);
                             }
 
                             RMmaxSpeed = 45;
-                            Debug.Log($"speed: {RMmaxSpeed}");
+                            Debug.Log($"{locomotive.id} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                             yield return new WaitForSeconds(5);
                             
@@ -162,7 +173,7 @@ namespace RouteManager
                         else if (distanceToStation <= 350 && distanceToStation > 25)
                         {
                             RMmaxSpeed = distanceToStation / 7f;
-                            Debug.Log($"speed: {RMmaxSpeed}");
+                            Debug.Log($"{locomotive.id} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                             yield return new WaitForSeconds(1);
                             
@@ -184,6 +195,15 @@ namespace RouteManager
                     {
                         if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
                         {
+                            Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
+                            LocoTelem.LocomotivePrevDestination.Remove(locomotive);
+                            LocoTelem.LocomotiveDestination.Remove(locomotive);
+                            LocoTelem.locomotiveCoroutines.Remove(locomotive);
+                            LocoTelem.DriveForward.Remove(locomotive);
+                            LocoTelem.LineDirectionEastWest.Remove(locomotive);
+                            LocoTelem.TransitMode.Remove(locomotive);
+                            LocoTelem.RMMaxSpeed.Remove(locomotive);
+                            StopCoroutine(AutoEngineerControlRoutine(locomotive));
                             break;
                         }
                         Debug.Log("Starting loading mode");
@@ -195,8 +215,8 @@ namespace RouteManager
                     }
                 }   
             }
-            var thisTrain = locomotive.EnumerateCoupled().ToList();
-            if (LocoTelem.SelectedStations[locomotive].Count < 0)
+            
+            if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
             {
                 Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
                 LocoTelem.LocomotivePrevDestination.Remove(locomotive);
@@ -227,6 +247,7 @@ public class ManagedTrains : MonoBehaviour
         public static Dictionary<Car, bool> LineDirectionEastWest { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, bool> DriveForward { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, bool> locomotiveCoroutines { get; private set; } = new Dictionary<Car, bool>();
+        public static Dictionary<Car, Car> CenterCar { get; private set; } = new Dictionary<Car, Car>();
 
     }
 
@@ -321,6 +342,72 @@ public class ManagedTrains : MonoBehaviour
         var direction = car.GetCenterRotation(graph);
         Debug.Log($"LocationF {locationF} LocationR {locationR} Rotation: {direction}");
 
+        if (ManagedTrains.LocoTelem.LocomotivePrevDestination.TryGetValue(car, out string prevDest))
+        {
+            Debug.Log($"Previous destination: {prevDest}");
+        }
+        else
+        {
+            Debug.Log("No previous destination for this car.");
+        }
+        if (ManagedTrains.LocoTelem.TransitMode.TryGetValue(car, out bool inTransitMode))
+        {
+            Debug.Log($"Transit Mode: {inTransitMode}");
+        }
+        else
+        {
+            Debug.Log("No Transit Mode recorded for this car.");
+        }
+        if (ManagedTrains.LocoTelem.LineDirectionEastWest.TryGetValue(car, out bool isEastWest))
+        {
+            Debug.Log($"Line Direction East/West: {isEastWest}");
+        }
+        else
+        {
+            Debug.Log("No Line Direction East/West recorded for this car.");
+        }
+        if (ManagedTrains.LocoTelem.DriveForward.TryGetValue(car, out bool driveForward))
+        {
+            Debug.Log($"Drive Forward: {driveForward}");
+        }
+        else
+        {
+            Debug.Log("No Drive Forward recorded for this car.");
+        }
+        if (ManagedTrains.LocoTelem.locomotiveCoroutines.TryGetValue(car, out bool coroutineExists))
+        {
+            Debug.Log($"Locomotive Coroutine Exists: {coroutineExists}");
+        }
+        else
+        {
+            Debug.Log("No Locomotive Coroutine recorded for this car.");
+        }
+        if (ManagedTrains.LocoTelem.CenterCar.TryGetValue(car, out Car centerCar))
+        {
+            Debug.Log($"Center Car: {centerCar}");
+        }
+        else
+        {
+            Debug.Log("No Center Car recorded for this car.");
+        }
+        try
+        {
+            LocoTelem.CenterCar[car] = GetCenterCoach(car);
+            Debug.Log($"center car for {car}: {LocoTelem.CenterCar[car]}");
+        }
+        catch (Exception ex)
+        {
+            Debug.Log($"could not get center car: {ex}");
+        }
+        var Locovelocity = car.velocity;
+        Debug.Log($"Current Speed: {Locovelocity}");
+
+        var cars = car.EnumerateCoupled().ToList();
+
+        foreach (var trainCar in cars)
+        {
+            Debug.Log($"{trainCar.Archetype}");
+        }
     }
 
 
@@ -478,14 +565,85 @@ public class ManagedTrains : MonoBehaviour
 
 
 
+    public static Vector3 GetTrainCenter(Car locomotive)
+    {
+        var graph = Graph.Shared;
 
+        // List of all coupled cars
+        var cars = locomotive.EnumerateCoupled().ToList();
 
+        // List of cars with their center positions
+        var carPositions = cars.Select(car => car.GetCenterPosition(graph)).ToList();
 
+        // Calculate the average position (center) of all cars
+        Vector3 center = Vector3.zero;
+        foreach (var pos in carPositions)
+        {
+            center += pos;
+        }
+        center /= cars.Count;
 
+        // Find the car closest to the center position
+        float bestDist = float.PositiveInfinity;
+        Car bestCar = null;
+        foreach (var car in cars)
+        {
+            var dist = Vector3.SqrMagnitude(car.GetCenterPosition(graph) - center);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                bestCar = car;
+            }
+        }
 
+        // Return the center position
+        return center;
+    }
 
+    public static Car GetCenterCoach (Car locomotive)
+    {
+        var graph = Graph.Shared;
 
+        // List of all coupled cars
+        var cars = locomotive.EnumerateCoupled().ToList();
+        var coaches = new List<Car>();
 
+        foreach (var car in cars)
+        {
+
+            if(car.Archetype == CarArchetype.Coach)
+            {
+                coaches.Add(car);
+            }
+
+        }
+        // List of cars with their center positions
+        var carPositions = coaches.Select(coaches => coaches.GetCenterPosition(graph)).ToList();
+        
+        // Calculate the average position (center) of all cars
+        Vector3 center = Vector3.zero;
+        foreach (var pos in carPositions)
+        {
+            center += pos;
+        }
+        center /= coaches.Count;
+
+        // Find the car closest to the center position
+        float bestDist = float.PositiveInfinity;
+        Car bestCar = null;
+        foreach (var coach in coaches)
+        {
+            var dist = Vector3.SqrMagnitude(coach.GetCenterPosition(graph) - center);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                bestCar = coach;
+            }
+        }
+
+        // Return the center position
+        return bestCar;
+    }
 
 
 

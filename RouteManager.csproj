@@ -44,6 +44,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Core.dll</HintPath>
     </Reference>
+    <Reference Include="Definition, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Definition.dll</HintPath>
+    </Reference>
     <Reference Include="KeyValue.Runtime, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\KeyValue.Runtime.dll</HintPath>
@@ -93,5 +97,5 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <LangVersion>8</LangVersion>
-</PropertyGroup>
+  </PropertyGroup>
 </Project>
