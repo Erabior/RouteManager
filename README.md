@@ -1,6 +1,7 @@
 # RouteManager
 This mod is VERY barebones. The purpose of this mod is to allow people to automate passenger service. This mod does not automate the throwing of switches for the passenger train. You must ensure the switches are thrown properly for the passenger train for the time being. The mod currently does not support automating freight.  More features will be added in the future to expand the capabilities of this mod, but for right now this mod only automates passenger service.
 
+################################################
 
 Installation:
 
@@ -16,7 +17,10 @@ Installation:
 
 6)Prosper
 
+################################################
+
 Usage:
+
 Select a locomotive (preferably with coaches coupled)
 
 Go to the 'Orders' Panel
