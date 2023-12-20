@@ -18,9 +18,15 @@ Installation:
 
 Usage:
 Select a locomotive (preferably with coaches coupled)
+
 Go to the 'Orders' Panel
+
 Select 'Road' mode
-(NOTE! before continuing just know that currently the train will go to the first station you select regardless of if you select additional stations on the way)
+
+(!NOTE! before continuing know that currently, the train will go to the first station you select regardless of whether you select additional stations on the way)
+
 You can select any station you want your train to stop at. The order in which you select stations does not matter as the train will go in the order that stations appear on the line.
+
 The Route Manager Logic will take over and stop your train at every station you have selected—no need to worry about selecting passengers in the coaches either. The Route Manager will take care of that as well!
+
 Make sure to keep track of the coal and water remaining in your locomotive as there is currently no check for low fuel/water
