@@ -34,7 +34,7 @@ namespace RouteManager
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
-        private const string modVersion = "1.0.0.0";
+        private const string modVersion = "1.0.0.2";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static ManualLogSource mls;
 
@@ -164,7 +164,7 @@ namespace RouteManager
                                 yield return new WaitForSeconds(30);
                             }
 
-                            RMmaxSpeed = 45;
+                            RMmaxSpeed = 100;
                             Debug.Log($"{locomotive.id} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                             yield return new WaitForSeconds(5);
@@ -195,10 +195,12 @@ namespace RouteManager
                     int numPassInTrain = 0;
                     int oldNumPassInTrain = int.MaxValue;
                     bool firstIter=true;
+                    
                     LocoTelem.CenterCar[locomotive] = GetCenterCoach(locomotive);
                     Debug.Log($"about to set new destination, curent destination{LocoTelem.LocomotiveDestination[locomotive]}");
                     ManagedTrains.GetNextDestination(locomotive);
                     Debug.Log($"New destination was set, destination: {LocoTelem.LocomotiveDestination[locomotive]}");
+                    
                     while (!LocoTelem.TransitMode[locomotive])
                     {
                         
@@ -212,7 +214,7 @@ namespace RouteManager
 
                         if (firstIter)
                         {
-                            yield return new WaitForSeconds(5);
+                            yield return new WaitForSeconds(10);
                             firstIter=false;
                         }
 
@@ -223,7 +225,7 @@ namespace RouteManager
                         {
                             Debug.Log($"loaded or disembarked {Math.Abs(oldNumPassInTrain - numPassInTrain)} passengers disembarkation/embarkation in progress");
                             oldNumPassInTrain = numPassInTrain;
-                            yield return new WaitForSeconds(5);
+                            yield return new WaitForSeconds(10);
                         }
                         else
                         {
