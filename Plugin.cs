@@ -34,7 +34,7 @@ namespace RouteManager
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
-        private const string modVersion = "0.7.8.5";
+        private const string modVersion = "1.0.0.0";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static ManualLogSource mls;
 
@@ -158,7 +158,7 @@ namespace RouteManager
                             {
                                 LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
                                 Debug.Log("Was driving in the wrong direction. Reversing Direction");
-                                RMmaxSpeed = 45;
+                                RMmaxSpeed = 100;
                                 Debug.Log($"{locomotive.id} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                                 StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                                 yield return new WaitForSeconds(30);
@@ -170,15 +170,15 @@ namespace RouteManager
                             yield return new WaitForSeconds(5);
                             
                         }
-                        else if (distanceToStation <= 350 && distanceToStation > 25)
+                        else if (distanceToStation <= 350 && distanceToStation > 45)
                         {
-                            RMmaxSpeed = distanceToStation / 7f;
+                            RMmaxSpeed = distanceToStation / 6f;
                             Debug.Log($"{locomotive.id} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                             yield return new WaitForSeconds(1);
                             
                         }
-                        else if (distanceToStation <= 25 && distanceToStation > 10)
+                        else if (distanceToStation <= 45 && distanceToStation > 10)
                         {
                             RMmaxSpeed = 5f;
                             Debug.Log($"{locomotive.id} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
