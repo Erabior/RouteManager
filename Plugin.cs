@@ -1005,10 +1005,10 @@ namespace RouteManagerUI
                 bool anyStationSelected = StationManager.IsAnyStationSelectedForLocomotive(car);
 
                  //If any station is selected, add a button to the UI
-                if (anyStationSelected)
-                {
-                    builder.AddButton("Print Car Info", () => ManagedTrains.PrintCarInfo(car));
-                }
+                //if (anyStationSelected)
+                //{
+                //    builder.AddButton("Print Car Info", () => ManagedTrains.PrintCarInfo(car));
+                //}
 
             }
             
