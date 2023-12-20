@@ -170,22 +170,37 @@ namespace RouteManager
                             yield return new WaitForSeconds(5);
                             
                         }
-                        else if (distanceToStation <= 350 && distanceToStation > 75)
+                        else if (distanceToStation <= 350 && distanceToStation > 10)
                         {
-                            RMmaxSpeed = distanceToStation / 15f;
+                            if (distanceToStation > olddist && (trainVelocity > 5f && trainVelocity < 15f))
+                            {
+                                LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
+                                Debug.Log("Was driving in the wrong direction. Reversing Direction");
+                                RMmaxSpeed = 100;
+                                Debug.Log($"{locomotive.id} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
+                                StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
+                                yield return new WaitForSeconds(30);
+                            }
+                            RMmaxSpeed = distanceToStation / 10f;
+                            if (RMmaxSpeed < 5f)
+                            {
+                                RMmaxSpeed = 5f;
+                            }
+                            
+
                             Debug.Log($"{locomotive.id} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                             yield return new WaitForSeconds(1);
                             
                         }
-                        else if (distanceToStation <= 75 && distanceToStation > 10)
+                        else if (distanceToStation <= 10 && distanceToStation > 0)
                         {
-                            RMmaxSpeed = 5f;
+                            RMmaxSpeed = 0f;
                             Debug.Log($"{locomotive.id} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], 0, null));
                             LocoTelem.TransitMode[locomotive] = false;
                             yield return new WaitForSeconds(1);
-                            
+
                         }
                     }
                 }
