@@ -17,12 +17,15 @@ using Model.Definition;
 using Track;
 using System.Collections;
 using static ManagedTrains;
+using Game;
+using static Game.State.StateManager;
 using UI.Menu;
 using Model.OpsNew;
 
 
 using GalaSoft.MvvmLight.Messaging;
 using Game.Events;
+using System.Runtime.CompilerServices;
 
 
 namespace RouteManager
@@ -32,7 +35,7 @@ namespace RouteManager
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
-        private const string modVersion = "1.0.0.3";
+        private const string modVersion = "1.0.1.0";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static ManualLogSource mls;
 
@@ -41,7 +44,14 @@ namespace RouteManager
             harmony.PatchAll();
             mls = Logger;
             mls.LogInfo("Dispatcher Mod Loaded - Awake method called.");
+            
         }
+
+        //void OnDestroy()
+        //{
+            
+        //}
+
     }
 
     public class RouteAIInjector : MonoBehaviour
@@ -71,20 +81,23 @@ namespace RouteManager
 
                 for (int i = 0; i < keys.Count(); i++)
                 {
-                    if (!LocoTelem.locomotiveCoroutines[keys[i]])
+                    //Debug.Log($"Loco {keys[i].id} has values Coroutine: {LocoTelem.locomotiveCoroutines[keys[i]]} and Route Mode bool: {LocoTelem.RouteMode[keys[i]]}");
+                    if (!LocoTelem.locomotiveCoroutines[keys[i]] && LocoTelem.RouteMode[keys[i]])
                     {
+
+
+
                         Debug.Log($"loco {keys[i]} currently has not called a coroutine - Calling the Coroutine with {keys[i]} as an arguement");
-                        LocoTelem.locomotiveCoroutines[keys[i]] = true;
-
-
                         LocoTelem.DriveForward[keys[i]]= true;
                         LocoTelem.LineDirectionEastWest[keys[i]] = true;
                         LocoTelem.TransitMode[keys[i]] = true;
                         LocoTelem.RMMaxSpeed[keys[i]] = 0;
-
+                        LocoTelem.locomotiveCoroutines[keys[i]] = true;
                         StartCoroutine(AutoEngineerControlRoutine(keys[i]));
+                        
+                        
                     }
-                    else if (LocoTelem.locomotiveCoroutines[keys[i]] && LocoTelem.SelectedStations[keys[i]].Count < 0)
+                    else if (LocoTelem.locomotiveCoroutines[keys[i]] && !LocoTelem.RouteMode[keys[i]])
                     {
                         Debug.Log($"loco {keys[i]} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {keys[i]}");
                         LocoTelem.LocomotivePrevDestination.Remove(keys[i]);
@@ -105,15 +118,14 @@ namespace RouteManager
         }
         private IEnumerator AutoEngineerControlRoutine(Car locomotive)
         {
-            Debug.Log($"Entered Coroutine for {locomotive.id} - is any station selected {StationManager.IsAnyStationSelectedForLocomotive(locomotive)}");
+            Debug.Log($"Entered Coroutine for {locomotive.id} - is Route Mode Enabled? {LocoTelem.RouteMode[locomotive]}");
 
+            LocoTelem.CenterCar[locomotive] = GetCenterCoach(locomotive);
             ManagedTrains.GetNextDestination(locomotive);
             float RMmaxSpeed = 0;
             float distanceToStation=0;
             float olddist=float.MaxValue;
-            LocoTelem.CenterCar[locomotive]=GetCenterCoach(locomotive);
-
-            while (StationManager.IsAnyStationSelectedForLocomotive(locomotive))
+            while (LocoTelem.RouteMode[locomotive])
             {
                 if (LocoTelem.TransitMode[locomotive])
                 {
@@ -127,6 +139,15 @@ namespace RouteManager
                         if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
                         {
                             break;
+                        }
+                        if (!LocoTelem.RouteMode[locomotive])
+                        {
+
+                            Debug.Log($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
+                            clearDicts(locomotive);
+                            StopCoroutine(AutoEngineerControlRoutine(locomotive));
+                            break;
+
                         }
                         try
                         {
@@ -181,7 +202,7 @@ namespace RouteManager
                                 StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                                 yield return new WaitForSeconds(30);
                             }
-                            RMmaxSpeed = distanceToStation / 10f;
+                            RMmaxSpeed = distanceToStation / 8f;
                             if (RMmaxSpeed < 5f)
                             {
                                 RMmaxSpeed = 5f;
@@ -226,6 +247,15 @@ namespace RouteManager
                             StopCoroutine(AutoEngineerControlRoutine(locomotive));
                             break;
                         }
+                        if (!LocoTelem.RouteMode[locomotive])
+                        {
+
+                            Debug.Log($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
+                            clearDicts(locomotive);
+                            StopCoroutine(AutoEngineerControlRoutine(locomotive));
+                            break;
+
+                        }
 
                         if (firstIter)
                         {
@@ -251,7 +281,14 @@ namespace RouteManager
                     }
                 }   
             }
-            
+            if (!LocoTelem.RouteMode[locomotive])
+            {
+
+                Debug.Log($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
+                clearDicts(locomotive);
+                StopCoroutine(AutoEngineerControlRoutine(locomotive));
+
+            }
             if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
             {
                 Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
@@ -280,16 +317,19 @@ public class ManagedTrains : MonoBehaviour
 
     public class LocoTelem
     {
+        public static Dictionary<Car, Dictionary<string, bool>> UIStationSelections = new Dictionary<Car, Dictionary<string, bool>>();
+        //public static Dictionary<Car, Dictionary<string, bool>> UIStationSelections = new Dictionary<Car, Dictionary<string, bool>>();
         public static Dictionary<Car, string> LocomotiveDestination { get; private set; } = new Dictionary<Car, string>();
         public static Dictionary<Car, string> LocomotivePrevDestination { get; private set; } = new Dictionary<Car, string>();
         public static Dictionary<Car, List<PassengerStop>> SelectedStations { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
-        public static Dictionary<Car, Dictionary<string, bool>> UIStationSelections = new Dictionary<Car, Dictionary<string, bool>>();
         public static Dictionary<Car, float> RMMaxSpeed { get; private set; } = new Dictionary<Car, float>();
+        public static Dictionary<Car, bool> RouteMode { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, bool> TransitMode { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, bool> LineDirectionEastWest { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, bool> DriveForward { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, bool> locomotiveCoroutines { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, Car> CenterCar { get; private set; } = new Dictionary<Car, Car>();
+
 
     }
 
@@ -306,6 +346,7 @@ public class ManagedTrains : MonoBehaviour
         {
             // Default direction is true
             LocoTelem.LineDirectionEastWest[locomotive] = true;
+
         }
 
         if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
@@ -489,7 +530,7 @@ public class ManagedTrains : MonoBehaviour
         for (int i = 0; i < selectedStations.Count; i++)
         {
             PassengerStop station = selectedStations[i];
-            Debug.Log($"Station that was retrived from selectedStation: {station} and this shoudl be the Indentifier for the station {station.identifier}");
+            Debug.Log($"Station that was retrived from selectedStation: {station} and this should be the Indentifier for the station {station.identifier}");
             if (StationManager.Stations.TryGetValue(station.identifier, out StationData stationData))
             {
                 // Calculate the distance between the locomotive and the station's center point
@@ -521,10 +562,11 @@ public class ManagedTrains : MonoBehaviour
         string currentStation = null;
         if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
         {
-            Debug.Log($"LocomotiveDestination does not contain key: {locomotive} getting the closes station");
+            Debug.Log($"LocomotiveDestination does not contain key: {locomotive} getting the closest station");
             currentStation = GetClosestSelectedStation(locomotive);
             Debug.Log($"Locomotive {locomotive} is closest to {currentStation} ");
             LocoTelem.LocomotiveDestination[locomotive] = currentStation;
+            return;
         }
         else
         {
@@ -805,6 +847,44 @@ public class ManagedTrains : MonoBehaviour
         // Implement the logic to display a message to the user
         Debug.Log($"Selected stations copied to {count} passenger cars.");
     }
+
+    public static bool IsRouteModeEnabled(Car locomotive)
+    {
+        // Check if the locomotive exists in the TransitMode dictionary
+        if (LocoTelem.RouteMode.ContainsKey(locomotive))
+        {
+            return LocoTelem.RouteMode[locomotive];
+        }
+        else
+        {
+            // Handle the case where the key does not exist, for example, by logging an error or initializing the key
+            Debug.LogError($"TransitMode dictionary does not contain key: {locomotive}");
+            // Optionally initialize the key with a default value
+            LocoTelem.RouteMode[locomotive] = false; // Default value
+            return false;
+        }
+    }
+
+    public static void SetRouteModeEnabled(bool IsOn , Car locomotive)
+    {
+
+        
+
+        if (!LocoTelem.RouteMode.ContainsKey(locomotive))
+        {
+            Debug.Log($" LocoTelem.RouteMode does not contain {locomotive.id} creating bool for {locomotive.id}");
+            LocoTelem.RouteMode[locomotive] = false;
+        }
+        Debug.Log($"changing LocoTelem.Route Mode from {!IsOn} to {IsOn}");
+        LocoTelem.RouteMode[locomotive] = IsOn;
+
+        if (!LocoTelem.locomotiveCoroutines.ContainsKey(locomotive))
+        {
+            Debug.Log($" LocoTelem.locomotiveCoroutines does not contain {locomotive.id} creating bool for {locomotive.id}");
+            LocoTelem.locomotiveCoroutines[locomotive] = false;
+        }
+        return;
+    }
 }
 
 
@@ -886,6 +966,8 @@ public static class StationManager
             LocoTelem.UIStationSelections[locomotive] = stationSelectionsForLocomotive;
         }
     }
+
+    
 }
 
 
@@ -926,6 +1008,7 @@ namespace RouteManagerUI
                 builder.AddButtonSelectable("Manual", mode2 == AutoEngineerMode.Off, delegate
                 {
                     SetOrdersValue(AutoEngineerMode.Off, null, null, null);
+                    SetRouteModeEnabled(false, car);
                 });
                 builder.AddButtonSelectable("Road", mode2 == AutoEngineerMode.Road, delegate
                 {
@@ -933,6 +1016,7 @@ namespace RouteManagerUI
                 });
                 builder.AddButtonSelectable("Yard", mode2 == AutoEngineerMode.Yard, delegate
                 {
+                    SetRouteModeEnabled(false, car);
                     SetOrdersValue(AutoEngineerMode.Yard, null, null, null);
                 });
 
@@ -994,7 +1078,27 @@ namespace RouteManagerUI
                     }, 0f, num / 5, wholeNumbers: true);
                     builder.AddField("Max Speed", control);
                 }
-                
+
+                if (!LocoTelem.RouteMode.ContainsKey(car))
+                {
+                    LocoTelem.RouteMode[car] = false;
+                }
+
+                builder.HStack(delegate (UIPanelBuilder hstack)
+                {
+                    // Add a checkbox for "Enable Route Mode"
+                    hstack.AddToggle(() => ManagedTrains.IsRouteModeEnabled(car), isOn =>
+                    {
+                        SetRouteModeEnabled(isOn , car);
+
+                        
+                        // Additional actions to perform when the checkbox state changes, if any
+                    });
+
+                    // Add a label next to the checkbox
+                    hstack.AddLabel("Enable Route Mode");
+                });
+
                 var stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
                 var orderedStops = new string[] { "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka", "almond", "nantahala", "topton", "rhodo", "andrews" }
                                    .Select(id => stopsLookup[id])
@@ -1014,6 +1118,7 @@ namespace RouteManagerUI
                                 StationManager.SetStationSelected(stop, car ,isOn);
                                 
                                 UpdateManagedTrainsSelectedStations(car); // Update when checkbox state changes
+                                builder.Rebuild();
                             });
 
                             // Add a label next to the checkbox
@@ -1036,6 +1141,17 @@ namespace RouteManagerUI
 
             if (mode2 == AutoEngineerMode.Yard)
             {
+                //
+                //
+                //
+                //PUT CODE HERE TO DISABLE ROUTE MODE
+                //
+                //
+                //
+                //
+                //
+
+
                 RectTransform control2 = builder.ButtonStrip(delegate (UIPanelBuilder builder)
                 {
                     builder.AddButton("Stop", delegate
@@ -1141,15 +1257,8 @@ namespace RouteManagerUI
 
             // Update the ManagedTrains with the selected stations for this car
             ManagedTrains.UpdateSelectedStations(car, selectedStations);
-            if (!LocoTelem.locomotiveCoroutines.ContainsKey(car))
-            {
-                Debug.Log($" Loco.Telem.locomotiveCoroutines does not contain {car.id} creating bool for {car.id}");
-                LocoTelem.locomotiveCoroutines[car] = false;
-            }
-            
-
-            
         }
+
 
     }
 }
