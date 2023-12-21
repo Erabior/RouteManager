@@ -35,7 +35,7 @@ namespace RouteManager
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
-        private const string modVersion = "1.0.1.0";
+        private const string modVersion = "1.0.1.1";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static ManualLogSource mls;
 
@@ -70,6 +70,16 @@ namespace RouteManager
 
     public class RouteAI : MonoBehaviour
     {
+
+        void Awake()
+        {
+            Debug.Log("--------------------------------------------------------------------------------------------------");
+            Debug.Log("--------------------------------------------------------------------------------------------------");
+            Debug.Log("subscribing to unload event");
+            Debug.Log("--------------------------------------------------------------------------------------------------");
+            Debug.Log("--------------------------------------------------------------------------------------------------");
+            Messenger.Default.Register<MapDidUnloadEvent>(this , OnMapDidNunloadEvenForRouteMode);
+        }
         void Update()
         {
             
@@ -119,7 +129,7 @@ namespace RouteManager
         private IEnumerator AutoEngineerControlRoutine(Car locomotive)
         {
             Debug.Log($"Entered Coroutine for {locomotive.id} - is Route Mode Enabled? {LocoTelem.RouteMode[locomotive]}");
-
+            
             LocoTelem.CenterCar[locomotive] = GetCenterCoach(locomotive);
             ManagedTrains.GetNextDestination(locomotive);
             float RMmaxSpeed = 0;
@@ -144,7 +154,7 @@ namespace RouteManager
                         {
 
                             Debug.Log($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
-                            clearDicts(locomotive);
+                            clearDictsForLoco(locomotive);
                             StopCoroutine(AutoEngineerControlRoutine(locomotive));
                             break;
 
@@ -243,7 +253,7 @@ namespace RouteManager
                         if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
                         {
                             Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
-                            clearDicts(locomotive);
+                            clearDictsForLoco(locomotive);
                             StopCoroutine(AutoEngineerControlRoutine(locomotive));
                             break;
                         }
@@ -251,7 +261,7 @@ namespace RouteManager
                         {
 
                             Debug.Log($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
-                            clearDicts(locomotive);
+                            clearDictsForLoco(locomotive);
                             StopCoroutine(AutoEngineerControlRoutine(locomotive));
                             break;
 
@@ -285,20 +295,20 @@ namespace RouteManager
             {
 
                 Debug.Log($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
-                clearDicts(locomotive);
+                clearDictsForLoco(locomotive);
                 StopCoroutine(AutoEngineerControlRoutine(locomotive));
 
             }
             if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
             {
                 Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
-                clearDicts(locomotive);
+                clearDictsForLoco(locomotive);
                 StopCoroutine(AutoEngineerControlRoutine(locomotive));
                 ;
             }
         }
 
-        private void clearDicts(Car locomotive)
+        private void clearDictsForLoco(Car locomotive)
         {
             LocoTelem.LocomotivePrevDestination.Remove(locomotive);
             LocoTelem.LocomotiveDestination.Remove(locomotive);
@@ -307,6 +317,44 @@ namespace RouteManager
             LocoTelem.LineDirectionEastWest.Remove(locomotive);
             LocoTelem.TransitMode.Remove(locomotive);
             LocoTelem.RMMaxSpeed.Remove(locomotive);
+        }
+        private void clearDicts()
+        {
+            LocoTelem.LocomotivePrevDestination.Clear();
+            LocoTelem.LocomotiveDestination.Clear();
+            LocoTelem.locomotiveCoroutines.Clear();
+            LocoTelem.DriveForward.Clear();
+            LocoTelem.LineDirectionEastWest.Clear();
+            LocoTelem.TransitMode.Clear();
+            LocoTelem.RMMaxSpeed.Clear();
+        }
+
+        void OnMapDidNunloadEvenForRouteMode(MapDidUnloadEvent mapDidUnloadEvent)
+        {
+            Debug.Log("--------------------------------------------------------------------------------------------------");
+            Debug.Log("--------------------------------------------------------------------------------------------------");
+            Debug.Log("OnMapDidNunloadEvenForRouteMode called");
+            Debug.Log("--------------------------------------------------------------------------------------------------");
+            Debug.Log("--------------------------------------------------------------------------------------------------");
+
+            if (LocoTelem.locomotiveCoroutines.Count >= 1)
+            {
+                Debug.Log("--------------------------------------------------------------------------------------------------");
+                Debug.Log("--------------------------------------------------------------------------------------------------");
+                Debug.Log("Stopping All Route AI coroutine instances");
+                Debug.Log("--------------------------------------------------------------------------------------------------");
+                Debug.Log("--------------------------------------------------------------------------------------------------");
+                //Debug.Log("There is data in locomotiveCoroutines");
+                var keys = LocoTelem.locomotiveCoroutines.Keys.ToArray();
+
+                for (int i = 0; i < keys.Count(); i++)
+                {
+                    
+                    StopCoroutine(AutoEngineerControlRoutine(keys[i]));
+
+                }
+                clearDicts();
+            }
         }
     }
 }
@@ -868,21 +916,28 @@ public class ManagedTrains : MonoBehaviour
     public static void SetRouteModeEnabled(bool IsOn , Car locomotive)
     {
 
+
+        if (StationManager.IsAnyStationSelectedForLocomotive(locomotive) && IsOn)
+        {
+            if (!LocoTelem.RouteMode.ContainsKey(locomotive))
+            {
+                Debug.Log($" LocoTelem.RouteMode does not contain {locomotive.id} creating bool for {locomotive.id}");
+                LocoTelem.RouteMode[locomotive] = false;
+            }
+            Debug.Log($"changing LocoTelem.Route Mode from {!IsOn} to {IsOn}");
+            LocoTelem.RouteMode[locomotive] = IsOn;
+
+            if (!LocoTelem.locomotiveCoroutines.ContainsKey(locomotive))
+            {
+                Debug.Log($" LocoTelem.locomotiveCoroutines does not contain {locomotive.id} creating bool for {locomotive.id}");
+                LocoTelem.locomotiveCoroutines[locomotive] = false;
+            }
+        }
+        else
+        {
+            Console.Log($"There are no stations selected for {locomotive.DisplayName}. Please select at least 1 station before enabling Route Mode");
+        }
         
-
-        if (!LocoTelem.RouteMode.ContainsKey(locomotive))
-        {
-            Debug.Log($" LocoTelem.RouteMode does not contain {locomotive.id} creating bool for {locomotive.id}");
-            LocoTelem.RouteMode[locomotive] = false;
-        }
-        Debug.Log($"changing LocoTelem.Route Mode from {!IsOn} to {IsOn}");
-        LocoTelem.RouteMode[locomotive] = IsOn;
-
-        if (!LocoTelem.locomotiveCoroutines.ContainsKey(locomotive))
-        {
-            Debug.Log($" LocoTelem.locomotiveCoroutines does not contain {locomotive.id} creating bool for {locomotive.id}");
-            LocoTelem.locomotiveCoroutines[locomotive] = false;
-        }
         return;
     }
 }
