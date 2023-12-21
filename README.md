@@ -34,3 +34,8 @@ You can select any station you want your train to stop at. The order in which yo
 The Route Manager Logic will take over and stop your train at every station you have selected—no need to worry about selecting passengers in the coaches either. The Route Manager will take care of that as well!
 
 Make sure to keep track of the coal and water remaining in your locomotive as there is currently no check for low fuel/water
+
+
+
+#############################
+https://github.com/Erabior/RouteManager/releases/latest
