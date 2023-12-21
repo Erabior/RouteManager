@@ -13,18 +13,16 @@ using Model.AI;
 using System.Linq;
 using Model;
 using System.Reflection;
-using Game;
-using static Model.OpsNew.PassengerMarker;
-using Helpers;
-using Serilog;
 using Model.Definition;
 using Track;
 using System.Collections;
 using static ManagedTrains;
 using UI.Menu;
-using System.Runtime.CompilerServices;
 using Model.OpsNew;
-using UnityEngine.InputSystem.EnhancedTouch;
+
+
+using GalaSoft.MvvmLight.Messaging;
+using Game.Events;
 
 
 namespace RouteManager
@@ -34,7 +32,7 @@ namespace RouteManager
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
-        private const string modVersion = "1.0.0.2";
+        private const string modVersion = "1.0.0.3";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static ManualLogSource mls;
 
@@ -64,6 +62,8 @@ namespace RouteManager
     {
         void Update()
         {
+            
+
             if (LocoTelem.locomotiveCoroutines.Count >= 1)
             {
                 //Debug.Log("There is data in locomotiveCoroutines");
@@ -283,6 +283,7 @@ public class ManagedTrains : MonoBehaviour
         public static Dictionary<Car, string> LocomotiveDestination { get; private set; } = new Dictionary<Car, string>();
         public static Dictionary<Car, string> LocomotivePrevDestination { get; private set; } = new Dictionary<Car, string>();
         public static Dictionary<Car, List<PassengerStop>> SelectedStations { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
+        public static Dictionary<Car, Dictionary<string, bool>> UIStationSelections = new Dictionary<Car, Dictionary<string, bool>>();
         public static Dictionary<Car, float> RMMaxSpeed { get; private set; } = new Dictionary<Car, float>();
         public static Dictionary<Car, bool> TransitMode { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, bool> LineDirectionEastWest { get; private set; } = new Dictionary<Car, bool>();
@@ -826,7 +827,7 @@ public class StationData
 
 public static class StationManager
 {
-    private static Dictionary<string, bool> stationSelections = new Dictionary<string, bool>();
+    //private static Dictionary<string, bool> stationSelections = new Dictionary<string, bool>();
 
     public static Dictionary<string, StationData> Stations = new Dictionary<string, StationData>
     {
@@ -848,30 +849,15 @@ public static class StationManager
 
     };
 
-    
-    public static void InitializeStationSelections()
+
+    public static bool IsStationSelected(PassengerStop stop, Car locomotive)
     {
-        var allStops = PassengerStop.FindAll();
-        Debug.Log($"all stops {allStops}");
-        foreach (var stop in allStops)
-        {
-            stationSelections[stop.identifier] = false;
-        }
+        return LocoTelem.UIStationSelections[locomotive].TryGetValue(stop.identifier, out bool isSelected) && isSelected;
     }
 
-    public static bool IsStationSelected(PassengerStop stop)
+    public static void SetStationSelected(PassengerStop stop,Car locomotive, bool isSelected)
     {
-        return stationSelections.TryGetValue(stop.identifier, out bool isSelected) && isSelected;
-    }
-
-    public static bool IsAnyStationSelected(List<PassengerStop> stations)
-    {
-        return stations.Any(stop => stationSelections.TryGetValue(stop.identifier, out bool isSelected) && isSelected);
-    }
-
-    public static void SetStationSelected(PassengerStop stop, bool isSelected)
-    {
-        stationSelections[stop.identifier] = isSelected;
+        LocoTelem.UIStationSelections[locomotive][stop.identifier] = isSelected;
     }
     public static bool IsAnyStationSelectedForLocomotive(Car locomotive)
     {
@@ -885,7 +871,24 @@ public static class StationManager
         // Return false if the locomotive is not found or no stations are selected
         return false;
     }
+    public static void InitializeStationSelectionForLocomotive(Car locomotive)
+    {
+        if (!LocoTelem.UIStationSelections.ContainsKey(locomotive))
+        {
+            var stationSelectionsForLocomotive = new Dictionary<string, bool>();
+            var allStops = PassengerStop.FindAll();
+
+            foreach (var stop in allStops)
+            {
+                stationSelectionsForLocomotive[stop.identifier] = false;
+            }
+
+            LocoTelem.UIStationSelections[locomotive] = stationSelectionsForLocomotive;
+        }
+    }
 }
+
+
 
 namespace RouteManagerUI
 {
@@ -899,7 +902,7 @@ namespace RouteManagerUI
             // Access the _car field using reflection
             var carField = typeof(CarInspector).GetField("_car", BindingFlags.NonPublic | BindingFlags.Instance);
             var car = carField.GetValue(__instance) as Car; // Assuming the type of _car is Car
-            
+            StationManager.InitializeStationSelectionForLocomotive(car);
             if (car == null)
             {
                 // Handle the case where car is not found or is null
@@ -1006,9 +1009,9 @@ namespace RouteManagerUI
                         builder.HStack(delegate (UIPanelBuilder hstack)
                         {
                             // Add a checkbox for each station
-                            hstack.AddToggle(() => StationManager.IsStationSelected(stop), isOn =>
+                            hstack.AddToggle(() => StationManager.IsStationSelected(stop, car), isOn =>
                             {
-                                StationManager.SetStationSelected(stop, isOn);
+                                StationManager.SetStationSelected(stop, car ,isOn);
                                 
                                 UpdateManagedTrainsSelectedStations(car); // Update when checkbox state changes
                             });
@@ -1018,6 +1021,7 @@ namespace RouteManagerUI
                         });
                     }
                 });
+                
 
                 bool anyStationSelected = StationManager.IsAnyStationSelectedForLocomotive(car);
 
@@ -1133,7 +1137,7 @@ namespace RouteManagerUI
         {
             // Get the list of all selected stations
             var allStops = PassengerStop.FindAll();
-            var selectedStations = allStops.Where(StationManager.IsStationSelected).ToList();
+            var selectedStations = allStops.Where(stop => StationManager.IsStationSelected(stop, car)).ToList();
 
             // Update the ManagedTrains with the selected stations for this car
             ManagedTrains.UpdateSelectedStations(car, selectedStations);
