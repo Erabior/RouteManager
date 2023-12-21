@@ -38,4 +38,7 @@ Make sure to keep track of the coal and water remaining in your locomotive as th
 
 
 #############################
+Latest Release
+
+
 https://github.com/Erabior/RouteManager/releases/latest
