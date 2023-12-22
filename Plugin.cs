@@ -141,10 +141,11 @@ namespace RouteManager
                 {
                     Debug.Log("starting transit mode");
                     olddist = float.MaxValue;
+                    bool YieldRequired = false;
                     while (LocoTelem.TransitMode[locomotive])
                     {
                         
-                        bool YieldRequired = false;
+                        
                         olddist = distanceToStation;
                         if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
                         {
@@ -162,25 +163,28 @@ namespace RouteManager
                         try
                         {
                             distanceToStation = ManagedTrains.GetDistanceToDest(locomotive);
-                            
-                            
+                            YieldRequired = false;
                         }
                         catch
                         {
+                            if (YieldRequired)
+                            {
+                                Debug.Log($"distance to station not able to be calculated after yielding once. stopping coroutine");
+                                yield break;
+                            }
                             Debug.Log($"distance to station could not be calculated. Yielding for 5s");
+                            YieldRequired = true;
+                        }
+                        if (distanceToStation <= -6969f)
+                        {
                             YieldRequired = true;
                         }
                         if (YieldRequired){
                             yield return new WaitForSeconds(5);
                         }
 
-                        
-                        distanceToStation = ManagedTrains.GetDistanceToDest(locomotive);
-                        
-
-
-                        
                         var trainVelocity = Math.Abs(locomotive.velocity* 2.23694f);
+
                         if (distanceToStation > 350)
                         {
                             
@@ -824,8 +828,9 @@ public class ManagedTrains : MonoBehaviour
         // Check if the locomotive is null
         if (locomotive == null)
         {
+            
             Debug.LogError("Locomotive is null in GetDistanceToDest.");
-            return 0f; // Return a default value or handle this case as needed
+            return -6969; // Return a default value or handle this case as needed
         }
         
         // Check if the locomotive key exists in the LocomotiveDestination dictionary
@@ -836,7 +841,7 @@ public class ManagedTrains : MonoBehaviour
 
             if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
             {
-                return 0f; // Or handle this scenario appropriately
+                return -6969f; // Or handle this scenario appropriately
             }
 
         }
@@ -845,7 +850,7 @@ public class ManagedTrains : MonoBehaviour
         if (destination == null)
         {
             Debug.LogError("Destination is null for locomotive.");
-            return 0f; // Handle null destination
+            return -6969f; // Handle null destination
         }
         var graph = Graph.Shared;
         if (LocoTelem.CenterCar.ContainsKey(locomotive))
@@ -866,7 +871,7 @@ public class ManagedTrains : MonoBehaviour
         if (!StationManager.Stations.ContainsKey(destination))
         {
             Debug.LogError($"Station not found for destination: {destination}");
-            return 0f; // Handle missing station
+            return - 6969f; // Handle missing station
         }
 
         Vector3 destCenter = StationManager.Stations[destination].Center;
