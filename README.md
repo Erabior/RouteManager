@@ -3,23 +3,29 @@ This mod is VERY barebones. The purpose of this mod is to allow people to automa
 
 ################################################
 
-Installation:
+**Installation:**
 
-1)Download the latest version of BepInEx: https://github.com/BepInEx/BepInEx/releases Make sure to grab the correct zip for your system (x64/x86)
+1)Download the latest version of BepInEx: https://github.com/BepInEx/BepInEx/releases Make sure to grab the correct zip for your system (x64/x86). If you are unsure if you need x64 or x86 you can find that in ThisPC -> (Right Click) -> Properties
 
 2)Open your game directory (Steam Library right-click on Railroader -> properties -> installed files -> Browse)
+![image](https://github.com/Erabior/RouteManager/assets/7718625/0b75293a-9092-4cb1-a7cc-7125cf09f799)
 
-3)Drag all files in the BepInEx .zip into your install directory
+3)OPEN (DO NOT unzip) the BepInEx zip file
 
-4)Inside Railroader/BepInEx create a new folder called "plugins"
+4)Drag all files in the BepInEx .zip into your install directory
+![image](https://github.com/Erabior/RouteManager/assets/7718625/4eec8c87-4a12-4d99-9cc5-a255ebdd16d5)
 
-5)Put RouteManager.dll in the plugins folder
 
-6)Prosper
+5)Run the game once, then close the game and go back into your install directory
+
+6)Put RouteManager.dll in the plugins (Railroader/BepInEx/plugins) folder
+![image](https://github.com/Erabior/RouteManager/assets/7718625/d8719272-514b-4b7d-96f4-f765bb751eca)
+
+7)Prosper
 
 ################################################
 
-Usage:
+**Usage:**
 
 Select a locomotive (preferably with coaches coupled)
 
@@ -27,10 +33,21 @@ Go to the 'Orders' Panel
 
 Select 'Road' mode
 
-(!NOTE! before continuing know that currently, the train will go to the first station you select regardless of whether you select additional stations on the way)
+Select all of the stations you want your train to stop at
 
-You can select any station you want your train to stop at. The order in which you select stations does not matter as the train will go in the order that stations appear on the line.
+Press 'Enable Route Mode'
 
 The Route Manager Logic will take over and stop your train at every station you have selected—no need to worry about selecting passengers in the coaches either. The Route Manager will take care of that as well!
 
 Make sure to keep track of the coal and water remaining in your locomotive as there is currently no check for low fuel/water
+
+
+
+#############################
+
+**Latest Release**
+
+
+https://github.com/Erabior/RouteManager/releases/latest
+
+
