@@ -3,7 +3,7 @@ This mod is VERY barebones. The purpose of this mod is to allow people to automa
 
 ################################################
 
-Installation:
+**Installation:**
 
 1)Download the latest version of BepInEx: https://github.com/BepInEx/BepInEx/releases Make sure to grab the correct zip for your system (x64/x86). If you are unsure if you need x64 or x86 you can find that in ThisPC -> (Right Click) -> Properties
 
@@ -25,7 +25,7 @@ Installation:
 
 ################################################
 
-Usage:
+**Usage:**
 
 Select a locomotive (preferably with coaches coupled)
 
@@ -45,7 +45,7 @@ Make sure to keep track of the coal and water remaining in your locomotive as th
 
 #############################
 
-Latest Release
+**Latest Release**
 
 
 https://github.com/Erabior/RouteManager/releases/latest
