@@ -27,6 +27,7 @@ using GalaSoft.MvvmLight.Messaging;
 using Game.Events;
 using System.Runtime.CompilerServices;
 using Helpers;
+using Model.Definition.Data;
 
 
 namespace RouteManager
@@ -36,7 +37,7 @@ namespace RouteManager
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
-        private const string modVersion = "1.0.1.5";
+        private const string modVersion = "1.0.1.6";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static ManualLogSource mls;
 
@@ -148,12 +149,55 @@ public class RouteAI : MonoBehaviour
             Debug.Log($"Entered Coroutine for {locomotive.DisplayName} - is Route Mode Enabled? {LocoTelem.RouteMode[locomotive]}");
             
             LocoTelem.CenterCar[locomotive] = GetCenterCoach(locomotive);
-            ManagedTrains.GetNextDestination(locomotive);
+            if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
+            {
+                ManagedTrains.GetNextDestination(locomotive);
+            }
+            bool lowwaterwarngiven = false;
+            bool lowfuelwarngiven = false;
             float RMmaxSpeed = 0;
             float distanceToStation=0;
             float olddist=float.MaxValue;
             while (LocoTelem.RouteMode[locomotive])
             {
+
+                float? coallevel = ManagedTrains.GetLoadInfoForLoco(locomotive, "coal")/2000;
+                float? waterlevel = ManagedTrains.GetLoadInfoForLoco(locomotive, "water");
+                if (coallevel != null)
+                {
+                    if (coallevel < 0.5)
+                    {
+                        if (!lowfuelwarngiven)
+                        {
+                            lowfuelwarngiven = true;
+                            Console.Log($"Locomotive {locomotive.DisplayName} has less than 0.5T of coal remaining");
+                        }
+                    }
+                    else
+                    {
+                        lowfuelwarngiven = false;
+                    }
+                }
+
+                if (waterlevel != null)
+                {
+                    if (waterlevel < 500)
+                    {
+                        if (!lowwaterwarngiven)
+                        {
+                            lowwaterwarngiven = true;
+                            Console.Log($"Locomotive {locomotive.DisplayName} has less than 500 Gallons of coal remaining");
+                        }
+                    }
+                    else
+                    {
+                        lowwaterwarngiven = false;
+                    }
+                }
+
+
+
+
                 if (LocoTelem.TransitMode[locomotive])
                 {
                     Debug.Log("starting transit mode");
@@ -172,7 +216,7 @@ public class RouteAI : MonoBehaviour
                         {
 
                             Debug.Log($"loco {locomotive.DisplayName} - route mode was disabled - Stopping Coroutine for {locomotive.DisplayName}");
-                            clearDictsForLoco(locomotive);
+                            //clearDictsForLoco(locomotive);
                             StopCoroutine(AutoEngineerControlRoutine(locomotive));
                             break;
 
@@ -276,7 +320,7 @@ public class RouteAI : MonoBehaviour
                         if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
                         {
                             Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
-                            clearDictsForLoco(locomotive);
+                            //clearDictsForLoco(locomotive);
                             StopCoroutine(AutoEngineerControlRoutine(locomotive));
                             break;
                         }
@@ -284,7 +328,7 @@ public class RouteAI : MonoBehaviour
                         {
 
                             Debug.Log($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
-                            clearDictsForLoco(locomotive);
+                            //clearDictsForLoco(locomotive);
                             StopCoroutine(AutoEngineerControlRoutine(locomotive));
                             break;
 
@@ -318,14 +362,14 @@ public class RouteAI : MonoBehaviour
             {
 
                 Debug.Log($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
-                clearDictsForLoco(locomotive);
+                //clearDictsForLoco(locomotive);
                 StopCoroutine(AutoEngineerControlRoutine(locomotive));
 
             }
             if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
             {
                 Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
-                clearDictsForLoco(locomotive);
+                //clearDictsForLoco(locomotive);
                 StopCoroutine(AutoEngineerControlRoutine(locomotive));
                 ;
             }
@@ -334,10 +378,10 @@ public class RouteAI : MonoBehaviour
         private void clearDictsForLoco(Car locomotive)
         {
             LocoTelem.LocomotivePrevDestination.Remove(locomotive);
-            //LocoTelem.LocomotiveDestination.Remove(locomotive);
+            LocoTelem.LocomotiveDestination.Remove(locomotive);
             LocoTelem.locomotiveCoroutines.Remove(locomotive);
             LocoTelem.DriveForward.Remove(locomotive);
-            //LocoTelem.LineDirectionEastWest.Remove(locomotive);
+            LocoTelem.LineDirectionEastWest.Remove(locomotive);
             LocoTelem.TransitMode.Remove(locomotive);
             LocoTelem.RMMaxSpeed.Remove(locomotive);
         }
@@ -411,6 +455,65 @@ public class ManagedTrains : MonoBehaviour
         }
 
         LocoTelem.SelectedStations[car] = selectedStops;
+    }
+
+    public static float GetLoadInfoForLoco(Car car, String loadIdent)
+    {
+        int slotIndex;
+
+        var cars = car.EnumerateCoupled().ToList();
+
+        foreach (var trainCar in cars)
+        {
+            if (trainCar.Archetype == CarArchetype.Tender)
+            {
+                Car Tender = trainCar;
+                CarLoadInfo? loadInfo = Tender.GetLoadInfo(loadIdent, out slotIndex);
+
+                if (loadInfo.HasValue)
+                {
+                    return loadInfo.Value.Quantity;
+                }
+            }
+        }
+
+
+
+        return 0f;
+    }
+    public static void TestLoadInfo(Car locomotive, string loadIdentifier)
+    {
+        int slotIndex;
+
+        var cars = locomotive.EnumerateCoupled().ToList();
+
+        foreach (var trainCar in cars)
+        {
+            if (trainCar.Archetype == CarArchetype.Tender)
+            {
+                Car Tender = trainCar;
+                CarLoadInfo? loadInfo = Tender.GetLoadInfo(loadIdentifier, out slotIndex);
+
+                if (loadInfo.HasValue)
+                {
+                    Debug.Log($"Load Identifier: {loadIdentifier}");
+                    Debug.Log($"Slot Index: {slotIndex}");
+                    Debug.Log($"Value: {loadInfo.Value}");
+                    Debug.Log($"Quantity: {loadInfo.Value.Quantity}");
+                    // Add more details you wish to log
+                }
+                else
+                {
+                    Debug.Log($"No load information found for {loadIdentifier}.");
+                }
+            }
+            else
+            {
+                Debug.Log($"No Tender found for {loadIdentifier}.");
+            }
+        }
+
+        
     }
 
 
@@ -530,6 +633,11 @@ public class ManagedTrains : MonoBehaviour
         {
             Debug.Log($"{trainCar.Archetype}");
         }
+
+        TestLoadInfo(car, "water");
+
+        TestLoadInfo(car, "coal");
+
     }
 
     private static readonly List<string> orderedStations = new List<string>
@@ -1212,11 +1320,11 @@ namespace RouteManagerUI
 
                 bool anyStationSelected = StationManager.IsAnyStationSelectedForLocomotive(car);
 
-                 //If any station is selected, add a button to the UI
-                //if (anyStationSelected)
-                //{
-                //    builder.AddButton("Print Car Info", () => ManagedTrains.PrintCarInfo(car));
-                //}
+                //If any station is selected, add a button to the UI
+                if (anyStationSelected)
+                {
+                    builder.AddButton("Print Car Info", () => ManagedTrains.PrintCarInfo(car));
+                }
 
             }
             
