@@ -29,6 +29,7 @@ using System.Runtime.CompilerServices;
 using Helpers;
 using Model.Definition.Data;
 using System.Reflection.Emit;
+using UnityEngine.UI;
 
 
 namespace RouteManager
@@ -38,7 +39,7 @@ namespace RouteManager
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
-        private const string modVersion = "1.0.1.9";
+        private const string modVersion = "1.0.2.0";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static ManualLogSource mls;
 
@@ -94,7 +95,7 @@ namespace RouteManager
     //                i += 2; // Skip the newly inserted instructions
     //            }
     //        }
-
+    
     //        return codes.AsEnumerable();
     //    }
     //}
