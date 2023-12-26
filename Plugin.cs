@@ -47,12 +47,11 @@ namespace RouteManager
         {
             harmony.PatchAll();
             mls = Logger;
-            
         }
 
         //void OnDestroy()
         //{
-            
+
         //}
 
     }
@@ -64,45 +63,20 @@ namespace RouteManager
         {
             public static void Postfix(bool show)
             {
-                new GameObject().AddComponent<RouteAI>();
+                //I am sure that there is probably a better way of ensuring that only one GameObject is generated.
+                //Multiple instances can and will cause issues with multiple actions triggering and more.
+                if (GameObject.FindObjectsOfType(typeof(RouteAI)).Length == 0)
+                {
+                    //Create Parent Game object to bind the instance of Route AI To.
+                    GameObject erabiorDispatcher = new GameObject("Erabior.Dispatcher");
+
+                    //Bind the of Route AI component to the Game Object instance
+                    erabiorDispatcher.AddComponent<RouteAI>();
+                }
             }
         }
 
     }
-
-
-    //public static class SearchPatch
-    //{
-    //    public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-    //    {
-    //        var codes = new List<CodeInstruction>(instructions);
-
-    //        for (int i = 0; i < codes.Count; i++)
-    //        {
-    //            // Looking for the opcode that loads the constant '35' (0x23) onto the evaluation stack
-    //            if (codes[i].opcode == OpCodes.Ldc_I4_S && (sbyte)codes[i].operand == 0x23)
-    //            {
-    //                // Replace the constant '35' with '60' (or any desired value)
-    //                codes[i].operand = (sbyte)60; // Or use the byte value for 60
-    //            }
-
-    //            // Looking for the return opcode of the MaxSpeedForTrackMph method
-    //            if (i > 0 && codes[i].opcode == OpCodes.Ret && codes[i - 1].opcode == OpCodes.Call && codes[i - 1].operand.ToString().Contains("UnityEngine.Mathf::Min"))
-    //            {
-    //                // Injecting instructions to add 5 to the result just before the return statement of MaxSpeedForTrackMph
-    //                codes.Insert(i, new CodeInstruction(OpCodes.Ldc_I4_5)); // Load constant '5'
-    //                codes.Insert(i + 1, new CodeInstruction(OpCodes.Add));    // Add operation
-    //                i += 2; // Skip the newly inserted instructions
-    //            }
-    //        }
-    
-    //        return codes.AsEnumerable();
-    //    }
-    //}
-
-
-
-
 
 
 
@@ -117,11 +91,11 @@ namespace RouteManager
             Debug.Log("subscribing to unload event");
             Debug.Log("--------------------------------------------------------------------------------------------------");
             Debug.Log("--------------------------------------------------------------------------------------------------");
-            Messenger.Default.Register<MapDidUnloadEvent>(this , OnMapDidNunloadEvenForRouteMode);
+            Messenger.Default.Register<MapDidUnloadEvent>(this, OnMapDidNunloadEvenForRouteMode);
         }
         void Update()
         {
-            
+
 
             if (LocoTelem.locomotiveCoroutines.Count >= 1)
             {
@@ -136,8 +110,11 @@ namespace RouteManager
 
 
 
-                        Debug.Log($"loco {keys[i].DisplayName} currently has not called a coroutine - Calling the Coroutine with {keys[i].DisplayName} as an argument");
-                        LocoTelem.DriveForward[keys[i]]= true;
+
+                        Debug.Log($"loco {keys[i].DisplayName} currently has not called a coroutine - Calling the Coroutine with {keys[i].DisplayName} as an arguement");
+                        LocoTelem.DriveForward[keys[i]] = true;
+                        LocoTelem.LineDirectionEastWest[keys[i]] = true;
+
                         LocoTelem.TransitMode[keys[i]] = true;
                         LocoTelem.RMMaxSpeed[keys[i]] = 0;
                         LocoTelem.locomotiveCoroutines[keys[i]] = true;
@@ -148,8 +125,8 @@ namespace RouteManager
                         }
 
                         StartCoroutine(AutoEngineerControlRoutine(keys[i]));
-                        
-                        
+
+
                     }
                     else if (LocoTelem.locomotiveCoroutines[keys[i]] && !LocoTelem.RouteMode[keys[i]])
                     {
@@ -172,8 +149,10 @@ namespace RouteManager
         }
         public IEnumerator AutoEngineerControlRoutine(Car locomotive)
         {
+
             Debug.Log($"Entered Coroutine for {locomotive.DisplayName} - is Route Mode Enabled? {LocoTelem.RouteMode[locomotive]}");
             
+
             LocoTelem.CenterCar[locomotive] = GetCenterCoach(locomotive);
             if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
             {
@@ -183,8 +162,8 @@ namespace RouteManager
             bool lowwaterwarngiven = false;
             bool lowfuelwarngiven = false;
             float RMmaxSpeed = 0;
-            float distanceToStation=0;
-            float olddist=float.MaxValue;
+            float distanceToStation = 0;
+            float olddist = float.MaxValue;
             while (LocoTelem.RouteMode[locomotive])
             {
 
@@ -249,8 +228,8 @@ namespace RouteManager
                     bool YieldRequired = false;
                     while (LocoTelem.TransitMode[locomotive])
                     {
-                        
-                        
+
+
                         olddist = distanceToStation;
                         if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
                         {
@@ -298,17 +277,18 @@ namespace RouteManager
                         {
                             YieldRequired = true;
                         }
-                        if (YieldRequired){
+                        if (YieldRequired)
+                        {
                             yield return new WaitForSeconds(5);
                         }
 
-                        var trainVelocity = Math.Abs(locomotive.velocity* 2.23694f);
+                        var trainVelocity = Math.Abs(locomotive.velocity * 2.23694f);
 
                         if (distanceToStation > 350)
-                        {
-                            
+                        {                         
                             
                             if (distanceToStation > olddist && (trainVelocity > 1f && trainVelocity < 10f))
+
                             {
                                 LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
                                 Debug.Log("Was driving in the wrong direction. Reversing Direction");
@@ -322,7 +302,7 @@ namespace RouteManager
                             Debug.Log($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                             yield return new WaitForSeconds(5);
-                            
+
                         }
                         else if (distanceToStation <= 350 && distanceToStation > 10)
                         {
@@ -340,12 +320,12 @@ namespace RouteManager
                             {
                                 RMmaxSpeed = 5f;
                             }
-                            
+
 
                             Debug.Log($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                             yield return new WaitForSeconds(1);
-                            
+
                         }
                         else if (distanceToStation <= 10 && distanceToStation > 0)
                         {
@@ -373,16 +353,16 @@ namespace RouteManager
                     CopyStationsFromLocoToCoaches(locomotive);
                     int numPassInTrain = 0;
                     int oldNumPassInTrain = int.MaxValue;
-                    bool firstIter=true;
-                    
+                    bool firstIter = true;
+
                     LocoTelem.CenterCar[locomotive] = GetCenterCoach(locomotive);
                     Debug.Log($"about to set new destination, curent destination{LocoTelem.LocomotiveDestination[locomotive]}");
                     
                     Debug.Log($"New destination was set, destination: {LocoTelem.LocomotiveDestination[locomotive]}");
-                    
+
                     while (!LocoTelem.TransitMode[locomotive])
                     {
-                        
+
                         if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
                         {
                             Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
@@ -403,7 +383,7 @@ namespace RouteManager
                         if (firstIter)
                         {
                             yield return new WaitForSeconds(10);
-                            firstIter=false;
+                            firstIter = false;
                         }
 
                         numPassInTrain = GetNumPassInTrain(locomotive);
@@ -461,7 +441,7 @@ namespace RouteManager
                             
                         }
                     }
-                }   
+                }
             }
             if (!LocoTelem.RouteMode[locomotive])
             {
@@ -521,7 +501,7 @@ namespace RouteManager
 
                 for (int i = 0; i < keys.Count(); i++)
                 {
-                    
+
                     StopCoroutine(AutoEngineerControlRoutine(keys[i]));
 
                 }
@@ -551,12 +531,14 @@ public class ManagedTrains : MonoBehaviour
     }
 
 
+
     public static void UpdateSelectedStations(Car car, List<PassengerStop> selectedStops)
     {
         if (car == null)
         {
             throw new ArgumentNullException(nameof(car));
         }
+
 
         LocoTelem.SelectedStations[car] = selectedStops;
     }
@@ -682,7 +664,7 @@ public class ManagedTrains : MonoBehaviour
             Debug.Log("Car is null");
             return;
         }
-        
+
         // Retrieve saved stations for this car from ManagedTrains
         if (ManagedTrains.LocoTelem.SelectedStations.TryGetValue(car, out List<PassengerStop> selectedStations))
         {
@@ -695,7 +677,7 @@ public class ManagedTrains : MonoBehaviour
         {
             Debug.Log("No stations selected for this car.");
         }
-        
+
 
         if (ManagedTrains.LocoTelem.LocomotiveDestination.TryGetValue(car, out string dest))
         {
@@ -706,7 +688,7 @@ public class ManagedTrains : MonoBehaviour
         {
             Debug.Log("No destination for this car.");
         }
-        
+
         if (graph == null)
         {
             Debug.LogError("Graph object is null");
@@ -891,7 +873,7 @@ public class ManagedTrains : MonoBehaviour
             .Distinct()
             .ToList();
 
-        var orderedSelectedStations = orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList(); 
+        var orderedSelectedStations = orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
 
         Debug.Log($"try to get value from SelectedStations and checking number of selected stops");
         if (LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStops) && selectedStops.Count > 1)
@@ -916,8 +898,9 @@ public class ManagedTrains : MonoBehaviour
 
                 if (currentIndex == orderedSelectedStations.Count - 1)
                 {
-                    Debug.Log($"Reached {currentStation} and is the end of the line. Reversing travel direction back to {orderedSelectedStations[currentIndex-1]}");
-                    
+                    Debug.Log($"Reached {currentStation} and is the end of the line. Reversing travel direction back to {orderedSelectedStations[currentIndex - 1]}");
+                    CopyStationsFromLocoToCoaches(locomotive);
+
                     LocoTelem.LineDirectionEastWest[locomotive] = false;
                     LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
                     LocoTelem.LocomotiveDestination[locomotive] = orderedSelectedStations[currentIndex - 1];
@@ -926,7 +909,7 @@ public class ManagedTrains : MonoBehaviour
                 {
                     Debug.Log($"Reached {currentStation} next station is {orderedSelectedStations[currentIndex + 1]}");
                     LocoTelem.LocomotiveDestination[locomotive] = orderedSelectedStations[currentIndex + 1];
-                    
+
                 }
                 
             }
@@ -1009,7 +992,7 @@ public class ManagedTrains : MonoBehaviour
         return center;
     }
 
-    public static Car GetCenterCoach (Car locomotive)
+    public static Car GetCenterCoach(Car locomotive)
     {
         var graph = Graph.Shared;
 
@@ -1020,7 +1003,7 @@ public class ManagedTrains : MonoBehaviour
         foreach (var car in cars)
         {
 
-            if(car.Archetype == CarArchetype.Coach)
+            if (car.Archetype == CarArchetype.Coach)
             {
                 coaches.Add(car);
             }
@@ -1028,7 +1011,7 @@ public class ManagedTrains : MonoBehaviour
         }
         // List of cars with their center positions
         var carPositions = coaches.Select(coaches => coaches.GetCenterPosition(graph)).ToList();
-        
+
         // Calculate the average position (center) of all cars
         Vector3 center = Vector3.zero;
         foreach (var pos in carPositions)
@@ -1054,8 +1037,8 @@ public class ManagedTrains : MonoBehaviour
         return bestCar;
     }
 
-    public static int GetNumPassInTrain(Car locomotive) 
-    { 
+    public static int GetNumPassInTrain(Car locomotive)
+    {
         int numPass = 0;
 
         var cars = locomotive.EnumerateCoupled().ToList();
@@ -1082,7 +1065,7 @@ public class ManagedTrains : MonoBehaviour
             {
                 Debug.Log($"failed to get the number of passengers from GetPassengerCount(coach): {ex}");
             }
-            
+
 
         }
 
@@ -1101,11 +1084,11 @@ public class ManagedTrains : MonoBehaviour
         // Check if the locomotive is null
         if (locomotive == null)
         {
-            
+
             Debug.LogError("Locomotive is null in GetDistanceToDest.");
             return -6969; // Return a default value or handle this case as needed
         }
-        
+
         // Check if the locomotive key exists in the LocomotiveDestination dictionary
         if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
         {
@@ -1145,7 +1128,7 @@ public class ManagedTrains : MonoBehaviour
         if (!StationManager.Stations.ContainsKey(destination))
         {
             Debug.LogError($"Station not found for destination: {destination}");
-            return - 6969f; // Handle missing station
+            return -6969f; // Handle missing station
         }
 
         Vector3 destCenter = StationManager.Stations[destination].Center;
@@ -1219,6 +1202,7 @@ public class ManagedTrains : MonoBehaviour
         }
     }
 
+
     public static event Action<Car> OnRouteModeChanged;
     public static void SetRouteModeEnabled(bool IsOn , Car locomotive)
     {
@@ -1245,6 +1229,7 @@ public class ManagedTrains : MonoBehaviour
         {
             Console.Log($"There are no stations selected for {locomotive.DisplayName}. Please select at least 1 station before enabling Route Mode");
         }
+
         else if (StationManager.IsAnyStationSelectedForLocomotive(locomotive) && !IsOn)
         {
             LocoTelem.RouteMode[locomotive]=false;
@@ -1259,7 +1244,6 @@ public class ManagedTrains : MonoBehaviour
         {
             Debug.Log($"Route Mode ({LocoTelem.RouteMode[locomotive]}) and IsAnyStationSelectedForLocomotive ({StationManager.IsAnyStationSelectedForLocomotive(locomotive)}) are no combination of false or true ");
         }
-        
         return;
     }
 }
@@ -1312,7 +1296,7 @@ public static class StationManager
         return LocoTelem.UIStationSelections[locomotive].TryGetValue(stop.identifier, out bool isSelected) && isSelected;
     }
 
-    public static void SetStationSelected(PassengerStop stop,Car locomotive, bool isSelected)
+    public static void SetStationSelected(PassengerStop stop, Car locomotive, bool isSelected)
     {
         LocoTelem.UIStationSelections[locomotive][stop.identifier] = isSelected;
     }
@@ -1344,16 +1328,16 @@ public static class StationManager
         }
     }
 
-    
+
 }
 
 
 
 namespace RouteManagerUI
 {
-    
+
     [HarmonyPatch(typeof(CarInspector), "PopulateAIPanel")]
-    public static class CarInspectorPopulateAIPanelPatch 
+    public static class CarInspectorPopulateAIPanelPatch
     {
 
         static bool Prefix(CarInspector __instance, UIPanelBuilder builder)
@@ -1367,7 +1351,7 @@ namespace RouteManagerUI
                 // Handle the case where car is not found or is null
                 return true; // You might want to let the original method run in this case
             }
-            
+
             builder.FieldLabelWidth = 100f;
             builder.Spacing = 8f;
             AutoEngineerPersistence persistence = new AutoEngineerPersistence(car.KeyValueObject);
@@ -1379,7 +1363,7 @@ namespace RouteManagerUI
                     builder.Rebuild();
                 }
             }, callInitial: false));
-            
+
             builder.AddField("Mode", builder.ButtonStrip(delegate (UIPanelBuilder builder)
             {
                 builder.AddButtonSelectable("Manual", mode2 == AutoEngineerMode.Off, delegate
@@ -1398,12 +1382,13 @@ namespace RouteManagerUI
                 });
 
             }));
-            
+
             if (!persistence.Orders.Enabled)
             {
                 builder.AddExpandingVerticalSpacer();
                 return false;
             }
+
             if (!LocoTelem.RouteMode.ContainsKey(car))
                 {
                     LocoTelem.RouteMode[car] = false;
@@ -1436,7 +1421,7 @@ namespace RouteManagerUI
                     });
                 }));
             }
-            
+
             if (mode2 == AutoEngineerMode.Road)
             {
                 if (!LocoTelem.RouteMode[car])
@@ -1465,7 +1450,7 @@ namespace RouteManagerUI
                 {
                     hstack.AddToggle(() => ManagedTrains.IsRouteModeEnabled(car), isOn =>
                     {
-                        ManagedTrains.SetRouteModeEnabled(isOn, car);
+                        SetRouteModeEnabled(isOn, car);
                     });
                     hstack.AddLabel("Enable Route Mode");
 
@@ -1496,6 +1481,7 @@ namespace RouteManagerUI
                             // Add a checkbox for each station
                             hstack.AddToggle(() => StationManager.IsStationSelected(stop, car), isOn =>
                             {
+
                                 StationManager.SetStationSelected(stop, car ,isOn);
                                 builder.Rebuild();
                                 UpdateManagedTrainsSelectedStations(car); // Update when checkbox state changes
@@ -1507,7 +1493,7 @@ namespace RouteManagerUI
                         });
                     }
                 });
-                
+
 
                 bool anyStationSelected = StationManager.IsAnyStationSelectedForLocomotive(car);
 
@@ -1518,7 +1504,7 @@ namespace RouteManagerUI
                 //}
 
             }
-            
+
 
             if (mode2 == AutoEngineerMode.Yard)
             {
@@ -1573,7 +1559,7 @@ namespace RouteManagerUI
                 }, 4);
                 builder.AddField("Car Lengths", control2);
             }
-            
+
             builder.AddExpandingVerticalSpacer();
             builder.AddField("Status", () => persistence.PlannerStatus, UIPanelBuilder.Frequency.Periodic);
             static int MaxSpeedMphForMode(AutoEngineerMode mode)
@@ -1586,7 +1572,7 @@ namespace RouteManagerUI
                     _ => throw new ArgumentOutOfRangeException("mode", mode, null),
                 };
             }
-            
+
             AutoEngineerMode Mode()
             {
                 Orders orders2 = persistence.Orders;
@@ -1600,12 +1586,12 @@ namespace RouteManagerUI
                 }
                 return AutoEngineerMode.Yard;
             }
-            
+
             void SendAutoEngineerCommand(AutoEngineerMode mode, bool forward, int maxSpeedMph, float? distance)
             {
                 StateManager.ApplyLocal(new AutoEngineerCommand(car.id, mode, forward, maxSpeedMph, distance));
             }
-            
+
             void SetOrdersValue(AutoEngineerMode? mode, bool? forward, int? maxSpeedMph, float? distance)
             {
                 Orders orders = persistence.Orders;
@@ -1625,7 +1611,6 @@ namespace RouteManagerUI
                 SendAutoEngineerCommand(mode3, forward ?? orders.Forward, maxSpeedMph2, distance);
             }
 
-            
 
             return false; // Prevent the original method from running
         }
