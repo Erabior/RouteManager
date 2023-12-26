@@ -38,7 +38,7 @@ namespace RouteManager
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
-        private const string modVersion = "1.0.1.8";
+        private const string modVersion = "1.0.1.9";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static ManualLogSource mls;
 
@@ -547,9 +547,9 @@ public class ManagedTrains : MonoBehaviour
         public static Dictionary<Car, bool> DriveForward { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, bool> locomotiveCoroutines { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, Car> CenterCar { get; private set; } = new Dictionary<Car, Car>();
-
-
     }
+
+
     public static void UpdateSelectedStations(Car car, List<PassengerStop> selectedStops)
     {
         if (car == null)
@@ -673,8 +673,6 @@ public class ManagedTrains : MonoBehaviour
 
         
     }
-
-
     public static void PrintCarInfo(Car car)
     {
         var graph = Graph.Shared;
@@ -1220,6 +1218,7 @@ public class ManagedTrains : MonoBehaviour
         }
     }
 
+    public static event Action<Car> OnRouteModeChanged;
     public static void SetRouteModeEnabled(bool IsOn , Car locomotive)
     {
 
@@ -1233,6 +1232,7 @@ public class ManagedTrains : MonoBehaviour
             }
             Debug.Log($"changing LocoTelem.Route Mode from {!IsOn} to {IsOn}");
             LocoTelem.RouteMode[locomotive] = IsOn;
+            OnRouteModeChanged?.Invoke(locomotive);
 
             if (!LocoTelem.locomotiveCoroutines.ContainsKey(locomotive))
             {
@@ -1247,10 +1247,12 @@ public class ManagedTrains : MonoBehaviour
         else if (StationManager.IsAnyStationSelectedForLocomotive(locomotive) && !IsOn)
         {
             LocoTelem.RouteMode[locomotive]=false;
+            OnRouteModeChanged?.Invoke(locomotive);
         }
         else if(!StationManager.IsAnyStationSelectedForLocomotive(locomotive) && !IsOn)
         {
             LocoTelem.RouteMode[locomotive] = false;
+            OnRouteModeChanged?.Invoke(locomotive);
         }
         else
         {
@@ -1401,8 +1403,11 @@ namespace RouteManagerUI
                 builder.AddExpandingVerticalSpacer();
                 return false;
             }
-            
-            if (!StationManager.IsAnyStationSelectedForLocomotive(car))
+            if (!LocoTelem.RouteMode.ContainsKey(car))
+                {
+                    LocoTelem.RouteMode[car] = false;
+                }
+            if (!LocoTelem.RouteMode[car])
             {
                 builder.AddField("Direction", builder.ButtonStrip(delegate (UIPanelBuilder builder)
                 {
@@ -1433,7 +1438,7 @@ namespace RouteManagerUI
             
             if (mode2 == AutoEngineerMode.Road)
             {
-                if (!StationManager.IsAnyStationSelectedForLocomotive(car))
+                if (!LocoTelem.RouteMode[car])
                 {
                     int num = MaxSpeedMphForMode(mode2);
                     RectTransform control = builder.AddSlider(() => persistence.Orders.MaxSpeedMph / 5, delegate
@@ -1453,24 +1458,24 @@ namespace RouteManagerUI
                     builder.AddField("Max Speed", control);
                 }
 
-                if (!LocoTelem.RouteMode.ContainsKey(car))
-                {
-                    LocoTelem.RouteMode[car] = false;
-                }
+
 
                 builder.HStack(delegate (UIPanelBuilder hstack)
                 {
-                    // Add a checkbox for "Enable Route Mode"
                     hstack.AddToggle(() => ManagedTrains.IsRouteModeEnabled(car), isOn =>
                     {
-                        SetRouteModeEnabled(isOn , car);
-
-                        
-                        // Additional actions to perform when the checkbox state changes, if any
+                        ManagedTrains.SetRouteModeEnabled(isOn, car);
                     });
-
-                    // Add a label next to the checkbox
                     hstack.AddLabel("Enable Route Mode");
+
+                    // Subscribe to the OnRouteModeChanged event
+                    ManagedTrains.OnRouteModeChanged += (changedCar) =>
+                    {
+                        if (changedCar == car) // Check if the changed car is the one currently displayed in the UI
+                        {
+                            builder.Rebuild();
+                        }
+                    };
                 });
 
                 var stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
@@ -1486,13 +1491,14 @@ namespace RouteManagerUI
                     {
                         builder.HStack(delegate (UIPanelBuilder hstack)
                         {
+
                             // Add a checkbox for each station
                             hstack.AddToggle(() => StationManager.IsStationSelected(stop, car), isOn =>
                             {
                                 StationManager.SetStationSelected(stop, car ,isOn);
-                                
-                                UpdateManagedTrainsSelectedStations(car); // Update when checkbox state changes
                                 builder.Rebuild();
+                                UpdateManagedTrainsSelectedStations(car); // Update when checkbox state changes
+                                
                             });
 
                             // Add a label next to the checkbox
@@ -1617,9 +1623,9 @@ namespace RouteManagerUI
                 int maxSpeedMph2 = Mathf.Min(maxSpeedMph ?? orders.MaxSpeedMph, MaxSpeedMphForMode(mode3));
                 SendAutoEngineerCommand(mode3, forward ?? orders.Forward, maxSpeedMph2, distance);
             }
-            
 
             
+
             return false; // Prevent the original method from running
         }
 
