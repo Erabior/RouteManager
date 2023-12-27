@@ -88,8 +88,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Plugin.cs" />
+    <Compile Include="v1\strucutures\LocoTelem.cs" />
+    <Compile Include="v1\core\ManagedTrains.cs" />
+    <Compile Include="ModLoader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="v1\core\RouteAI.cs" />
+    <Compile Include="v1\harmonyPatches\RouteManagerUI.cs" />
+    <Compile Include="v1\strucutures\StationData.cs" />
+    <Compile Include="v1\core\StationManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Patches\" />
@@ -97,5 +103,8 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <LangVersion>8</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>copy /Y "$(TargetDir)$(ProjectName).dll" "G:\SteamLibrary\steamapps\common\Railroader\BepInEx\plugins\$(ProjectName).dll"</PostBuildEvent>
   </PropertyGroup>
 </Project>
