@@ -48,11 +48,10 @@ namespace RouteManager
                     //Create Parent Game object to bind the instance of Route AI To.
                     GameObject erabiorDispatcher = new GameObject("Erabior.Dispatcher");
 
-                    //Bind the of Route AI component to the Game Object instance
+                    //Bind the Route AI component to the Game Object instance
                     erabiorDispatcher.AddComponent<RouteAI>();
                 }
             }
         }
-
     } 
 }
