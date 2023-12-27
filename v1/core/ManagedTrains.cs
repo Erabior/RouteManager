@@ -62,10 +62,11 @@ namespace RouteManager
                 }
                 else
                 {
-                    Debug.Log($"{car.DisplayName} No load information found for {loadIdent}.");
-                    return null;
+                    //Debugging
+                    Debug.Log($"{car.DisplayName} No Diesel load information found for {loadIdent}.");
+                    //With the updated logic based on archetype checking i propose that this return is no longer needed. 
+                    //return null;
                 }
-
             }
 
 
@@ -82,11 +83,15 @@ namespace RouteManager
                     {
                         return loadInfo.Value.Quantity;
                     }
+                    else
+                    {
+                        //Debugging
+                        Debug.Log($"{car.DisplayName} No Steam load information found for {loadIdent}.");
+                    }
                 }
             }
 
-
-
+            //Something went wrong so assume 0 fuel
             return 0f;
         }
         public static void TestLoadInfo(Car locomotive, string loadIdentifier)
