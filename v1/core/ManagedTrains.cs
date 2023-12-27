@@ -49,7 +49,6 @@ namespace RouteManager
         {
             int slotIndex;
 
-
             if (loadIdent == "diesel-fuel")
             {
 
@@ -57,17 +56,14 @@ namespace RouteManager
 
                 if (loadInfo.HasValue)
                 {
-
                     return loadInfo.Value.Quantity;
                 }
                 else
                 {
-                    Debug.Log($"{car.DisplayName} No load information found for {loadIdent}.");
+                    Debug.Log(String.Format("{0} No load information found for {1}", car.DisplayName, loadIdent));
                     return null;
                 }
-
             }
-
 
             var cars = car.EnumerateCoupled().ToList();
 
@@ -82,13 +78,20 @@ namespace RouteManager
                     {
                         return loadInfo.Value.Quantity;
                     }
+                    else
+                    {
+                        //Bugfix
+                        //Missing null return causing default return case to return 0 for fuels not used by locomotive
+                        Debug.Log(String.Format("{0} No load information found for {1}", car.DisplayName, loadIdent));
+                        return null;
+                    }
                 }
             }
 
-
-
-            return 0f;
+            //Default return case should probably also be null as something definately went wrong if we land here...
+            return null;
         }
+
         public static void TestLoadInfo(Car locomotive, string loadIdentifier)
         {
             int slotIndex;
