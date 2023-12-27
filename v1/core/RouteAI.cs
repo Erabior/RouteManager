@@ -100,55 +100,59 @@ namespace RouteManager
                 float? waterlevel = ManagedTrains.GetLoadInfoForLoco(locomotive, "water");
                 float? diesellevel = ManagedTrains.GetLoadInfoForLoco(locomotive, "diesel-fuel");
 
-                if (coallevel != null)
+                if(locomotive.Archetype == Model.Definition.CarArchetype.LocomotiveSteam)
                 {
-                    if (coallevel < 0.5)
+                    if (coallevel != null)
                     {
-                        if (!lowcoalwarngiven)
+                        if (coallevel < 0.5)
                         {
-                            lowcoalwarngiven = true;
-                            Console.Log($"Locomotive {locomotive.DisplayName} has less than 0.5T of coal remaining");
+                            if (!lowcoalwarngiven)
+                            {
+                                lowcoalwarngiven = true;
+                                Console.Log($"Locomotive {locomotive.DisplayName} has less than 0.5T of coal remaining");
+                            }
+                        }
+                        else
+                        {
+                            lowcoalwarngiven = false;
                         }
                     }
-                    else
-                    {
-                        lowcoalwarngiven = false;
-                    }
-                }
 
-                if (waterlevel != null)
-                {
-                    if (waterlevel < 500)
+                    if (waterlevel != null)
                     {
-                        if (!lowwaterwarngiven)
+                        if (waterlevel < 500)
                         {
-                            lowwaterwarngiven = true;
-                            Console.Log($"Locomotive {locomotive.DisplayName} has less than 500 Gallons of Water remaining");
+                            if (!lowwaterwarngiven)
+                            {
+                                lowwaterwarngiven = true;
+                                Console.Log($"Locomotive {locomotive.DisplayName} has less than 500 Gallons of Water remaining");
+                            }
+                        }
+                        else
+                        {
+                            lowwaterwarngiven = false;
                         }
                     }
-                    else
-                    {
-                        lowwaterwarngiven = false;
-                    }
                 }
-                if (diesellevel != null)
-                {
-                    if (diesellevel < 100)
+                
+                if (locomotive.Archetype == Model.Definition.CarArchetype.LocomotiveDiesel) {
+
+                    if (diesellevel != null)
                     {
-                        if (!lowfuelwarngiven)
+                        if (diesellevel < 100)
                         {
-                            lowfuelwarngiven = true;
-                            Console.Log($"Locomotive {locomotive.DisplayName} has less than 100 Gallons of diesel fuel remaining");
+                            if (!lowfuelwarngiven)
+                            {
+                                lowfuelwarngiven = true;
+                                Console.Log($"Locomotive {locomotive.DisplayName} has less than 100 Gallons of diesel-fuel remaining");
+                            }
+                        }
+                        else
+                        {
+                            lowfuelwarngiven = false;
                         }
                     }
-                    else
-                    {
-                        lowfuelwarngiven = false;
-                    }
                 }
-
-
-
 
                 if (LocoTelem.TransitMode[locomotive])
                 {
@@ -327,38 +331,45 @@ namespace RouteManager
                         else
                         {
                             bool clearedForDeparture = true;
-                            if (waterlevel != null)
+
+                            if (locomotive.Archetype == Model.Definition.CarArchetype.LocomotiveSteam)
                             {
-                                Debug.Log($"loaded or disembarked {Math.Abs(oldNumPassInTrain - numPassInTrain)} passengers disembarkation/embarkation finished");
-                                if (waterlevel < 500)
+                                if (waterlevel != null)
                                 {
-                                    Console.Log($"Locomotive {locomotive.DisplayName} is low on water and is holding at {LocoTelem.LocomotivePrevDestination[locomotive]} ");
-                                    clearedForDeparture = false;
-                                    yield return new WaitForSeconds(30);
+                                    Debug.Log($"loaded or disembarked {Math.Abs(oldNumPassInTrain - numPassInTrain)} passengers disembarkation/embarkation finished");
+                                    if (waterlevel < 500)
+                                    {
+                                        Console.Log($"Locomotive {locomotive.DisplayName} is low on water and is holding at {LocoTelem.LocomotivePrevDestination[locomotive]} ");
+                                        clearedForDeparture = false;
+                                        yield return new WaitForSeconds(30);
+
+                                    }
+                                }
+
+                                if (coallevel != null)
+                                {
+                                    if (coallevel < .5)
+                                    {
+                                        Console.Log($"Locomotive {locomotive.DisplayName} is low on coal and is holding at {LocoTelem.LocomotivePrevDestination[locomotive]} ");
+                                        clearedForDeparture = false;
+                                        yield return new WaitForSeconds(30);
+                                    }
 
                                 }
                             }
 
-                            if (coallevel != null)
+                            if(locomotive.Archetype == Model.Definition.CarArchetype.LocomotiveDiesel)
                             {
-                                if (coallevel < .5)
+                                if (diesellevel != null)
                                 {
-                                    Console.Log($"Locomotive {locomotive.DisplayName} is low on coal and is holding at {LocoTelem.LocomotivePrevDestination[locomotive]} ");
-                                    clearedForDeparture = false;
-                                    yield return new WaitForSeconds(30);
+                                    if (diesellevel < 100)
+                                    {
+                                        Console.Log($"Locomotive {locomotive.DisplayName} is low on diesel-fuel and is holding at {LocoTelem.LocomotivePrevDestination[locomotive]} ");
+                                        clearedForDeparture = false;
+                                        yield return new WaitForSeconds(30);
+                                    }
+
                                 }
-
-                            }
-
-                            if (diesellevel != null)
-                            {
-                                if (diesellevel < 100)
-                                {
-                                    Console.Log($"Locomotive {locomotive.DisplayName} is low on disel-fuel and is holding at {LocoTelem.LocomotivePrevDestination[locomotive]} ");
-                                    clearedForDeparture = false;
-                                    yield return new WaitForSeconds(30);
-                                }
-
                             }
 
                             if (clearedForDeparture)
