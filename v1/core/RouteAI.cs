@@ -8,6 +8,8 @@ using System.Linq;
 using UnityEngine;
 using Model;
 using System.IO;
+using RouteManager.v1.helpers;
+using Logger = RouteManager.v1.helpers.Logger;
 
 namespace RouteManager
 {
@@ -17,11 +19,11 @@ namespace RouteManager
         //Initialize Route AI.
         void Awake()
         {
-            Debug.Log("--------------------------------------------------------------------------------------------------");
-            Debug.Log("--------------------------------------------------------------------------------------------------");
-            Debug.Log("subscribing to unload event");
-            Debug.Log("--------------------------------------------------------------------------------------------------");
-            Debug.Log("--------------------------------------------------------------------------------------------------");
+            Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+            Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+            Logger.LogToDebug("subscribing to unload event");
+            Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+            Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
             Messenger.Default.Register<MapDidUnloadEvent>(this, OnMapDidNunloadEvenForRouteMode);
         }
         void Update()
@@ -41,7 +43,7 @@ namespace RouteManager
 
 
 
-                        Debug.Log($"loco {keys[i].DisplayName} currently has not called a coroutine - Calling the Coroutine with {keys[i].DisplayName} as an arguement");
+                        Logger.LogToDebug($"loco {keys[i].DisplayName} currently has not called a coroutine - Calling the Coroutine with {keys[i].DisplayName} as an arguement");
                         LocoTelem.DriveForward[keys[i]] = true;
                         LocoTelem.LineDirectionEastWest[keys[i]] = true;
 
@@ -60,7 +62,7 @@ namespace RouteManager
                     }
                     else if (LocoTelem.locomotiveCoroutines[keys[i]] && !LocoTelem.RouteMode[keys[i]])
                     {
-                        Debug.Log($"loco {keys[i].DisplayName} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {keys[i].DisplayName}");
+                        Logger.LogToDebug($"loco {keys[i].DisplayName} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {keys[i].DisplayName}");
                         LocoTelem.LocomotivePrevDestination.Remove(keys[i]);
                         //LocoTelem.LocomotiveDestination.Remove(keys[i]);
                         LocoTelem.locomotiveCoroutines.Remove(keys[i]);
@@ -80,7 +82,7 @@ namespace RouteManager
         public IEnumerator AutoEngineerControlRoutine(Car locomotive)
         {
 
-            Debug.Log($"Entered Coroutine for {locomotive.DisplayName} - is Route Mode Enabled? {LocoTelem.RouteMode[locomotive]}");
+            Logger.LogToDebug($"Entered Coroutine for {locomotive.DisplayName} - is Route Mode Enabled? {LocoTelem.RouteMode[locomotive]}");
 
 
             LocoTelem.CenterCar[locomotive] = ManagedTrains.GetCenterCoach(locomotive);
@@ -127,7 +129,7 @@ namespace RouteManager
                             {
                                 //Give Warning
                                 lowcoalwarngiven = true;
-                                Console.Log(String.Format("Locomotive {0} has less than {1}T of coal remaining", locomotive.DisplayName,minCoalQuantity));
+                                Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}T of coal remaining", locomotive.DisplayName,minCoalQuantity));
                             }
                         }
                         else
@@ -147,7 +149,7 @@ namespace RouteManager
                             {
                                 //Give Warning
                                 lowwaterwarngiven = true;
-                                Console.Log(String.Format("Locomotive {0} has less than {1}Gallons of Water remaining", locomotive.DisplayName, minWaterQuantity));
+                                Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}Gallons of Water remaining", locomotive.DisplayName, minWaterQuantity));
                             }
                         }
                         else
@@ -171,7 +173,7 @@ namespace RouteManager
                             {
                                 //Give warning
                                 lowfuelwarngiven = true;
-                                Console.Log(String.Format("Locomotive {0} has less than {1}Gallons of Diesel-Fuel remaining", locomotive.DisplayName, minDieselQuantity));
+                                Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}Gallons of Diesel-Fuel remaining", locomotive.DisplayName, minDieselQuantity));
                             }
                         }
                         else
@@ -303,30 +305,31 @@ namespace RouteManager
                 {
                     if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
                     {
-                        Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
+                        Logger.LogToDebug($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
                         //clearDictsForLoco(locomotive);
                         ManagedTrains.SetRouteModeEnabled(false, locomotive);
                         StopCoroutine(AutoEngineerControlRoutine(locomotive));
                         break;
                     }
                     ManagedTrains.GetNextDestination(locomotive);
-                    Debug.Log("Starting loading mode");
+                    Logger.LogToConsole(String.Format("{0} has arrived at: {1}",locomotive.DisplayName,"EXAMPLE"));
+                    Logger.LogToDebug("Starting loading mode");
                     ManagedTrains.CopyStationsFromLocoToCoaches(locomotive);
                     int numPassInTrain = 0;
                     int oldNumPassInTrain = int.MaxValue;
                     bool firstIter = true;
 
                     LocoTelem.CenterCar[locomotive] = ManagedTrains.GetCenterCoach(locomotive);
-                    Debug.Log($"about to set new destination, curent destination{LocoTelem.LocomotiveDestination[locomotive]}");
+                    Logger.LogToDebug($"about to set new destination, curent destination{LocoTelem.LocomotiveDestination[locomotive]}");
 
-                    Debug.Log($"New destination was set, destination: {LocoTelem.LocomotiveDestination[locomotive]}");
+                    Logger.LogToDebug($"New destination was set, destination: {LocoTelem.LocomotiveDestination[locomotive]}");
 
                     while (!LocoTelem.TransitMode[locomotive])
                     {
 
                         if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
                         {
-                            Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
+                            Logger.LogToDebug($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
                             //clearDictsForLoco(locomotive);
                             StopCoroutine(AutoEngineerControlRoutine(locomotive));
                             break;
@@ -334,7 +337,7 @@ namespace RouteManager
                         if (!LocoTelem.RouteMode[locomotive])
                         {
 
-                            Debug.Log($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
+                            Logger.LogToDebug($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
                             //clearDictsForLoco(locomotive);
                             StopCoroutine(AutoEngineerControlRoutine(locomotive));
                             break;
@@ -348,11 +351,11 @@ namespace RouteManager
                         }
 
                         numPassInTrain = ManagedTrains.GetNumPassInTrain(locomotive);
-                        Debug.Log($"{locomotive} Has {numPassInTrain} onboard \t Was {oldNumPassInTrain} 5 seconds ago");
+                        Logger.LogToDebug($"{locomotive} Has {numPassInTrain} onboard \t Was {oldNumPassInTrain} 5 seconds ago");
 
                         if (oldNumPassInTrain != numPassInTrain)
                         {
-                            Debug.Log($"loaded or disembarked {Math.Abs(oldNumPassInTrain - numPassInTrain)} passengers disembarkation/embarkation in progress");
+                            Logger.LogToDebug($"loaded or disembarked {Math.Abs(oldNumPassInTrain - numPassInTrain)} passengers disembarkation/embarkation in progress");
                             oldNumPassInTrain = numPassInTrain;
                             yield return new WaitForSeconds(10);
                         }
@@ -375,7 +378,7 @@ namespace RouteManager
                                     if (waterlevel < minWaterQuantity)
                                     {
                                         //Below minimums notate as such and hold loco
-                                        Console.Log(String.Format("Locomotive {0} is low on {1} and is holding at {2}", locomotive.DisplayName, "water" , LocoTelem.LocomotivePrevDestination[locomotive] ));
+                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on {1} and is holding at {2}", locomotive.DisplayName, "water" , LocoTelem.LocomotivePrevDestination[locomotive] ));
                                         clearedForDeparture = false;
 
                                         //Check again in 30 seconds. 
@@ -389,7 +392,7 @@ namespace RouteManager
                                     //Check if below minimums
                                     if (coallevel < minCoalQuantity)
                                     {
-                                        Console.Log(String.Format("Locomotive {0} is low on {1} and is holding at {2}", locomotive.DisplayName, "coal", LocoTelem.LocomotivePrevDestination[locomotive]));
+                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on {1} and is holding at {2}", locomotive.DisplayName, "coal", LocoTelem.LocomotivePrevDestination[locomotive]));
                                         clearedForDeparture = false;
                                         yield return new WaitForSeconds(30);
                                     }
@@ -404,7 +407,7 @@ namespace RouteManager
                                     //Check if below minimums
                                     if (diesellevel < minDieselQuantity)
                                     {
-                                        Console.Log(String.Format("Locomotive {0} is low on {1} and is holding at {2}", locomotive.DisplayName, "diesel-fuel", LocoTelem.LocomotivePrevDestination[locomotive]));
+                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on {1} and is holding at {2}", locomotive.DisplayName, "diesel-fuel", LocoTelem.LocomotivePrevDestination[locomotive]));
                                         clearedForDeparture = false;
                                         yield return new WaitForSeconds(30);
                                     }
@@ -426,14 +429,14 @@ namespace RouteManager
             if (!LocoTelem.RouteMode[locomotive])
             {
 
-                Debug.Log($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
+                Logger.LogToDebug($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
                 //clearDictsForLoco(locomotive);
                 StopCoroutine(AutoEngineerControlRoutine(locomotive));
 
             }
             if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
             {
-                Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
+                Logger.LogToDebug($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
                 //clearDictsForLoco(locomotive);
                 StopCoroutine(AutoEngineerControlRoutine(locomotive));
                 ;
@@ -463,19 +466,19 @@ namespace RouteManager
 
         void OnMapDidNunloadEvenForRouteMode(MapDidUnloadEvent mapDidUnloadEvent)
         {
-            Debug.Log("--------------------------------------------------------------------------------------------------");
-            Debug.Log("--------------------------------------------------------------------------------------------------");
-            Debug.Log("OnMapDidNunloadEvenForRouteMode called");
-            Debug.Log("--------------------------------------------------------------------------------------------------");
-            Debug.Log("--------------------------------------------------------------------------------------------------");
+            Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+            Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+            Logger.LogToDebug("OnMapDidNunloadEvenForRouteMode called");
+            Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+            Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
 
             if (LocoTelem.locomotiveCoroutines.Count >= 1)
             {
-                Debug.Log("--------------------------------------------------------------------------------------------------");
-                Debug.Log("--------------------------------------------------------------------------------------------------");
-                Debug.Log("Stopping All Route AI coroutine instances");
-                Debug.Log("--------------------------------------------------------------------------------------------------");
-                Debug.Log("--------------------------------------------------------------------------------------------------");
+                Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+                Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+                Logger.LogToDebug("Stopping All Route AI coroutine instances");
+                Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+                Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
                 //Debug.Log("There is data in locomotiveCoroutines");
                 var keys = LocoTelem.locomotiveCoroutines.Keys.ToArray();
 

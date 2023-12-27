@@ -19,7 +19,7 @@ using UI.Menu;
 namespace RouteManager
 {
     [BepInPlugin(modGUID, modName, modVersion)]
-    public class Dispatcher : BaseUnityPlugin
+    public class ModLoader : BaseUnityPlugin
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
@@ -32,9 +32,24 @@ namespace RouteManager
             harmony.PatchAll();
             mls = Logger;
         }
+
+        public static string getModGuid()
+        {
+            return modGUID;
+        }
+
+        public static string getModName()
+        {
+            return modName;
+        }
+
+        public static string getModVersion()
+        {
+            return modVersion;
+        }
     }
 
-    public class RouteAIInjector : MonoBehaviour
+    public class ModInjector : MonoBehaviour
     {
         [HarmonyPatch(typeof(PersistentLoader), nameof(PersistentLoader.ShowLoadingScreen))]
         public static class ShowLoadingScreen

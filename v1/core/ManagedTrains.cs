@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Track;
 using UnityEngine;
+using Logger = RouteManager.v1.helpers.Logger;
 
 namespace RouteManager
 {
@@ -63,7 +64,7 @@ namespace RouteManager
                 else
                 {
                     //Debugging
-                    Debug.Log($"{car.DisplayName} No Diesel load information found for {loadIdent}.");
+                    Logger.LogToDebug($"{car.DisplayName} No Diesel load information found for {loadIdent}.");
                     //With the updated logic based on archetype checking i propose that this return is no longer needed. 
                     //return null;
                 }
@@ -86,7 +87,7 @@ namespace RouteManager
                     else
                     {
                         //Debugging
-                        Debug.Log($"{car.DisplayName} No Steam load information found for {loadIdent}.");
+                        Logger.LogToDebug($"{car.DisplayName} No Steam load information found for {loadIdent}.");
                     }
                 }
             }
@@ -106,16 +107,16 @@ namespace RouteManager
 
                 if (loadInfo.HasValue)
                 {
-                    Debug.Log($"Load Identifier: {loadIdentifier}");
-                    Debug.Log($"Slot Index: {slotIndex}");
-                    Debug.Log($"Value: {loadInfo.Value}");
-                    Debug.Log($"Quantity: {loadInfo.Value.Quantity}");
+                    Logger.LogToDebug($"Load Identifier: {loadIdentifier}");
+                    Logger.LogToDebug($"Slot Index: {slotIndex}");
+                    Logger.LogToDebug($"Value: {loadInfo.Value}");
+                    Logger.LogToDebug($"Quantity: {loadInfo.Value.Quantity}");
                     // Add more details you wish to log
                     return;
                 }
                 else
                 {
-                    Debug.Log($"No load information found for {loadIdentifier}.");
+                    Logger.LogToDebug($"No load information found for {loadIdentifier}.");
                     return;
                 }
 
@@ -131,20 +132,20 @@ namespace RouteManager
 
                     if (loadInfo.HasValue)
                     {
-                        Debug.Log($"Load Identifier: {loadIdentifier}");
-                        Debug.Log($"Slot Index: {slotIndex}");
-                        Debug.Log($"Value: {loadInfo.Value}");
-                        Debug.Log($"Quantity: {loadInfo.Value.Quantity}");
+                        Logger.LogToDebug($"Load Identifier: {loadIdentifier}");
+                        Logger.LogToDebug($"Slot Index: {slotIndex}");
+                        Logger.LogToDebug($"Value: {loadInfo.Value}");
+                        Logger.LogToDebug($"Quantity: {loadInfo.Value.Quantity}");
                         // Add more details you wish to log
                     }
                     else
                     {
-                        Debug.Log($"No load information found for {loadIdentifier}.");
+                        Logger.LogToDebug($"No load information found for {loadIdentifier}.");
                     }
                 }
                 else
                 {
-                    Debug.Log($"No Tender found for {loadIdentifier}.");
+                    Logger.LogToDebug($"No Tender found for {loadIdentifier}.");
                 }
             }
 
@@ -155,7 +156,7 @@ namespace RouteManager
             var graph = Graph.Shared;
             if (car == null)
             {
-                Debug.Log("Car is null");
+                Logger.LogToDebug("Car is null");
                 return;
             }
 
@@ -165,22 +166,22 @@ namespace RouteManager
                 string stationNames = string.Join(", ", selectedStations.Select(s => s.name));
                 Vector3? centerPoint = car.GetCenterPosition(graph); // Assuming GetCenterPosition exists
 
-                Debug.Log($"Car ID: {car.id}, Selected Stations: {stationNames}, Center Position: {centerPoint}");
+                Logger.LogToDebug($"Car ID: {car.id}, Selected Stations: {stationNames}, Center Position: {centerPoint}");
             }
             else
             {
-                Debug.Log("No stations selected for this car.");
+                Logger.LogToDebug("No stations selected for this car.");
             }
 
 
             if (LocoTelem.LocomotiveDestination.TryGetValue(car, out string dest))
             {
 
-                Debug.Log($"destination: {dest}");
+                Logger.LogToDebug($"destination: {dest}");
             }
             else
             {
-                Debug.Log("No destination for this car.");
+                Logger.LogToDebug("No destination for this car.");
             }
 
             if (graph == null)
@@ -198,73 +199,73 @@ namespace RouteManager
             var locationF = car.LocationF;
             var locationR = car.LocationR;
             var direction = car.GetCenterRotation(graph);
-            Debug.Log($"LocationF {locationF} LocationR {locationR} Rotation: {direction}");
+            Logger.LogToDebug($"LocationF {locationF} LocationR {locationR} Rotation: {direction}");
 
             if (LocoTelem.LocomotivePrevDestination.TryGetValue(car, out string prevDest))
             {
-                Debug.Log($"Previous destination: {prevDest}");
+                Logger.LogToDebug($"Previous destination: {prevDest}");
             }
             else
             {
-                Debug.Log("No previous destination for this car.");
+                Logger.LogToDebug("No previous destination for this car.");
             }
             if (LocoTelem.TransitMode.TryGetValue(car, out bool inTransitMode))
             {
-                Debug.Log($"Transit Mode: {inTransitMode}");
+                Logger.LogToDebug($"Transit Mode: {inTransitMode}");
             }
             else
             {
-                Debug.Log("No Transit Mode recorded for this car.");
+                Logger.LogToDebug("No Transit Mode recorded for this car.");
             }
             if (LocoTelem.LineDirectionEastWest.TryGetValue(car, out bool isEastWest))
             {
-                Debug.Log($"Line Direction East/West: {isEastWest}");
+                Logger.LogToDebug($"Line Direction East/West: {isEastWest}");
             }
             else
             {
-                Debug.Log("No Line Direction East/West recorded for this car.");
+                Logger.LogToDebug("No Line Direction East/West recorded for this car.");
             }
             if (LocoTelem.DriveForward.TryGetValue(car, out bool driveForward))
             {
-                Debug.Log($"Drive Forward: {driveForward}");
+                Logger.LogToDebug($"Drive Forward: {driveForward}");
             }
             else
             {
-                Debug.Log("No Drive Forward recorded for this car.");
+                Logger.LogToDebug("No Drive Forward recorded for this car.");
             }
             if (LocoTelem.locomotiveCoroutines.TryGetValue(car, out bool coroutineExists))
             {
-                Debug.Log($"Locomotive Coroutine Exists: {coroutineExists}");
+                Logger.LogToDebug($"Locomotive Coroutine Exists: {coroutineExists}");
             }
             else
             {
-                Debug.Log("No Locomotive Coroutine recorded for this car.");
+                Logger.LogToDebug("No Locomotive Coroutine recorded for this car.");
             }
             if (LocoTelem.CenterCar.TryGetValue(car, out Car centerCar))
             {
-                Debug.Log($"Center Car: {centerCar}");
+                Logger.LogToDebug($"Center Car: {centerCar}");
             }
             else
             {
-                Debug.Log("No Center Car recorded for this car.");
+                Logger.LogToDebug("No Center Car recorded for this car.");
             }
             try
             {
                 LocoTelem.CenterCar[car] = GetCenterCoach(car);
-                Debug.Log($"center car for {car}: {LocoTelem.CenterCar[car]}");
+                Logger.LogToDebug($"center car for {car}: {LocoTelem.CenterCar[car]}");
             }
             catch (Exception ex)
             {
-                Debug.Log($"could not get center car: {ex}");
+                Logger.LogToDebug($"could not get center car: {ex}");
             }
             var Locovelocity = car.velocity;
-            Debug.Log($"Current Speed: {Locovelocity}");
+            Logger.LogToDebug($"Current Speed: {Locovelocity}");
 
             var cars = car.EnumerateCoupled().ToList();
 
             foreach (var trainCar in cars)
             {
-                Debug.Log($"{trainCar.Archetype}");
+                Logger.LogToDebug($"{trainCar.Archetype}");
             }
 
             TestLoadInfo(car, "water");
@@ -285,7 +286,7 @@ namespace RouteManager
         {
             var graph = Graph.Shared;
             Vector3? centerPoint = locomotive.GetCenterPosition(graph);
-            Debug.Log($"Position of the loco {centerPoint} also centerpoint.value {centerPoint.Value}");
+            Logger.LogToDebug($"Position of the loco {centerPoint} also centerpoint.value {centerPoint.Value}");
             // Check if centerPoint is null
             if (centerPoint == null)
             {
@@ -295,7 +296,7 @@ namespace RouteManager
 
             if (!LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStations) || selectedStations.Count == 0)
             {
-                Debug.Log("No stations selected for this locomotive.");
+                Logger.LogToDebug("No stations selected for this locomotive.");
                 return null;
             }
 
@@ -307,13 +308,13 @@ namespace RouteManager
             for (int i = 0; i < selectedStations.Count; i++)
             {
                 PassengerStop station = selectedStations[i];
-                Debug.Log($"Station that was retrived from selectedStation: {station} and this should be the Indentifier for the station {station.identifier}");
+                Logger.LogToDebug($"Station that was retrived from selectedStation: {station} and this should be the Indentifier for the station {station.identifier}");
                 if (StationManager.Stations.TryGetValue(station.identifier, out StationData stationData))
                 {
                     // Calculate the distance between the locomotive and the station's center point
                     // Unwrap the nullable Vector3 using the Value property
-                    Debug.Log($"Station center: {stationData.Center}");
-                    Debug.Log($"loco center: {centerPoint.Value}");
+                    Logger.LogToDebug($"Station center: {stationData.Center}");
+                    Logger.LogToDebug($"loco center: {centerPoint.Value}");
 
                     float distance = Vector3.Distance(centerPoint.Value, stationData.Center);
 
@@ -329,7 +330,7 @@ namespace RouteManager
                     Debug.LogError($"Station data not found for identifier: {station.identifier}");
                 }
             }
-            Debug.Log($"returning {closestStationName}");
+            Logger.LogToDebug($"returning {closestStationName}");
             return closestStationName;
         }
 
@@ -339,13 +340,13 @@ namespace RouteManager
             bool isSelectedInUISelectedStations = true;
 
 
-            Debug.Log($"Getting next station for {locomotive.id}");
+            Logger.LogToDebug($"Getting next station for {locomotive.id}");
             string currentStation = null;
             if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
             {
-                Debug.Log($"LocomotiveDestination does not contain key: {locomotive} getting the closest station");
+                Logger.LogToDebug($"LocomotiveDestination does not contain key: {locomotive} getting the closest station");
                 currentStation = GetClosestSelectedStation(locomotive);
-                Debug.Log($"Locomotive {locomotive} is closest to {currentStation} ");
+                Logger.LogToDebug($"Locomotive {locomotive} is closest to {currentStation} ");
                 LocoTelem.LocomotiveDestination[locomotive] = currentStation;
                 return;
             }
@@ -360,7 +361,7 @@ namespace RouteManager
 
             LocoTelem.LocomotivePrevDestination[locomotive] = currentStation;
             bool EastWest = LocoTelem.LineDirectionEastWest[locomotive];
-            Debug.Log($"current station is {currentStation}");
+            Logger.LogToDebug($"current station is {currentStation}");
             List<string> selectedStationIdentifiers = LocoTelem.SelectedStations
                 .SelectMany(pair => pair.Value)
                 .Select(passengerStop => passengerStop.identifier)
@@ -369,18 +370,18 @@ namespace RouteManager
 
             var orderedSelectedStations = orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
 
-            Debug.Log($"try to get value from SelectedStations and checking number of selected stops");
+            Logger.LogToDebug($"try to get value from SelectedStations and checking number of selected stops");
             if (LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStops) && selectedStops.Count > 1)
             {
-                Debug.Log($"got value and there were {selectedStops.Count} stops");
+                Logger.LogToDebug($"got value and there were {selectedStops.Count} stops");
 
                 int currentIndex = orderedSelectedStations.IndexOf(currentStation);
 
-                Debug.Log($"The index of the current station in the list of selected stations is {currentIndex}");
+                Logger.LogToDebug($"The index of the current station in the list of selected stations is {currentIndex}");
                 if (currentIndex == -1)
                 {
                     LocoTelem.LocomotiveDestination[locomotive] = selectedStops.First().identifier;
-                    Debug.Log($" setting the next station to the first station because there was no current station");
+                    Logger.LogToDebug($" setting the next station to the first station because there was no current station");
                     return;  // If no current station, return the first selected station
                 }
 
@@ -388,11 +389,11 @@ namespace RouteManager
 
                 if (EastWest)
                 {
-                    Debug.Log($"Going East to West");
+                    Logger.LogToDebug($"Going East to West");
 
                     if (currentIndex == orderedSelectedStations.Count - 1)
                     {
-                        Debug.Log($"Reached {currentStation} and is the end of the line. Reversing travel direction back to {orderedSelectedStations[currentIndex - 1]}");
+                        Logger.LogToDebug($"Reached {currentStation} and is the end of the line. Reversing travel direction back to {orderedSelectedStations[currentIndex - 1]}");
                         CopyStationsFromLocoToCoaches(locomotive);
 
                         LocoTelem.LineDirectionEastWest[locomotive] = false;
@@ -401,7 +402,7 @@ namespace RouteManager
                     }
                     else
                     {
-                        Debug.Log($"Reached {currentStation} next station is {orderedSelectedStations[currentIndex + 1]}");
+                        Logger.LogToDebug($"Reached {currentStation} next station is {orderedSelectedStations[currentIndex + 1]}");
                         LocoTelem.LocomotiveDestination[locomotive] = orderedSelectedStations[currentIndex + 1];
 
                     }
@@ -409,11 +410,11 @@ namespace RouteManager
                 }
                 else
                 {
-                    Debug.Log($"Going West to East");
+                    Logger.LogToDebug($"Going West to East");
 
                     if (currentIndex == 0)
                     {
-                        Debug.Log($"Reached {currentStation} and is the end of the line. Reversing travel direction back to {orderedSelectedStations[currentIndex + 1]}");
+                        Logger.LogToDebug($"Reached {currentStation} and is the end of the line. Reversing travel direction back to {orderedSelectedStations[currentIndex + 1]}");
 
                         LocoTelem.LineDirectionEastWest[locomotive] = true;
                         LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
@@ -421,7 +422,7 @@ namespace RouteManager
                     }
                     else
                     {
-                        Debug.Log($"Reached {currentStation} next station is {orderedSelectedStations[currentIndex - 1]}");
+                        Logger.LogToDebug($"Reached {currentStation} next station is {orderedSelectedStations[currentIndex - 1]}");
                         LocoTelem.LocomotiveDestination[locomotive] = orderedSelectedStations[currentIndex - 1];
                     }
 
@@ -447,7 +448,7 @@ namespace RouteManager
                 }
 
             }
-            Debug.Log("There was no next destination");
+            Logger.LogToDebug("There was no next destination");
             return; // No next destination
         }
 
@@ -557,7 +558,7 @@ namespace RouteManager
                 }
                 catch (Exception ex)
                 {
-                    Debug.Log($"failed to get the number of passengers from GetPassengerCount(coach): {ex}");
+                    Logger.LogToDebug($"failed to get the number of passengers from GetPassengerCount(coach): {ex}");
                 }
 
 
@@ -630,15 +631,15 @@ namespace RouteManager
 
             if (destination == "alarkajct")
             {
-                Debug.Log($"Going to AlarkaJct checking which platform is closest south dist: {Vector3.Distance(locomotivePosition, destCenter)} | north dist: {Vector3.Distance(locomotivePosition, destCentern)}");
+                Logger.LogToDebug($"Going to AlarkaJct checking which platform is closest south dist: {Vector3.Distance(locomotivePosition, destCenter)} | north dist: {Vector3.Distance(locomotivePosition, destCentern)}");
                 if (Vector3.Distance(locomotivePosition, destCenter) > Vector3.Distance(locomotivePosition, destCentern))
                 {
-                    Debug.Log($"North is closest");
+                    Logger.LogToDebug($"North is closest");
                     return Vector3.Distance(locomotivePosition, destCentern);
                 }
                 else
                 {
-                    Debug.Log($"South is closest");
+                    Logger.LogToDebug($"South is closest");
                 }
             }
             return Vector3.Distance(locomotivePosition, destCenter);
@@ -646,7 +647,7 @@ namespace RouteManager
 
         public static void CopyStationsFromLocoToCoaches(Car locomotive)
         {
-            Debug.Log($"Copying Stations from loco: {locomotive.DisplayName} to coupled coaches");
+            Logger.LogToDebug($"Copying Stations from loco: {locomotive.DisplayName} to coupled coaches");
             string currentStation = LocoTelem.LocomotiveDestination[locomotive];
             int currentStationIndex = orderedStations.IndexOf(currentStation);
             bool isEastWest = LocoTelem.LineDirectionEastWest[locomotive]; // true if traveling West
@@ -676,7 +677,7 @@ namespace RouteManager
         private void DisplayUpdatedPassengerCarsMessage(int count)
         {
             // Implement the logic to display a message to the user
-            Debug.Log($"Selected stations copied to {count} passenger cars.");
+            Logger.LogToDebug($"Selected stations copied to {count} passenger cars.");
         }
 
         public static bool IsRouteModeEnabled(Car locomotive)
@@ -706,22 +707,22 @@ namespace RouteManager
             {
                 if (!LocoTelem.RouteMode.ContainsKey(locomotive))
                 {
-                    Debug.Log($" LocoTelem.RouteMode does not contain {locomotive.id} creating bool for {locomotive.id}");
+                    Logger.LogToDebug($" LocoTelem.RouteMode does not contain {locomotive.id} creating bool for {locomotive.id}");
                     LocoTelem.RouteMode[locomotive] = false;
                 }
-                Debug.Log($"changing LocoTelem.Route Mode from {!IsOn} to {IsOn}");
+                Logger.LogToDebug($"changing LocoTelem.Route Mode from {!IsOn} to {IsOn}");
                 LocoTelem.RouteMode[locomotive] = IsOn;
                 OnRouteModeChanged?.Invoke(locomotive);
 
                 if (!LocoTelem.locomotiveCoroutines.ContainsKey(locomotive))
                 {
-                    Debug.Log($" LocoTelem.locomotiveCoroutines does not contain {locomotive.id} creating bool for {locomotive.id}");
+                    Logger.LogToDebug($" LocoTelem.locomotiveCoroutines does not contain {locomotive.id} creating bool for {locomotive.id}");
                     LocoTelem.locomotiveCoroutines[locomotive] = false;
                 }
             }
             else if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive) && IsOn)
             {
-                Console.Log($"There are no stations selected for {locomotive.DisplayName}. Please select at least 1 station before enabling Route Mode");
+                Logger.LogToConsole($"There are no stations selected for {locomotive.DisplayName}. Please select at least 1 station before enabling Route Mode");
             }
 
             else if (StationManager.IsAnyStationSelectedForLocomotive(locomotive) && !IsOn)
@@ -736,7 +737,7 @@ namespace RouteManager
             }
             else
             {
-                Debug.Log($"Route Mode ({LocoTelem.RouteMode[locomotive]}) and IsAnyStationSelectedForLocomotive ({StationManager.IsAnyStationSelectedForLocomotive(locomotive)}) are no combination of false or true ");
+                Logger.LogToDebug($"Route Mode ({LocoTelem.RouteMode[locomotive]}) and IsAnyStationSelectedForLocomotive ({StationManager.IsAnyStationSelectedForLocomotive(locomotive)}) are no combination of false or true ");
             }
             return;
         }
