@@ -170,7 +170,7 @@ namespace RouteManager.v2.core
                         if (distanceToStation > 350)
                         {
 
-                            /*We may be able to avoid this with better logic elsewhere...
+                            //We may be able to avoid this with better logic elsewhere...
                             
                             if (distanceToStation > olddist && (trainVelocity > 1f && trainVelocity < 10f))
                             {
@@ -181,7 +181,7 @@ namespace RouteManager.v2.core
                                 StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                                 yield return new WaitForSeconds(30);
                             }
-                            */
+                            
 
                             RMmaxSpeed = 100;
                             Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
@@ -213,7 +213,7 @@ namespace RouteManager.v2.core
                         }
                         else if (distanceToStation <= 350 && distanceToStation > 10)
                         {
-                            /*We may be able to avoid this with better logic elsewhere...
+                            //We may be able to avoid this with better logic elsewhere...
                             if (distanceToStation > olddist && (trainVelocity > 1f && trainVelocity < 15f))
                             {
                                 LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
@@ -223,7 +223,7 @@ namespace RouteManager.v2.core
                                 StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                                 yield return new WaitForSeconds(30);
                             }
-                            */
+                            
 
                             RMmaxSpeed = distanceToStation / 8f;
                             if (RMmaxSpeed < 5f)
