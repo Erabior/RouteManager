@@ -445,15 +445,12 @@ namespace RouteManager.v2.core
         }
 
         //Methodize repeated code of fuel check. 
-        private bool compareAgainstMinVal(float? inputValue, float minimumValue)
+        //Method could be re-integrated into calling method now that additional checks have been rendered null from further code improvements.
+        private bool compareAgainstMinVal(float inputValue, float minimumValue)
         {
-            //If value not null
-            if(inputValue != null)
-            {
-                //Compare to minimums
-                if (inputValue < minimumValue)
-                    return true;
-            }
+            //Compare to minimums
+            if (inputValue < minimumValue)
+                return true;
 
             //Something unexpected happened or fuel is above minimums.
             //Either way return false here as there is nothing further we can do. 

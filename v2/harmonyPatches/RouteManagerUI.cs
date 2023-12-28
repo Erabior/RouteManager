@@ -11,8 +11,10 @@ using UI.CarInspector;
 using UnityEngine;
 using RouteManager;
 using Model;
+using RouteManager.v2.core;
+using RouteManager.v2.dataStructures;
 
-namespace RouteManagerUI
+namespace RouteManager.v2.harmonyPatches
 {
 
     [HarmonyPatch(typeof(CarInspector), "PopulateAIPanel")]

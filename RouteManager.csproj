@@ -90,17 +90,23 @@
   <ItemGroup>
     <Compile Include="ModLoader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="v2\core\AutoEngineer.cs" />
+    <Compile Include="v2\core\ManagedTrains.cs" />
     <Compile Include="v2\core\SettingsManager.cs" />
+    <Compile Include="v2\core\StationManager.cs" />
     <Compile Include="v2\dataStructures\LocoTelem.cs" />
     <Compile Include="v2\dataStructures\Settings.cs" />
+    <Compile Include="v2\dataStructures\StationMapData.cs" />
+    <Compile Include="v2\dataStructures\StationInformation.cs" />
     <Compile Include="v2\Dispatcher.cs" />
+    <Compile Include="v2\harmonyPatches\RouteManagerUI.cs" />
+    <Compile Include="v2\helpers\DebugFunctions.cs" />
     <Compile Include="v2\helpers\IniFile.cs" />
     <Compile Include="v2\helpers\Utilities.cs" />
     <Compile Include="v2\Logging\Logger.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Patches\" />
-    <Folder Include="v2\harmonyPatches\" />
     <Folder Include="v2\UI\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
