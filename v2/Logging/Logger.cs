@@ -19,7 +19,8 @@ namespace RouteManager.v2.Logging
         {
             Trace,
             Debug,
-            Information,
+            Verbose,
+            Informational,
             Warning,
             Error
         }
@@ -30,7 +31,7 @@ namespace RouteManager.v2.Logging
             LogToDebug("[CONSOLE OUTPUT] " + message);
         }
 
-        public static void LogToDebug(string message, logLevel messageLevel = logLevel.Information)
+        public static void LogToDebug(string message, logLevel messageLevel = logLevel.Informational)
         {
             if(messageLevel>=currentLogLevel)
                 Debug.Log(String.Format("{0} - {1}_V{2}: {3}", DateTime.Now.ToString("u"), ModLoader.getModName(), ModLoader.getModVersion(), message));
