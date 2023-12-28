@@ -428,13 +428,14 @@ namespace RouteManager
                             if (clearedForDeparture)
                             {
                                 LocoTelem.TransitMode[locomotive] = true;
+
+                                //Feature Enahncement: Issue #24
+                                //Write to console the departure of the train consist at station X
+                                //Bugfix: Fixed Erronious departure messages if not cleared for departure.
+                                Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", locomotive.DisplayName, currentStation.ToUpper(), LocoTelem.LocomotiveDestination[locomotive].ToUpper()));
+
                                 yield return new WaitForSeconds(1);
                             }
-
-                            //Feature Enahncement: Issue #24
-                            //Write to console the departure of the train consist at station X
-                            Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", locomotive.DisplayName, currentStation.ToUpper(), LocoTelem.LocomotiveDestination[locomotive].ToUpper()));
-
                         }
                     }
                 }
