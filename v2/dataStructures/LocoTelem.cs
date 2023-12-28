@@ -3,10 +3,13 @@ using RollingStock;
 using System.Collections.Generic;
 
 
-namespace RouteManager
+namespace RouteManager.v2.dataStructures
 {
     public class LocoTelem
     {
+
+        public static Dictionary<Car, bool> locomotiveCoroutines { get; private set; } = new Dictionary<Car, bool>();
+
         public static Dictionary<Car, Dictionary<string, bool>> UIStationSelections = new Dictionary<Car, Dictionary<string, bool>>();
         public static Dictionary<Car, string> LocomotiveDestination { get; private set; } = new Dictionary<Car, string>();
         public static Dictionary<Car, string> LocomotivePrevDestination { get; private set; } = new Dictionary<Car, string>();
@@ -16,7 +19,7 @@ namespace RouteManager
         public static Dictionary<Car, bool> TransitMode { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, bool> LineDirectionEastWest { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, bool> DriveForward { get; private set; } = new Dictionary<Car, bool>();
-        public static Dictionary<Car, bool> locomotiveCoroutines { get; private set; } = new Dictionary<Car, bool>();
+        
         public static Dictionary<Car, Car> CenterCar { get; private set; } = new Dictionary<Car, Car>();
     }
 }
