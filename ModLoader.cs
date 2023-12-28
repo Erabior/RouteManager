@@ -23,7 +23,7 @@ namespace RouteManager
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
-        private const string modVersion = "1.0.1.11";
+        private const string modVersion = "1.0.1.12";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static ManualLogSource mls;
 
