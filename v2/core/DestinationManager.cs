@@ -1,10 +1,5 @@
-﻿using Game.Messages;
-using Game.State;
-using Model;
-using Model.Definition;
-using Model.OpsNew;
+﻿using Model;
 using RollingStock;
-using RouteManager.v2.core;
 using RouteManager.v2.dataStructures;
 using System;
 using System.Collections.Generic;
@@ -17,28 +12,75 @@ using Logger = RouteManager.v2.Logging.Logger;
 
 namespace RouteManager.v2.core
 {
-    public class ManagedTrains : MonoBehaviour
+    public static class DestinationManager
     {
-        // Rest of your ManagedTrains code...
-        
+        public static readonly List<string> orderedStations = new List<string>
+        {
+            "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka",
+            "almond", "nantahala", "topton", "rhodo", "andrews"
+        };
 
-        
+        //Update the list of stations to stop at.
+        public static void SetSelectedStations(Car car, List<PassengerStop> selectedStops)
+        {
+            //Trace Logging
+            Logger.LogToDebug("ENTERED FUNCTION: SetSelectedStations", Logger.logLevel.Trace);
+
+            //Something went wrong
+            if (car == null)
+            {
+                throw new ArgumentNullException(nameof(car));
+            }
+
+            //Uppdate consists's station list
+            LocoTelem.SelectedStations[car] = selectedStops;
+
+            //Trace Logging
+            Logger.LogToDebug("EXITING FUNCTION: SetSelectedStations", Logger.logLevel.Trace);
+        }
+
+        //Determine if the current destination is a selected station.
+        public static bool IsCurrentDestinationSelected(Car locomotive)
+        {
+            //Trace Logging
+            Logger.LogToDebug("ENTERED FUNCTION: IsCurrentDestinationSelected", Logger.logLevel.Trace);
+
+            if (LocoTelem.LocomotiveDestination.TryGetValue(locomotive, out string currentDestination))
+            {
+                if (LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStations))
+                {
+                    return selectedStations.Any(station => station.identifier == currentDestination);
+                }
+            }
+
+            //Trace Logging
+            Logger.LogToDebug("EXITING FUNCTION: IsCurrentDestinationSelected", Logger.logLevel.Trace);
+
+            return false;
+        }
 
         public static string GetClosestSelectedStation(Car locomotive)
         {
-            var graph = Graph.Shared;
+            //Trace Logging
+            Logger.LogToDebug("ENTERED FUNCTION: GetClosestSelectedStation", Logger.logLevel.Trace);
+
+            Graph graph = Graph.Shared;
+
+            //Get Locomotive Center on the map
             Vector3? centerPoint = locomotive.GetCenterPosition(graph);
-            Logger.LogToDebug($"Position of the loco {centerPoint} also centerpoint.value {centerPoint.Value}");
-            // Check if centerPoint is null
+            Logger.LogToDebug(String.Format("Loco {0} centerpoint {1} has value {2})",locomotive, centerPoint, centerPoint.Value),Logger.logLevel.Debug);
+
+            // If centerpoint is null then bail
             if (centerPoint == null)
             {
                 Logger.LogToError("Could not obtain locomotive's center position.");
                 return null;
             }
 
+            //IF no stations are selected, bail
             if (!LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStations) || selectedStations.Count == 0)
             {
-                Logger.LogToDebug("No stations selected for this locomotive.");
+                Logger.LogToDebug("No stations selected for this locomotive.", Logger.logLevel.Debug);
                 return null;
             }
 
@@ -73,6 +115,10 @@ namespace RouteManager.v2.core
                 }
             }
             Logger.LogToDebug($"returning {closestStationName}");
+
+            //Trace Logging
+            Logger.LogToDebug("EXITING FUNCTION: GetClosestSelectedStation", Logger.logLevel.Trace);
+
             return closestStationName;
         }
 
@@ -136,7 +182,7 @@ namespace RouteManager.v2.core
                     if (currentIndex == orderedSelectedStations.Count - 1)
                     {
                         Logger.LogToDebug($"Reached {currentStation} and is the end of the line. Reversing travel direction back to {orderedSelectedStations[currentIndex - 1]}");
-                        CopyStationsFromLocoToCoaches(locomotive);
+                        TrainManager.CopyStationsFromLocoToCoaches(locomotive);
 
                         LocoTelem.LineDirectionEastWest[locomotive] = false;
                         LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
@@ -193,93 +239,6 @@ namespace RouteManager.v2.core
             Logger.LogToDebug("There was no next destination");
             return; // No next destination
         }
-
-        public static Car GetCenterCoach(Car locomotive)
-        {
-            var graph = Graph.Shared;
-
-            // List of all coupled cars
-            var cars = locomotive.EnumerateCoupled().ToList();
-            var coaches = new List<Car>();
-
-            foreach (var car in cars)
-            {
-
-                if (car.Archetype == CarArchetype.Coach)
-                {
-                    coaches.Add(car);
-                }
-
-            }
-            // List of cars with their center positions
-            var carPositions = coaches.Select(coaches => coaches.GetCenterPosition(graph)).ToList();
-
-            // Calculate the average position (center) of all cars
-            Vector3 center = Vector3.zero;
-            foreach (var pos in carPositions)
-            {
-                center += pos;
-            }
-            center /= coaches.Count;
-
-            // Find the car closest to the center position
-            float bestDist = float.PositiveInfinity;
-            Car bestCar = null;
-            foreach (var coach in coaches)
-            {
-                var dist = Vector3.SqrMagnitude(coach.GetCenterPosition(graph) - center);
-                if (dist < bestDist)
-                {
-                    bestDist = dist;
-                    bestCar = coach;
-                }
-            }
-
-            // Return the center position
-            return bestCar;
-        }
-
-        public static int GetNumPassInTrain(Car locomotive)
-        {
-            int numPass = 0;
-
-            var cars = locomotive.EnumerateCoupled().ToList();
-            var coaches = new List<Car>();
-
-            foreach (var car in cars)
-            {
-
-                if (car.Archetype == CarArchetype.Coach)
-                {
-                    coaches.Add(car);
-                }
-
-            }
-
-            foreach (Car coach in coaches)
-            {
-
-                try
-                {
-                    numPass += GetPassengerCount(coach);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogToDebug($"failed to get the number of passengers from GetPassengerCount(coach): {ex}");
-                }
-
-
-            }
-
-            return numPass;
-        }
-
-
-        public static int GetPassengerCount(Car coach)
-        {
-            return coach.GetPassengerMarker()?.TotalPassengers ?? 0;
-        }
-
 
         public static float GetDistanceToDest(Car locomotive)
         {
@@ -352,95 +311,98 @@ namespace RouteManager.v2.core
             return Vector3.Distance(locomotivePosition, destCenter);
         }
 
-        public static void CopyStationsFromLocoToCoaches(Car locomotive)
+
+
+
+
+
+
+
+
+
+
+
+
+        /**************************************************************************************************************************
+         * 
+         * 
+         * 
+         * 
+         *                                              UI HELPER METHODS BELOW THIS POINT
+         * 
+         * 
+         * 
+         * 
+         * 
+         ***************************************************************************************************************************/
+
+
+        //Determine if station is selected
+        public static bool IsStationSelected(PassengerStop stop, Car locomotive)
         {
-            Logger.LogToDebug($"Copying Stations from loco: {locomotive.DisplayName} to coupled coaches");
-            string currentStation = LocoTelem.LocomotiveDestination[locomotive];
-            int currentStationIndex = orderedStations.IndexOf(currentStation);
-            bool isEastWest = LocoTelem.LineDirectionEastWest[locomotive]; // true if traveling West
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: IsStationSelected", Logger.logLevel.Trace);
 
-            // Determine the range of stations to include based on travel direction
-            IEnumerable<string> relevantStations = isEastWest ?
-                orderedStations.Skip(currentStationIndex) :
-                orderedStations.Take(currentStationIndex + 1).Reverse();
+            bool result =  LocoTelem.UIStationSelections[locomotive].TryGetValue(stop.identifier, out bool isSelected) && isSelected;
 
-            // Filter to include only selected stations
-            HashSet<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
-                .Select(stop => stop.identifier)
-                .ToHashSet();
-
-            HashSet<string> filteredStations = relevantStations
-                .Where(station => selectedStationIdentifiers.Contains(station))
-                .ToHashSet();
-
-            // Apply the filtered stations to each coach
-            foreach (Car coach in locomotive.EnumerateCoupled().Where(car => car.Archetype == CarArchetype.Coach))
-            {
-                StateManager.ApplyLocal(new SetPassengerDestinations(coach.id, filteredStations.ToList()));
-            }
+            //Trace Function
+            Logger.LogToDebug("EXITING FUNCTION: IsStationSelected", Logger.logLevel.Trace);
+            return result; 
         }
 
-        public static bool IsRouteModeEnabled(Car locomotive)
+        //Update station selection
+        public static void SetStationSelected(PassengerStop stop, Car locomotive, bool isSelected)
         {
-            // Check if the locomotive exists in the TransitMode dictionary
-            if (LocoTelem.RouteMode.ContainsKey(locomotive))
-            {
-                return LocoTelem.RouteMode[locomotive];
-            }
-            else
-            {
-                // Handle the case where the key does not exist, for example, by logging an error or initializing the key
-                Logger.LogToError($"TransitMode dictionary does not contain key: {locomotive}");
-                // Optionally initialize the key with a default value
-                LocoTelem.RouteMode[locomotive] = false; // Default value
-                return false;
-            }
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: SetStationSelected", Logger.logLevel.Trace);
+
+            LocoTelem.UIStationSelections[locomotive][stop.identifier] = isSelected;
+
+            //Trace Function
+            Logger.LogToDebug("EXITING FUNCTION: SetStationSelected", Logger.logLevel.Trace);
         }
 
-
-        public static event Action<Car> OnRouteModeChanged;
-        public static void SetRouteModeEnabled(bool IsOn, Car locomotive)
+        //Check if Consist has any stations enabled
+        public static bool IsAnyStationSelectedForLocomotive(Car locomotive)
         {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: IsAnyStationSelectedForLocomotive", Logger.logLevel.Trace);
 
-
-            if (StationManager.IsAnyStationSelectedForLocomotive(locomotive) && IsOn)
+            // Check if the locomotive exists in the SelectedStations dictionary
+            if (LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStations))
             {
-                if (!LocoTelem.RouteMode.ContainsKey(locomotive))
+                // Return true if there is at least one selected station
+                return selectedStations.Any();
+            }
+
+            //Trace Function
+            Logger.LogToDebug("EXITING FUNCTION: IsAnyStationSelectedForLocomotive", Logger.logLevel.Trace);
+
+            // Return false if the locomotive is not found or no stations are selected
+            return false;
+        }
+
+        //Setup create station selection list of current consist.
+        public static void InitializeStationSelectionForLocomotive(Car locomotive)
+        {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: InitializeStationSelectionForLocomotive", Logger.logLevel.Trace);
+
+            if (!LocoTelem.UIStationSelections.ContainsKey(locomotive))
+            {
+                var stationSelectionsForLocomotive = new Dictionary<string, bool>();
+                var allStops = PassengerStop.FindAll();
+
+                foreach (var stop in allStops)
                 {
-                    Logger.LogToDebug($" LocoTelem.RouteMode does not contain {locomotive.id} creating bool for {locomotive.id}");
-                    LocoTelem.RouteMode[locomotive] = false;
+                    stationSelectionsForLocomotive[stop.identifier] = false;
                 }
-                Logger.LogToDebug($"changing LocoTelem.Route Mode from {!IsOn} to {IsOn}");
-                LocoTelem.RouteMode[locomotive] = IsOn;
-                OnRouteModeChanged?.Invoke(locomotive);
 
-                if (!LocoTelem.locomotiveCoroutines.ContainsKey(locomotive))
-                {
-                    Logger.LogToDebug($" LocoTelem.locomotiveCoroutines does not contain {locomotive.id} creating bool for {locomotive.id}");
-                    LocoTelem.locomotiveCoroutines[locomotive] = false;
-                }
-            }
-            else if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive) && IsOn)
-            {
-                Logger.LogToConsole($"There are no stations selected for {locomotive.DisplayName}. Please select at least 1 station before enabling Route Mode");
+                LocoTelem.UIStationSelections[locomotive] = stationSelectionsForLocomotive;
             }
 
-            else if (StationManager.IsAnyStationSelectedForLocomotive(locomotive) && !IsOn)
-            {
-                LocoTelem.RouteMode[locomotive] = false;
-                OnRouteModeChanged?.Invoke(locomotive);
-            }
-            else if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive) && !IsOn)
-            {
-                LocoTelem.RouteMode[locomotive] = false;
-                OnRouteModeChanged?.Invoke(locomotive);
-            }
-            else
-            {
-                Logger.LogToDebug($"Route Mode ({LocoTelem.RouteMode[locomotive]}) and IsAnyStationSelectedForLocomotive ({StationManager.IsAnyStationSelectedForLocomotive(locomotive)}) are no combination of false or true ");
-            }
-            return;
+            //Trace Function
+            Logger.LogToDebug("EXITING FUNCTION: InitializeStationSelectionForLocomotive", Logger.logLevel.Trace);
         }
     }
-
 }

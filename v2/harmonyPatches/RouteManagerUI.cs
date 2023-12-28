@@ -30,7 +30,7 @@ namespace RouteManager.v2.harmonyPatches
             var car = carField.GetValue(__instance) as Car;
 
             //Custom MOD Logic. Generate station selection
-            StationManager.InitializeStationSelectionForLocomotive(car);
+            DestinationManager.InitializeStationSelectionForLocomotive(car);
 
             //Ensure that car is not null
             if (car == null)
@@ -66,7 +66,7 @@ namespace RouteManager.v2.harmonyPatches
                 {
                     //Alteration: Hook for MOD deactivation
                     //Potential bug fix. Disable management before allowing manual control.
-                    ManagedTrains.SetRouteModeEnabled(false, car);
+                    TrainManager.SetRouteModeEnabled(false, car);
                     SetOrdersValue(AutoEngineerMode.Off, null, null, null);
                 });
                 builder.AddButtonSelectable("Road", mode2 == AutoEngineerMode.Road, delegate
@@ -76,7 +76,7 @@ namespace RouteManager.v2.harmonyPatches
                 builder.AddButtonSelectable("Yard", mode2 == AutoEngineerMode.Yard, delegate
                 {
                     //Alteration: Hook for MOD deactivation
-                    ManagedTrains.SetRouteModeEnabled(false, car);
+                    TrainManager.SetRouteModeEnabled(false, car);
                     SetOrdersValue(AutoEngineerMode.Yard, null, null, null);
                 });
 
@@ -121,7 +121,7 @@ namespace RouteManager.v2.harmonyPatches
                         bool? forward3 = false;
 
                         //IF STATEMENT wrapper for Station Management Logic
-                        if (!StationManager.IsAnyStationSelectedForLocomotive(car))
+                        if (!DestinationManager.IsAnyStationSelectedForLocomotive(car))
                         {
                             //Original Code
                             SetOrdersValue(null, forward3, null, null);
@@ -133,7 +133,7 @@ namespace RouteManager.v2.harmonyPatches
                         bool? forward2 = true;
 
                         //IF STATEMENT wrapper for Station Management Logic
-                        if (!StationManager.IsAnyStationSelectedForLocomotive(car))
+                        if (!DestinationManager.IsAnyStationSelectedForLocomotive(car))
                         {
                             //Original Code
                             SetOrdersValue(null, forward2, null, null);
@@ -166,7 +166,7 @@ namespace RouteManager.v2.harmonyPatches
                     {
                         
                         //If station Manager is inactive set max speed to RR Logic Max Speed
-                        if (!StationManager.IsAnyStationSelectedForLocomotive(car))
+                        if (!DestinationManager.IsAnyStationSelectedForLocomotive(car))
                         {
                             //Minor code ehancement: No need to calculate unless the condition is true.
                             int? maxSpeedMph3 = (int)(value * 5f);
@@ -186,14 +186,14 @@ namespace RouteManager.v2.harmonyPatches
 
                 builder.HStack(delegate (UIPanelBuilder hstack)
                 {
-                    hstack.AddToggle(() => ManagedTrains.IsRouteModeEnabled(car), isOn =>
+                    hstack.AddToggle(() => TrainManager.IsRouteModeEnabled(car), isOn =>
                     {
-                        ManagedTrains.SetRouteModeEnabled(isOn, car);
+                        TrainManager.SetRouteModeEnabled(isOn, car);
                     });
                     hstack.AddLabel("Enable Route Mode");
 
                     // Subscribe to the OnRouteModeChanged event
-                    ManagedTrains.OnRouteModeChanged += (changedCar) =>
+                    TrainManager.OnRouteModeChanged += (changedCar) =>
                     {
                         if (changedCar == car) // Check if the changed car is the one currently displayed in the UI
                         {
@@ -218,10 +218,10 @@ namespace RouteManager.v2.harmonyPatches
                         {
 
                             // Add a checkbox for each station
-                            hstack.AddToggle(() => StationManager.IsStationSelected(stop, car), isOn =>
+                            hstack.AddToggle(() => DestinationManager.IsStationSelected(stop, car), isOn =>
                             {
 
-                                StationManager.SetStationSelected(stop, car, isOn);
+                                DestinationManager.SetStationSelected(stop, car, isOn);
                                 builder.Rebuild();
 
                                 // Update when checkbox state changes
@@ -235,7 +235,7 @@ namespace RouteManager.v2.harmonyPatches
                 });
 
 
-                bool anyStationSelected = StationManager.IsAnyStationSelectedForLocomotive(car);
+                bool anyStationSelected = DestinationManager.IsAnyStationSelectedForLocomotive(car);
 
                 //If any station is selected, add a button to the UI
                 //if (anyStationSelected)
@@ -383,10 +383,10 @@ namespace RouteManager.v2.harmonyPatches
         {
             // Get the list of all selected stations
             var allStops = PassengerStop.FindAll();
-            var selectedStations = allStops.Where(stop => StationManager.IsStationSelected(stop, car)).ToList();
+            var selectedStations = allStops.Where(stop => DestinationManager.IsStationSelected(stop, car)).ToList();
 
             // Update the ManagedTrains with the selected stations for this car
-            ManagedTrains.SetSelectedStations(car, selectedStations);
+            DestinationManager.SetSelectedStations(car, selectedStations);
         }
     }
 }

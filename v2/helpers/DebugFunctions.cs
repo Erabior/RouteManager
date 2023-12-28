@@ -116,13 +116,13 @@ namespace RouteManager.v2.helpers
 
             if (graph == null)
             {
-                Logger.LogToError("Graph object is null", Logger.logLevel.Debug);
+                Logger.LogToError("Graph object is null");
                 return; // or handle this case as needed
             }
 
             if (car == null)
             {
-                Logger.LogToError("Car object is null", Logger.logLevel.Debug);
+                Logger.LogToError("Car object is null");
                 return; // or handle this case as needed
             }
 
@@ -181,7 +181,7 @@ namespace RouteManager.v2.helpers
             }
             try
             {
-                LocoTelem.CenterCar[car] = ManagedTrains.GetCenterCoach(car);
+                LocoTelem.CenterCar[car] = TrainManager.GetCenterCoach(car);
                 Logger.LogToDebug($"center car for {car}: {LocoTelem.CenterCar[car]}", Logger.logLevel.Debug);
             }
             catch (Exception ex)
