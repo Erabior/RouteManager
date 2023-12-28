@@ -5,12 +5,15 @@ using Model.Definition;
 using Model.OpsNew;
 using RollingStock;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization.Formatters;
 using System.Text;
 using System.Threading.Tasks;
 using Track;
 using UnityEngine;
+using static Game.Messages.PropertyChange;
 using Logger = RouteManager.v1.helpers.Logger;
 
 namespace RouteManager
@@ -18,6 +21,42 @@ namespace RouteManager
     public class ManagedTrains : MonoBehaviour
     {
         // Rest of your ManagedTrains code...
+
+        public static IEnumerator RMblow(Car locomotive, float intensity, float duration = 1f, float quillFinal = -1f)
+        {
+            duration = Mathf.Max(duration, 0.1f);
+
+            float finalIntensity = quillFinal < 0 ? intensity : quillFinal;
+            if (intensity == 0 && quillFinal == -1f)
+            {
+                StateManager.ApplyLocal(new PropertyChange(locomotive.id, Control.Horn, intensity));
+                yield break;
+            }
+
+            float timeDelta = 0.05f; // Time interval for updates
+            int intervals = (int)(duration / timeDelta); // Total number of intervals
+            float intensityChangePerInterval = (finalIntensity - intensity) / intervals; // Change in intensity per interval
+
+            if (quillFinal == -1f) //if final intensity is not specified then set a flat intensity with duration
+            {
+                StateManager.ApplyLocal(new PropertyChange(locomotive.id, Control.Horn, intensity));
+                yield return new WaitForSeconds(duration);
+            }
+            else
+            {
+                for (int i = 0; i <= intervals; i++)
+                {
+                    float currentIntensity = intensity + intensityChangePerInterval * i;
+                    StateManager.ApplyLocal(new PropertyChange(locomotive.id, Control.Horn, currentIntensity));
+                    yield return new WaitForSeconds(timeDelta);
+                }
+            }
+            
+        }
+        public static void RMbell(Car locomotive, bool IsBell)
+        {
+            StateManager.ApplyLocal(new PropertyChange(locomotive.id, Control.Bell, IsBell));
+        }
 
         //Update the list of stations to stop at.
         public static void UpdateSelectedStations(Car car, List<PassengerStop> selectedStops)

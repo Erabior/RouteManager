@@ -10,6 +10,8 @@ using Model;
 using System.IO;
 using RouteManager.v1.helpers;
 using Logger = RouteManager.v1.helpers.Logger;
+using System.Collections.Generic;
+using static Game.Messages.PropertyChange;
 
 namespace RouteManager
 {
@@ -104,7 +106,7 @@ namespace RouteManager
             float minDieselQuantity     = 100;
             float minWaterQuantity      = 500;
             float minCoalQuantity       = 0.5f;
-
+            float trainVelocity = 0;
 
 
 
@@ -189,6 +191,7 @@ namespace RouteManager
                     Logger.LogToDebug("starting transit mode");
                     olddist = float.MaxValue;
                     bool YieldRequired = false;
+                    bool aproachBlastrequired = false;
                     while (LocoTelem.TransitMode[locomotive])
                     {
 
@@ -245,7 +248,7 @@ namespace RouteManager
                             yield return new WaitForSeconds(5);
                         }
 
-                        var trainVelocity = Math.Abs(locomotive.velocity * 2.23694f);
+                        trainVelocity = Math.Abs(locomotive.velocity * 2.23694f);
 
                         if (distanceToStation > 350)
                         {
@@ -264,6 +267,25 @@ namespace RouteManager
                             RMmaxSpeed = 100;
                             Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
+                            if (distanceToStation < 500f)
+                            {
+                                Logger.LogToDebug("checking if blast required");
+                                if (aproachBlastrequired)
+                                {
+                                    Logger.LogToDebug("attempting to perform approach blast");
+                                    yield return ManagedTrains.RMblow(locomotive, 0.25f, 1.5f );
+                                    yield return ManagedTrains.RMblow(locomotive, 1f, 2.5f);
+                                    yield return ManagedTrains.RMblow(locomotive, 1f, 1.75f, 0.25f);
+                                    yield return ManagedTrains.RMblow(locomotive, 1f, 0.25f);
+                                    yield return ManagedTrains.RMblow(locomotive, 0f);
+                                    aproachBlastrequired = false;
+                                }
+
+                            }
+                            else
+                            {
+                                aproachBlastrequired = true;
+                            }
                             yield return new WaitForSeconds(5);
 
                         }
@@ -283,7 +305,7 @@ namespace RouteManager
                             {
                                 RMmaxSpeed = 5f;
                             }
-
+                            ManagedTrains.RMbell(locomotive, true);
 
                             Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
@@ -292,6 +314,7 @@ namespace RouteManager
                         }
                         else if (distanceToStation <= 10 && distanceToStation > 0)
                         {
+
                             RMmaxSpeed = 0f;
                             Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], 0, null));
@@ -317,7 +340,7 @@ namespace RouteManager
                     //Write to console the arrival of the train consist at station X
                     string currentStation = LocoTelem.LocomotiveDestination[locomotive];
                     Logger.LogToConsole(String.Format("{0} has arrived at {1} station",locomotive.DisplayName, currentStation.ToUpper()));
-
+                    ManagedTrains.RMbell(locomotive, false);
 
                     Logger.LogToDebug($"about to set new destination, curent destination {LocoTelem.LocomotiveDestination[locomotive].ToUpper()}");
                     ManagedTrains.GetNextDestination(locomotive);
@@ -325,13 +348,11 @@ namespace RouteManager
 
                     Logger.LogToDebug("Starting loading mode");
                     ManagedTrains.CopyStationsFromLocoToCoaches(locomotive);
-                    int numPassInTrain = 0;
-                    int oldNumPassInTrain = int.MaxValue;
-                    bool firstIter = true;
-
-                    LocoTelem.CenterCar[locomotive] = ManagedTrains.GetCenterCoach(locomotive);
+                    
+                    List<int> numPassInTrain = new List<int> { int.MaxValue, int.MaxValue, int.MaxValue, int.MaxValue, int.MaxValue };
                     
 
+                    LocoTelem.CenterCar[locomotive] = ManagedTrains.GetCenterCoach(locomotive);
                     
 
                     while (!LocoTelem.TransitMode[locomotive])
@@ -353,21 +374,36 @@ namespace RouteManager
                             break;
 
                         }
-
-                        if (firstIter)
+                        trainVelocity = Math.Abs(locomotive.velocity * 2.23694f);
+                        while (trainVelocity > 0.1f)
                         {
-                            yield return new WaitForSeconds(10);
-                            firstIter = false;
+                            trainVelocity = Math.Abs(locomotive.velocity * 2.23694f);
+                            if (trainVelocity > 0.1)
+                            {
+                                yield return new WaitForSeconds(1);
+                            }
+                            else
+                            {
+                                yield return new WaitForSeconds(3);
+                            }
+                            
                         }
 
-                        numPassInTrain = ManagedTrains.GetNumPassInTrain(locomotive);
-                        Logger.LogToDebug($"{locomotive} Has {numPassInTrain} onboard \t Was {oldNumPassInTrain} 5 seconds ago");
-
-                        if (oldNumPassInTrain != numPassInTrain)
+                        for (int i = 0; i<=4; i++)
                         {
-                            Logger.LogToDebug($"loaded or disembarked {Math.Abs(oldNumPassInTrain - numPassInTrain)} passengers disembarkation/embarkation in progress");
-                            oldNumPassInTrain = numPassInTrain;
-                            yield return new WaitForSeconds(10);
+                            numPassInTrain[i] = ManagedTrains.GetNumPassInTrain(locomotive);
+                            //Logger.LogToDebug($"{locomotive.DisplayName} Has {numPassInTrain} onboard.  Was {oldNumPassInTrain} 2 seconds ago");
+                            yield return new WaitForSeconds(1);
+
+                        }
+
+                        bool paxLoadNoChange = false;
+                        Logger.LogToDebug($"Passenger loading history for {locomotive.DisplayName} over the past 5 seconds {String.Join(",",numPassInTrain)}");
+                        paxLoadNoChange = numPassInTrain.All(numPass => numPass != int.MaxValue && numPass == numPassInTrain.First());
+                        if (!paxLoadNoChange)
+                        {
+                            Logger.LogToDebug($"{locomotive.DisplayName} Passenger count still changing - disembarkation/embarkation in progress");
+                            yield return new WaitForSeconds(1);
                         }
                         else
                         {

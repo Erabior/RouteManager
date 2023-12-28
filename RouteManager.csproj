@@ -88,6 +88,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="v1\helpers\Logger.cs" />
     <Compile Include="v1\strucutures\LocoTelem.cs" />
     <Compile Include="v1\core\ManagedTrains.cs" />
     <Compile Include="ModLoader.cs" />
