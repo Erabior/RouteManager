@@ -15,11 +15,13 @@ namespace RouteManager.v2.core
     {
         public static bool Load()
         {
+            //Stub
             return LoadRouteManagerSettings();
         }
 
         public static bool Apply()
-        {
+        {   
+            //Stub
             return ApplyRouteManagerSettings();
         }
 
@@ -27,39 +29,36 @@ namespace RouteManager.v2.core
         //Load Settings from config file
         private static bool LoadRouteManagerSettings()
         {
-            try
+            //Trace Logging
+            Logger.LogToDebug("ENTERED FUNCTION: LoadRouteManagerSettings", Logger.logLevel.Trace);
+
+            //Get INI File Location
+            string RouteManagerCFG = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "RouteManager.ini");
+            if (!File.Exists(RouteManagerCFG))
             {
-                Logger.LogToDebug("ENTERED FUNCTION: LoadRouteManagerSettings", Logger.logLevel.Trace);
-
-                //Get DLL File Location
-                string RouteManagerCFG = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "RouteManager.cfg");
-
-                if (!File.Exists(RouteManagerCFG))
-                {
-                    return false;
-                }
-                //Settings.currentLogLevel = Utilities.ParseEnum<Logger.logLevel>(File.ReadLines(RouteManagerCFG).First());
-
-                IniFile.SetIniFile(RouteManagerCFG);
-                string result = IniFile.Read("LogLevel", "Core");
-
-                Logger.LogToDebug(result);
-
+                return false;
             }
-            catch { return false; }
 
+            //Load Ini File
+            IniFile.Path = new FileInfo(RouteManagerCFG).FullName;
 
+            //Read INI File Properties
+            Settings.currentLogLevel = Utilities.ParseEnum<Logger.logLevel>(IniFile.Read("LogLevel", "Core"));
+
+            //Trace Logging
             Logger.LogToDebug("EXITING FUNCTION: LoadRouteManagerSettings", Logger.logLevel.Trace);
             return true;
         }
 
         private static bool ApplyRouteManagerSettings()
         {
+            //Trace Logging
             Logger.LogToDebug("ENTERED FUNCTION: ApplyRouteManagerSettings", Logger.logLevel.Trace);
 
             //Appply Settings
             Logger.currentLogLevel = Settings.currentLogLevel;
 
+            //Trace Logging
             Logger.LogToDebug("EXITING FUNCTION: ApplyRouteManagerSettings", Logger.logLevel.Trace);
             return true;
         }

@@ -25,12 +25,21 @@ namespace RouteManager.v2
             Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
 
             //Load Route Manager Configuration
-            SettingsManager.Load();
-            SettingsManager.Apply();
+            if (!SettingsManager.Load())
+                Logger.LogToError("FAILED TO LOAD SETTINGS!");
+            else
+                Logger.LogToDebug("Loaded Settings.", Logger.logLevel.Debug);
+
+            //Attempt to apply settings
+            if (!SettingsManager.Apply())
+                Logger.LogToError("FAILED TO APPLY SETTINGS!");
+            else
+                Logger.LogToDebug("Applied Settings.", Logger.logLevel.Debug);
 
             //Hook the map unload event to gracefully stop all instances prior to map unload. 
             Messenger.Default.Register<MapDidUnloadEvent>(this, GameMapUnloaded);
         }
+
         void Update()
         {
 

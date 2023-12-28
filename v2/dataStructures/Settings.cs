@@ -10,6 +10,6 @@ namespace RouteManager.v2.dataStructures
 {
     public class Settings
     {
-        public static logLevel currentLogLevel;
+        public static logLevel currentLogLevel = logLevel.Information;
     }
 }

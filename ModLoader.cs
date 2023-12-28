@@ -17,22 +17,26 @@ namespace RouteManager
         private readonly Harmony harmony = new Harmony(modGUID);
         public static ManualLogSource mls;
 
+        //Default unity hook.
         void Awake()
         {
             harmony.PatchAll();
             mls = Logger;
         }
 
+        //Accessor for getting current mod information
         public static string getModGuid()
         {
             return modGUID;
         }
 
+        //Accessor for getting current mod information
         public static string getModName()
         {
             return modName;
         }
 
+        //Accessor for getting current mod information
         public static string getModVersion()
         {
             return modVersion;

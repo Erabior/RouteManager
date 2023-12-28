@@ -12,7 +12,8 @@ namespace RouteManager.v2.Logging
     public class Logger : MonoBehaviour
     {
 
-        public static logLevel currentLogLevel = logLevel.Information;
+        //Initial default state
+        public static logLevel currentLogLevel = logLevel.Debug;
 
         public enum logLevel
         {

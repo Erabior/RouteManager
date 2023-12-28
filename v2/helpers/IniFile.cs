@@ -9,6 +9,17 @@ using System.Threading.Tasks;
 
 namespace RouteManager.v2.helpers
 {
+
+    /*******************************************************************************************************************
+     *******************************************************************************************************************
+     * 
+     * 
+     *              Class Derived from the link below with minimal edits to apply for the mod.
+     *              https://stackoverflow.com/questions/217902/reading-writing-an-ini-file
+     * 
+     * 
+     *******************************************************************************************************************
+     ******************************************************************************************************************/
     public class IniFile   // revision 11
     {
         public static string Path;
@@ -19,11 +30,6 @@ namespace RouteManager.v2.helpers
 
         [DllImport("kernel32", CharSet = CharSet.Unicode)]
         static extern int GetPrivateProfileString(string Section, string Key, string Default, StringBuilder RetVal, int Size, string FilePath);
-
-        public static void SetIniFile(string IniPath = null)
-        {
-            IniFile.Path = new FileInfo(IniPath ?? EXE + ".ini").FullName;
-        }
 
         public static string Read(string Key, string Section = null)
         {
