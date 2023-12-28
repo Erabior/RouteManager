@@ -253,7 +253,7 @@ namespace RouteManager.v2.core
 
                 if (!LocoTelem.locomotiveCoroutines.ContainsKey(locomotive))
                 {
-                    Logger.LogToDebug($" LocoTelem.locomotiveCoroutines does not contain {locomotive.id} creating bool for {locomotive.id}");
+                    Logger.LogToDebug($" LocoTelem.locomotiveCoroutines does not contain {locomotive.id} creating bool for {locomotive.DisplayName}");
                     LocoTelem.locomotiveCoroutines[locomotive] = false;
                 }
             }
@@ -261,7 +261,6 @@ namespace RouteManager.v2.core
             {
                 Logger.LogToConsole($"There are no stations selected for {locomotive.DisplayName}. Please select at least 1 station before enabling Route Mode");
             }
-
             else if (DestinationManager.IsAnyStationSelectedForLocomotive(locomotive) && !IsOn)
             {
                 LocoTelem.RouteMode[locomotive] = false;

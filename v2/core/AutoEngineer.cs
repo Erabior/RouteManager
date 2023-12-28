@@ -66,9 +66,11 @@ namespace RouteManager.v2.core
                     //Loop through transit logic
                     while (LocoTelem.TransitMode[locomotive])
                     {
+                        //Keep Track of old distance for use with direction check.
+                        olddist = distanceToStation;
 
                         //Determine if we should continue with the coroutine. If not break out...
-                        if(cancelTransitModeIfNeeded(locomotive))
+                        if (cancelTransitModeIfNeeded(locomotive))
                         {
                             break;
                         }

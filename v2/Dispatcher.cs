@@ -19,7 +19,7 @@ namespace RouteManager.v2
     public class Dispatcher : MonoBehaviour
     {
 
-
+        AutoEngineer engineerAi;
 
 
         //Default unity hook.
@@ -45,6 +45,8 @@ namespace RouteManager.v2
             //Hook the map unload event to gracefully stop all instances prior to map unload. 
             Messenger.Default.Register<MapDidUnloadEvent>(this, GameMapUnloaded);
 
+            engineerAi = new AutoEngineer();
+
             //Log status
             Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
             Logger.LogToDebug("Mod Ready!");
@@ -57,7 +59,8 @@ namespace RouteManager.v2
         void Update()
         {
             //Trace Logging
-            Logger.LogToDebug("ENTERED FUNCTION: Update", Logger.logLevel.Trace);
+            //Disable LogMessage for Update Thread unless REALLY NEEDED. 
+            //Logger.LogToDebug("ENTERED FUNCTION: Update", Logger.logLevel.Trace);
 
             //Only do stuff if we have an actively controlled consist
             if (LocoTelem.locomotiveCoroutines.Count >= 1)
@@ -67,14 +70,45 @@ namespace RouteManager.v2
                 //For each locomotive in the Coroutine list
                 foreach(Car currentLoco in keys) 
                 {
-                    Logger.LogToDebug(String.Format("Loco {0} has not called coroutine. Calling Coroutine for {1}",currentLoco,currentLoco.DisplayName),Logger.logLevel.Verbose);
+                    //Disable LogMessage for Update Thread unless REALLY NEEDED. 
+                    //Logger.LogToDebug(String.Format("Loco {0} has not called coroutine. Calling Coroutine for {1}",currentLoco,currentLoco.DisplayName),Logger.logLevel.Verbose);
 
+                    if (!LocoTelem.locomotiveCoroutines[currentLoco] && LocoTelem.RouteMode[currentLoco])
+                    {
+                        Logger.LogToDebug($"loco {currentLoco.DisplayName} currently has not called a coroutine - Calling the Coroutine with {currentLoco.DisplayName} as an arguement");
+                        LocoTelem.DriveForward[currentLoco] = true;
+                        LocoTelem.LineDirectionEastWest[currentLoco] = true;
 
+                        LocoTelem.TransitMode[currentLoco] = true;
+                        LocoTelem.RMMaxSpeed[currentLoco] = 0;
+                        LocoTelem.locomotiveCoroutines[currentLoco] = true;
+
+                        if (!LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
+                        {
+                            LocoTelem.LineDirectionEastWest[currentLoco] = true;
+                        }
+
+                        StartCoroutine(engineerAi.AutoEngineerControlRoutine(currentLoco));
+
+                    }
+                    else if (LocoTelem.locomotiveCoroutines[currentLoco] && !LocoTelem.RouteMode[currentLoco])
+                    {
+                        Logger.LogToDebug($"loco {currentLoco.DisplayName} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {currentLoco.DisplayName}");
+                        LocoTelem.LocomotivePrevDestination.Remove(currentLoco);
+                        //LocoTelem.LocomotiveDestination.Remove(keys[i]);
+                        LocoTelem.locomotiveCoroutines.Remove(currentLoco);
+                        LocoTelem.DriveForward.Remove(currentLoco);
+                        //LocoTelem.LineDirectionEastWest.Remove(keys[i]);
+                        LocoTelem.TransitMode.Remove(currentLoco);
+                        LocoTelem.RMMaxSpeed.Remove(currentLoco);
+                        StopCoroutine(engineerAi.AutoEngineerControlRoutine(currentLoco));
+                    }
                 }
             }
 
             //Trace Logging
-            Logger.LogToDebug("EXITING FUNCTION: Update", Logger.logLevel.Trace);
+            //Disable LogMessage for Update Thread unless REALLY NEEDED. 
+            //Logger.LogToDebug("EXITING FUNCTION: Update", Logger.logLevel.Trace);
         }
 
 
