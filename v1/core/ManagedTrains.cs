@@ -186,13 +186,13 @@ namespace RouteManager
 
             if (graph == null)
             {
-                Debug.LogError("Graph object is null");
+                Logger.LogToError("Graph object is null");
                 return; // or handle this case as needed
             }
 
             if (car == null)
             {
-                Debug.LogError("Car object is null");
+                Logger.LogToError("Car object is null");
                 return; // or handle this case as needed
             }
 
@@ -290,7 +290,7 @@ namespace RouteManager
             // Check if centerPoint is null
             if (centerPoint == null)
             {
-                Debug.LogError("Could not obtain locomotive's center position.");
+                Logger.LogToError("Could not obtain locomotive's center position.");
                 return null;
             }
 
@@ -327,7 +327,7 @@ namespace RouteManager
                 }
                 else
                 {
-                    Debug.LogError($"Station data not found for identifier: {station.identifier}");
+                    Logger.LogToError($"Station data not found for identifier: {station.identifier}");
                 }
             }
             Logger.LogToDebug($"returning {closestStationName}");
@@ -580,14 +580,14 @@ namespace RouteManager
             if (locomotive == null)
             {
 
-                Debug.LogError("Locomotive is null in GetDistanceToDest.");
+                Logger.LogToError("Locomotive is null in GetDistanceToDest.");
                 return -6969; // Return a default value or handle this case as needed
             }
 
             // Check if the locomotive key exists in the LocomotiveDestination dictionary
             if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
             {
-                Debug.LogError($"LocomotiveDestination does not contain key: {locomotive}");
+                Logger.LogToError($"LocomotiveDestination does not contain key: {locomotive}");
                 LocoTelem.LocomotiveDestination[locomotive] = GetClosestSelectedStation(locomotive);
 
                 if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
@@ -601,7 +601,7 @@ namespace RouteManager
 
             if (destination == null)
             {
-                Debug.LogError("Destination is null for locomotive.");
+                Logger.LogToError("Destination is null for locomotive.");
                 return -6969f; // Handle null destination
             }
             var graph = Graph.Shared;
@@ -622,7 +622,7 @@ namespace RouteManager
             }
             if (!StationManager.Stations.ContainsKey(destination))
             {
-                Debug.LogError($"Station not found for destination: {destination}");
+                Logger.LogToError($"Station not found for destination: {destination}");
                 return -6969f; // Handle missing station
             }
 
@@ -690,7 +690,7 @@ namespace RouteManager
             else
             {
                 // Handle the case where the key does not exist, for example, by logging an error or initializing the key
-                Debug.LogError($"TransitMode dictionary does not contain key: {locomotive}");
+                Logger.LogToError($"TransitMode dictionary does not contain key: {locomotive}");
                 // Optionally initialize the key with a default value
                 LocoTelem.RouteMode[locomotive] = false; // Default value
                 return false;

@@ -31,12 +31,12 @@ namespace RouteManager
 
             if (LocoTelem.locomotiveCoroutines.Count >= 1)
             {
-                //Debug.Log("There is data in locomotiveCoroutines");
+                //Logger.LogToDebug("There is data in locomotiveCoroutines");
                 var keys = LocoTelem.locomotiveCoroutines.Keys.ToArray();
 
                 for (int i = 0; i < keys.Count(); i++)
                 {
-                    //Debug.Log($"Loco {keys[i].id} has values Coroutine: {LocoTelem.locomotiveCoroutines[keys[i]]} and Route Mode bool: {LocoTelem.RouteMode[keys[i]]}");
+                    //Logger.LogToDebug($"Loco {keys[i].id} has values Coroutine: {LocoTelem.locomotiveCoroutines[keys[i]]} and Route Mode bool: {LocoTelem.RouteMode[keys[i]]}");
                     if (!LocoTelem.locomotiveCoroutines[keys[i]] && LocoTelem.RouteMode[keys[i]])
                     {
 
@@ -76,7 +76,7 @@ namespace RouteManager
             }
             else
             {
-                //Debug.Log("No key in locomotiveCoroutines: there are no locomotives that require the extended logic");
+                //Logger.LogToDebug("No key in locomotiveCoroutines: there are no locomotives that require the extended logic");
             }
         }
         public IEnumerator AutoEngineerControlRoutine(Car locomotive)
@@ -186,7 +186,7 @@ namespace RouteManager
 
                 if (LocoTelem.TransitMode[locomotive])
                 {
-                    Debug.Log("starting transit mode");
+                    Logger.LogToDebug("starting transit mode");
                     olddist = float.MaxValue;
                     bool YieldRequired = false;
                     while (LocoTelem.TransitMode[locomotive])
@@ -196,7 +196,7 @@ namespace RouteManager
                         olddist = distanceToStation;
                         if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
                         {
-                            Debug.Log($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
+                            Logger.LogToDebug($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
                             //clearDictsForLoco(locomotive);
                             ManagedTrains.SetRouteModeEnabled(false, locomotive);
                             StopCoroutine(AutoEngineerControlRoutine(locomotive));
@@ -206,7 +206,7 @@ namespace RouteManager
                         if (!LocoTelem.RouteMode[locomotive])
                         {
 
-                            Debug.Log($"loco {locomotive.DisplayName} - route mode was disabled - Stopping Coroutine for {locomotive.DisplayName}");
+                            Logger.LogToDebug($"loco {locomotive.DisplayName} - route mode was disabled - Stopping Coroutine for {locomotive.DisplayName}");
                             //clearDictsForLoco(locomotive);
                             StopCoroutine(AutoEngineerControlRoutine(locomotive));
                             break;
@@ -230,10 +230,10 @@ namespace RouteManager
                         {
                             if (YieldRequired)
                             {
-                                Debug.Log($"distance to station not able to be calculated after yielding once. stopping coroutine");
+                                Logger.LogToDebug($"distance to station not able to be calculated after yielding once. stopping coroutine");
                                 yield break;
                             }
-                            Debug.Log($"distance to station could not be calculated. Yielding for 5s");
+                            Logger.LogToDebug($"distance to station could not be calculated. Yielding for 5s");
                             YieldRequired = true;
                         }
                         if (distanceToStation <= -6969f)
@@ -254,15 +254,15 @@ namespace RouteManager
 
                             {
                                 LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
-                                Debug.Log("Was driving in the wrong direction. Reversing Direction");
+                                Logger.LogToDebug("Was driving in the wrong direction. Reversing Direction");
                                 RMmaxSpeed = 100;
-                                Debug.Log($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
+                                Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                                 StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                                 yield return new WaitForSeconds(30);
                             }
 
                             RMmaxSpeed = 100;
-                            Debug.Log($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
+                            Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                             yield return new WaitForSeconds(5);
 
@@ -272,9 +272,9 @@ namespace RouteManager
                             if (distanceToStation > olddist && (trainVelocity > 1f && trainVelocity < 15f))
                             {
                                 LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
-                                Debug.Log("Was driving in the wrong direction. Reversing Direction");
+                                Logger.LogToDebug("Was driving in the wrong direction. Reversing Direction");
                                 RMmaxSpeed = 100;
-                                Debug.Log($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
+                                Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                                 StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                                 yield return new WaitForSeconds(30);
                             }
@@ -285,7 +285,7 @@ namespace RouteManager
                             }
 
 
-                            Debug.Log($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
+                            Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                             yield return new WaitForSeconds(1);
 
@@ -293,7 +293,7 @@ namespace RouteManager
                         else if (distanceToStation <= 10 && distanceToStation > 0)
                         {
                             RMmaxSpeed = 0f;
-                            Debug.Log($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
+                            Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
                             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], 0, null));
                             LocoTelem.TransitMode[locomotive] = false;
                             yield return new WaitForSeconds(1);
@@ -311,8 +311,14 @@ namespace RouteManager
                         StopCoroutine(AutoEngineerControlRoutine(locomotive));
                         break;
                     }
+
+
+                    //Feature Enahncement: Issue #24
+                    //Write to console the arrival of the train consist at station X
+                    string currentStation = LocoTelem.LocomotiveDestination[locomotive];
+                    Logger.LogToConsole(String.Format("{0} has arrived at {1} station",locomotive.DisplayName, currentStation));
+
                     ManagedTrains.GetNextDestination(locomotive);
-                    Logger.LogToConsole(String.Format("{0} has arrived at: {1}",locomotive.DisplayName,"EXAMPLE"));
                     Logger.LogToDebug("Starting loading mode");
                     ManagedTrains.CopyStationsFromLocoToCoaches(locomotive);
                     int numPassInTrain = 0;
@@ -372,7 +378,7 @@ namespace RouteManager
                                 if (waterlevel != null)
                                 {
                                     //Erronious debug statement?
-                                    //Debug.Log($"loaded or disembarked {Math.Abs(oldNumPassInTrain - numPassInTrain)} passengers disembarkation/embarkation finished");
+                                    //Logger.LogToDebug($"loaded or disembarked {Math.Abs(oldNumPassInTrain - numPassInTrain)} passengers disembarkation/embarkation finished");
 
                                     //Check if below minimums
                                     if (waterlevel < minWaterQuantity)
@@ -421,6 +427,9 @@ namespace RouteManager
                                 yield return new WaitForSeconds(1);
                             }
 
+                            //Feature Enahncement: Issue #24
+                            //Write to console the departure of the train consist at station X
+                            Logger.LogToConsole(String.Format("{0} has departed {1} for {1}", locomotive.DisplayName, currentStation, LocoTelem.LocomotiveDestination[locomotive]));
 
                         }
                     }
@@ -479,7 +488,7 @@ namespace RouteManager
                 Logger.LogToDebug("Stopping All Route AI coroutine instances");
                 Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
                 Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
-                //Debug.Log("There is data in locomotiveCoroutines");
+                //Logger.LogToDebug("There is data in locomotiveCoroutines");
                 var keys = LocoTelem.locomotiveCoroutines.Keys.ToArray();
 
                 for (int i = 0; i < keys.Count(); i++)

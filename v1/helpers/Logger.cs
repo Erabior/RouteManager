@@ -12,13 +12,13 @@ namespace RouteManager.v1.helpers
     {
         public static void LogToConsole(string message)
         {
-            Console.Log(String.Format("{0}: {1}",ModLoader.getModName(), message));
+            Logger.LogToConsole(String.Format("{0}: {1}",ModLoader.getModName(), message));
             LogToDebug("[CONSOLE OUTPUT] " + message);
         }
 
         public static void LogToDebug(string message)
         {
-            Debug.Log(String.Format("{0} - {1}_V{2}: {3}", DateTime.Now.ToString("u"), ModLoader.getModName(), ModLoader.getModVersion(), message));
+            Logger.LogToDebug(String.Format("{0} - {1}_V{2}: {3}", DateTime.Now.ToString("u"), ModLoader.getModName(), ModLoader.getModVersion(), message));
         }
 
         public static void LogToError(string message)
