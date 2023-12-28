@@ -191,7 +191,7 @@ namespace RouteManager
                     Logger.LogToDebug("starting transit mode");
                     olddist = float.MaxValue;
                     bool YieldRequired = false;
-                    bool aproachBlastrequired = false;
+                    bool approachBlastrequired = false;
                     while (LocoTelem.TransitMode[locomotive])
                     {
 
@@ -270,7 +270,7 @@ namespace RouteManager
                             if (distanceToStation < 500f)
                             {
                                 Logger.LogToDebug("checking if blast required");
-                                if (aproachBlastrequired)
+                                if (approachBlastrequired)
                                 {
                                     Logger.LogToDebug("attempting to perform approach blast");
                                     yield return ManagedTrains.RMblow(locomotive, 0.25f, 1.5f );
@@ -278,13 +278,13 @@ namespace RouteManager
                                     yield return ManagedTrains.RMblow(locomotive, 1f, 1.75f, 0.25f);
                                     yield return ManagedTrains.RMblow(locomotive, 1f, 0.25f);
                                     yield return ManagedTrains.RMblow(locomotive, 0f);
-                                    aproachBlastrequired = false;
+                                    approachBlastrequired = false;
                                 }
 
                             }
                             else
                             {
-                                aproachBlastrequired = true;
+                                approachBlastrequired = true;
                             }
                             yield return new WaitForSeconds(5);
 
