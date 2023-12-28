@@ -316,9 +316,13 @@ namespace RouteManager
                     //Feature Enahncement: Issue #24
                     //Write to console the arrival of the train consist at station X
                     string currentStation = LocoTelem.LocomotiveDestination[locomotive];
-                    Logger.LogToConsole(String.Format("{0} has arrived at {1} station",locomotive.DisplayName, currentStation));
+                    Logger.LogToConsole(String.Format("{0} has arrived at {1} station",locomotive.DisplayName, currentStation.ToUpper()));
 
+
+                    Logger.LogToDebug($"about to set new destination, curent destination {LocoTelem.LocomotiveDestination[locomotive].ToUpper()}");
                     ManagedTrains.GetNextDestination(locomotive);
+                    Logger.LogToDebug($"New destination was set, destination: {LocoTelem.LocomotiveDestination[locomotive].ToUpper()}");
+
                     Logger.LogToDebug("Starting loading mode");
                     ManagedTrains.CopyStationsFromLocoToCoaches(locomotive);
                     int numPassInTrain = 0;
@@ -326,9 +330,9 @@ namespace RouteManager
                     bool firstIter = true;
 
                     LocoTelem.CenterCar[locomotive] = ManagedTrains.GetCenterCoach(locomotive);
-                    Logger.LogToDebug($"about to set new destination, curent destination{LocoTelem.LocomotiveDestination[locomotive]}");
+                    
 
-                    Logger.LogToDebug($"New destination was set, destination: {LocoTelem.LocomotiveDestination[locomotive]}");
+                    
 
                     while (!LocoTelem.TransitMode[locomotive])
                     {
@@ -429,7 +433,7 @@ namespace RouteManager
 
                             //Feature Enahncement: Issue #24
                             //Write to console the departure of the train consist at station X
-                            Logger.LogToConsole(String.Format("{0} has departed {1} for {1}", locomotive.DisplayName, currentStation, LocoTelem.LocomotiveDestination[locomotive]));
+                            Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", locomotive.DisplayName, currentStation.ToUpper(), LocoTelem.LocomotiveDestination[locomotive].ToUpper()));
 
                         }
                     }
