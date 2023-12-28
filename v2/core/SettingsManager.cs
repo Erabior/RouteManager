@@ -42,8 +42,36 @@ namespace RouteManager.v2.core
             //Load Ini File
             IniFile.Path = new FileInfo(RouteManagerCFG).FullName;
 
-            //Read INI File Properties
+
+
+
+            /********************************************************************************
+            *********************************************************************************
+            *
+            *
+            *                       Read INI File Properties
+            *                       
+            *
+            *********************************************************************************
+            ********************************************************************************/
+
+            float value = 0;
+
+            //Set Log Level
             Settings.currentLogLevel = Utilities.ParseEnum<Logger.logLevel>(IniFile.Read("LogLevel", "Core"));
+
+            //Set Min Water Level
+            if (float.TryParse(IniFile.Read("WaterWarningLevel", "Warnings"), out value))
+                Settings.minWaterQuantity = value ==0 ? 500f : value ;
+
+            //Set Min Coal Level
+            if (float.TryParse(IniFile.Read("CoalWarningLevel", "Warnings"), out value))
+                Settings.minCoalQuantity = value == 0 ? 0.5f : value;
+
+            //Set Min Diesel Level
+            if (float.TryParse(IniFile.Read("CoalDieselLevel", "Warnings"), out value))
+                Settings.minCoalQuantity = value == 0 ? 100f : value;
+
 
             //Trace Logging
             Logger.LogToDebug("EXITING FUNCTION: LoadRouteManagerSettings", Logger.logLevel.Trace);
