@@ -20,85 +20,9 @@ namespace RouteManager.v2.core
     public class ManagedTrains : MonoBehaviour
     {
         // Rest of your ManagedTrains code...
-
-        //Update the list of stations to stop at.
-        public static void UpdateSelectedStations(Car car, List<PassengerStop> selectedStops)
-        {
-            //Something went wrong
-            if (car == null)
-            {
-                throw new ArgumentNullException(nameof(car));
-            }
-
-            //Uppdate consists's station list
-            LocoTelem.SelectedStations[car] = selectedStops;
-        }
-
-
-        public static bool IsCurrentDestinationSelected(Car locomotive)
-        {
-            if (LocoTelem.LocomotiveDestination.TryGetValue(locomotive, out string currentDestination))
-            {
-                if (LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStations))
-                {
-                    return selectedStations.Any(station => station.identifier == currentDestination);
-                }
-            }
-
-            return false;
-        }
-
-        public static float GetLoadInfoForLoco(Car car, String loadIdent)
-        {
-            int slotIndex;
-
-            if (loadIdent == "diesel-fuel")
-            {
-                CarLoadInfo? loadInfo = car.GetLoadInfo(loadIdent, out slotIndex);
-
-                if (loadInfo.HasValue)
-                {
-
-                    return loadInfo.Value.Quantity;
-                }
-                else
-                {
-                    //Debugging
-                    Logger.LogToDebug($"{car.DisplayName} No Diesel load information found for {loadIdent}.");
-                }
-            }
-
-            var cars = car.EnumerateCoupled().ToList();
-            foreach (var trainCar in cars)
-            {
-                if (trainCar.Archetype == CarArchetype.Tender)
-                {
-                    Car Tender = trainCar;
-                    CarLoadInfo? loadInfo = Tender.GetLoadInfo(loadIdent, out slotIndex);
-
-                    if (loadInfo.HasValue)
-                    {
-                        return loadInfo.Value.Quantity;
-                    }
-                    else
-                    {
-                        //Debugging
-                        Logger.LogToDebug($"{car.DisplayName} No Steam load information found for {loadIdent}.");
-                    }
-                }
-            }
-
-            //Something went wrong so assume 0 fuel
-            return 0f;
-        }
-
         
 
-        private static readonly List<string> orderedStations = new List<string>
-    {
-        "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka",
-        "almond", "nantahala", "topton", "rhodo", "andrews"
-    };
+        
 
         public static string GetClosestSelectedStation(Car locomotive)
         {

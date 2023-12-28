@@ -132,12 +132,12 @@ namespace RouteManager.v2.core
                             //If after delaying execution for 5 seconds, stop coroutine for locomotive
                             if (delayExecution)
                             {
-                                Logger.LogToConsole("Unable to determine distance to station. Disabling Dispatcher control of locomotive: " + locomotive.DisplayName);
+                                Logger.LogToConsole("Unable to determine distance to station. Disabling Dispatcher control of locomotive: " + locomotive.DisplayName, Logger.logLevel.Debug);
                                 yield break;
                             }
 
                             //Try again in 5 seconds
-                            Logger.LogToDebug(String.Format("Distance to station could not be calculated for {0}. Yielding for 5s", locomotive.DisplayName));
+                            Logger.LogToDebug(String.Format("Distance to station could not be calculated for {0}. Yielding for 5s", locomotive.DisplayName), Logger.logLevel.Debug);
                             delayExecution = true;
                         }
 
@@ -262,9 +262,9 @@ namespace RouteManager.v2.core
 
 
                     //Update Route Destination
-                    Logger.LogToDebug(String.Format("Locomotive {0} - Current destination: {1}",locomotive.DisplayName, LocoTelem.LocomotiveDestination[locomotive].ToUpper()));
+                    Logger.LogToDebug(String.Format("Locomotive {0} - Current destination: {1}",locomotive.DisplayName, LocoTelem.LocomotiveDestination[locomotive].ToUpper()), Logger.logLevel.Debug);
                     ManagedTrains.GetNextDestination(locomotive);
-                    Logger.LogToDebug(String.Format("Locomotive {0} - New destination: {1}", locomotive.DisplayName, LocoTelem.LocomotiveDestination[locomotive].ToUpper()));
+                    Logger.LogToDebug(String.Format("Locomotive {0} - New destination: {1}", locomotive.DisplayName, LocoTelem.LocomotiveDestination[locomotive].ToUpper()), Logger.logLevel.Debug);
 
 
                     //Set Passenger car station lists
@@ -297,11 +297,11 @@ namespace RouteManager.v2.core
 
                         numPassInTrain = ManagedTrains.GetNumPassInTrain(locomotive);
 
-                        Logger.LogToDebug(String.Format("Locomotive {0} has {1} passengers now. Was: {2}", locomotive.DisplayName, numPassInTrain, oldNumPassInTrain));
+                        Logger.LogToDebug(String.Format("Locomotive {0} has {1} passengers now. Was: {2}", locomotive.DisplayName, numPassInTrain, oldNumPassInTrain), Logger.logLevel.Debug);
 
                         if (oldNumPassInTrain != numPassInTrain)
                         {
-                            Logger.LogToDebug(String.Format("Locomotive {0} passenger delta is: {1}", locomotive.DisplayName, Math.Abs(oldNumPassInTrain - numPassInTrain)));
+                            Logger.LogToDebug(String.Format("Locomotive {0} passenger delta is: {1}", locomotive.DisplayName, Math.Abs(oldNumPassInTrain - numPassInTrain)), Logger.logLevel.Debug);
                             oldNumPassInTrain = numPassInTrain;
                             yield return new WaitForSeconds(10);
                         }
@@ -372,26 +372,29 @@ namespace RouteManager.v2.core
             if (!LocoTelem.RouteMode[locomotive])
             {
 
-                Logger.LogToDebug($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}");
+                Logger.LogToDebug($"loco {locomotive} - route mode was disabled - Stopping Coroutine for {locomotive}", Logger.logLevel.Debug);
                 StopCoroutine(AutoEngineerControlRoutine(locomotive));
 
             }
             if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
             {
-                Logger.LogToDebug($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}");
+                Logger.LogToDebug($"loco {locomotive} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {locomotive}", Logger.logLevel.Debug);
                 StopCoroutine(AutoEngineerControlRoutine(locomotive));
             }
 
-            
+            //Trace Function
+            Logger.LogToDebug("EXITING FUNCTION: AutoEngineerControlRoutine", Logger.logLevel.Trace);
         }
 
         //Initial checks to determine if we can continue with the coroutine
         private bool cancelTransitModeIfNeeded(Car locomotive)
         {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: cancelTransitModeIfNeeded", Logger.logLevel.Trace);
             //If no stations are selected for the locmotive, end the coroutine
             if (!StationManager.IsAnyStationSelectedForLocomotive(locomotive))
             {
-                Logger.LogToConsole("No stations selected. Stopping Coroutine for: " + locomotive.DisplayName);
+                Logger.LogToConsole("No stations selected. Stopping Coroutine for: " + locomotive.DisplayName, Logger.logLevel.Debug);
                 ManagedTrains.SetRouteModeEnabled(false, locomotive);
                 StopCoroutine(AutoEngineerControlRoutine(locomotive));
                 return true;
@@ -400,11 +403,13 @@ namespace RouteManager.v2.core
             //Engineer mode was changed and is no longer route mode
             if (!LocoTelem.RouteMode[locomotive])
             {
-                Logger.LogToDebug("Locomotive no longer in Route Mode. Stopping Coroutine for: " + locomotive.DisplayName);
+                Logger.LogToDebug("Locomotive no longer in Route Mode. Stopping Coroutine for: " + locomotive.DisplayName, Logger.logLevel.Debug);
                 StopCoroutine(AutoEngineerControlRoutine(locomotive));
                 return true;
             }
 
+            //Trace Method
+            Logger.LogToDebug("EXITING FUNCTION: cancelTransitModeIfNeeded", Logger.logLevel.Trace);
             return false;
         }
 
@@ -412,6 +417,9 @@ namespace RouteManager.v2.core
         //Separate out the core fuel check logic
         private List<KeyValuePair<string, float>> locoLowFuelCheck(Car locomotive)
         {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: locoLowFuelCheck", Logger.logLevel.Trace);
+
             List<KeyValuePair<string, float>> fuelCheckResults = new List<KeyValuePair<string, float>>();
 
             //If steam locomotive Check the water and coal levels
@@ -441,6 +449,8 @@ namespace RouteManager.v2.core
                 }
             }
 
+            //Trace Method
+            Logger.LogToDebug("EXITING FUNCTION: locoLowFuelCheck", Logger.logLevel.Trace);
             return fuelCheckResults;
         }
 
@@ -448,9 +458,15 @@ namespace RouteManager.v2.core
         //Method could be re-integrated into calling method now that additional checks have been rendered null from further code improvements.
         private bool compareAgainstMinVal(float inputValue, float minimumValue)
         {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: compareAgainstMinVal", Logger.logLevel.Trace);
+
             //Compare to minimums
             if (inputValue < minimumValue)
                 return true;
+
+            //Trace Method
+            Logger.LogToDebug("EXITING FUNCTION: compareAgainstMinVal", Logger.logLevel.Trace);
 
             //Something unexpected happened or fuel is above minimums.
             //Either way return false here as there is nothing further we can do. 

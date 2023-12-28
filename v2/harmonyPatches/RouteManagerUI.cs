@@ -386,7 +386,7 @@ namespace RouteManager.v2.harmonyPatches
             var selectedStations = allStops.Where(stop => StationManager.IsStationSelected(stop, car)).ToList();
 
             // Update the ManagedTrains with the selected stations for this car
-            ManagedTrains.UpdateSelectedStations(car, selectedStations);
+            ManagedTrains.SetSelectedStations(car, selectedStations);
         }
     }
 }

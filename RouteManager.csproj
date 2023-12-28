@@ -94,6 +94,7 @@
     <Compile Include="v2\core\ManagedTrains.cs" />
     <Compile Include="v2\core\SettingsManager.cs" />
     <Compile Include="v2\core\StationManager.cs" />
+    <Compile Include="v2\core\TrainManager.cs" />
     <Compile Include="v2\dataStructures\LocoTelem.cs" />
     <Compile Include="v2\dataStructures\Settings.cs" />
     <Compile Include="v2\dataStructures\StationMapData.cs" />
