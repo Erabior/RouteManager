@@ -76,17 +76,8 @@ namespace RouteManager.v2
                     if (!LocoTelem.locomotiveCoroutines[currentLoco] && LocoTelem.RouteMode[currentLoco])
                     {
                         Logger.LogToDebug($"loco {currentLoco.DisplayName} currently has not called a coroutine - Calling the Coroutine with {currentLoco.DisplayName} as an arguement");
-                        LocoTelem.DriveForward[currentLoco] = true;
-                        LocoTelem.LineDirectionEastWest[currentLoco] = true;
 
-                        LocoTelem.TransitMode[currentLoco] = true;
-                        LocoTelem.RMMaxSpeed[currentLoco] = 0;
-                        LocoTelem.locomotiveCoroutines[currentLoco] = true;
-
-                        if (!LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
-                        {
-                            LocoTelem.LineDirectionEastWest[currentLoco] = true;
-                        }
+                        prepareDataStructures(currentLoco);
 
                         StartCoroutine(engineerAi.AutoEngineerControlRoutine(currentLoco));
 
@@ -94,13 +85,9 @@ namespace RouteManager.v2
                     else if (LocoTelem.locomotiveCoroutines[currentLoco] && !LocoTelem.RouteMode[currentLoco])
                     {
                         Logger.LogToDebug($"loco {currentLoco.DisplayName} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {currentLoco.DisplayName}");
-                        LocoTelem.LocomotivePrevDestination.Remove(currentLoco);
-                        //LocoTelem.LocomotiveDestination.Remove(keys[i]);
-                        LocoTelem.locomotiveCoroutines.Remove(currentLoco);
-                        LocoTelem.DriveForward.Remove(currentLoco);
-                        //LocoTelem.LineDirectionEastWest.Remove(keys[i]);
-                        LocoTelem.TransitMode.Remove(currentLoco);
-                        LocoTelem.RMMaxSpeed.Remove(currentLoco);
+
+                        cleanDataStructures(currentLoco);
+
                         StopCoroutine(engineerAi.AutoEngineerControlRoutine(currentLoco));
                     }
                 }
@@ -109,6 +96,49 @@ namespace RouteManager.v2
             //Trace Logging
             //Disable LogMessage for Update Thread unless REALLY NEEDED. 
             //Logger.LogToDebug("EXITING FUNCTION: Update", Logger.logLevel.Trace);
+        }
+
+
+        private void prepareDataStructures(Car currentLoco)
+        {
+            LocoTelem.DriveForward[currentLoco] = true;
+            LocoTelem.LineDirectionEastWest[currentLoco] = true;
+            LocoTelem.TransitMode[currentLoco] = true;
+            LocoTelem.RMMaxSpeed[currentLoco] = 0;
+            LocoTelem.locomotiveCoroutines[currentLoco] = true;
+            LocoTelem.approachWhistleSounded[currentLoco] = false;
+
+            if (!LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
+            {
+                LocoTelem.LineDirectionEastWest[currentLoco] = true;
+            }
+        }
+
+        private void cleanDataStructures(Car currentLoco)
+        {
+            if(LocoTelem.DriveForward.ContainsKey(currentLoco))
+                LocoTelem.DriveForward.Remove(currentLoco) ;
+
+            if (LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
+                LocoTelem.LineDirectionEastWest.Remove(currentLoco);
+
+            if (LocoTelem.TransitMode.ContainsKey(currentLoco))
+                LocoTelem.TransitMode.Remove(currentLoco);
+
+            if (LocoTelem.RMMaxSpeed.ContainsKey(currentLoco))
+                LocoTelem.RMMaxSpeed.Remove(currentLoco);
+
+            if (LocoTelem.approachWhistleSounded.ContainsKey(currentLoco))
+                LocoTelem.approachWhistleSounded.Remove(currentLoco);
+
+            if (LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
+                LocoTelem.LineDirectionEastWest.Remove(currentLoco);
+
+            if (LocoTelem.LocomotivePrevDestination.ContainsKey(currentLoco))
+                LocoTelem.LocomotivePrevDestination.Remove(currentLoco);
+
+            if (LocoTelem.locomotiveCoroutines.ContainsKey(currentLoco))
+                LocoTelem.locomotiveCoroutines.Remove(currentLoco);
         }
 
 

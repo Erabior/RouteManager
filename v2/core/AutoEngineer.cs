@@ -217,20 +217,20 @@ namespace RouteManager.v2.core
                             yield return new WaitForSeconds(5);
                         }
                         //Entering Destination Boundary
-                        else if (distanceToStation <= 500)
+                        else if (distanceToStation <= 500 && distanceToStation > 400)
                         {
                             onApproachLongDist(locomotive);
 
                             yield return new WaitForSeconds(1);
                         }
                         //Approaching platform
-                        else if (distanceToStation < 400 && distanceToStation > 100)
+                        else if (distanceToStation <= 400 && distanceToStation > 100)
                         {
                             onApproachMediumDist(locomotive, distanceToStation);
                             yield return new WaitForSeconds(1);
                         }
                         //Entering Platform
-                        else if (distanceToStation < 100 && distanceToStation > 10)
+                        else if (distanceToStation <= 100 && distanceToStation > 10)
                         {
                             onApproachShortDist(locomotive, distanceToStation);
                             yield return new WaitForSeconds(1);
@@ -451,6 +451,8 @@ namespace RouteManager.v2.core
             //Trace Function
             Logger.LogToDebug("ENTERED FUNCTION: generalTransit", Logger.logLevel.Trace);
 
+            Logger.LogToDebug(String.Format("Locomotive {0} triggered General Transit.", locomotive.DisplayName), Logger.logLevel.Verbose);
+
             //Set AI Maximum speed
             //Track max speed takes precedence. 
             LocoTelem.RMMaxSpeed[locomotive] = 100f;
@@ -470,9 +472,11 @@ namespace RouteManager.v2.core
             //Trace Function
             Logger.LogToDebug("ENTERED FUNCTION: onApproachLongDist", Logger.logLevel.Trace);
 
+            Logger.LogToDebug(String.Format("Locomotive {0} triggered Long Approach.",locomotive.DisplayName), Logger.logLevel.Verbose);
             //If yet to whistle on approach, then whistle
             if (!LocoTelem.approachWhistleSounded[locomotive])
             {
+                Logger.LogToDebug(String.Format("Locomotive {0} activating Appproach Whistle", locomotive.DisplayName), Logger.logLevel.Verbose);
                 TrainManager.standardWhistle(locomotive);
                 LocoTelem.approachWhistleSounded[locomotive] = true;
             }
@@ -488,6 +492,8 @@ namespace RouteManager.v2.core
         {
             //Trace Function
             Logger.LogToDebug("ENTERED FUNCTION: onApproachMediumDist", Logger.logLevel.Trace);
+
+            Logger.LogToDebug(String.Format("Locomotive {0} triggered Medium Approach.", locomotive.DisplayName), Logger.logLevel.Verbose);
 
             //Gradually reduce maximum speed the closer to the platform we get. 
             float calculatedSpeed = distanceToStation / 8f;
@@ -517,6 +523,8 @@ namespace RouteManager.v2.core
             //Trace Function
             Logger.LogToDebug("ENTERED FUNCTION: onApproachShortDist", Logger.logLevel.Trace);
 
+            Logger.LogToDebug(String.Format("Locomotive {0} triggered Short Approach.", locomotive.DisplayName), Logger.logLevel.Verbose);
+
             //Gradually reduce maximum speed the closer to the platform we get. 
             float calculatedSpeed = distanceToStation / 8f;
 
@@ -531,6 +539,7 @@ namespace RouteManager.v2.core
             }
 
             //Apply Bell
+            Logger.LogToDebug(String.Format("Locomotive {0} activating Approach Bell", locomotive.DisplayName), Logger.logLevel.Verbose);
             TrainManager.RMbell(locomotive, false);
 
             //Appply updated maxSpeed
@@ -548,10 +557,13 @@ namespace RouteManager.v2.core
             //Trace Function
             Logger.LogToDebug("ENTERED FUNCTION: onArrival", Logger.logLevel.Trace);
 
+            Logger.LogToDebug(String.Format("Locomotive {0} triggered on Arrival.", locomotive.DisplayName), Logger.logLevel.Verbose);
+
             //Train Arrived
             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], 0, null));
 
             //Disable bell
+            Logger.LogToDebug(String.Format("Locomotive {0} deactivating Approach Bell", locomotive.DisplayName), Logger.logLevel.Verbose);
             TrainManager.RMbell(locomotive, false);
 
             //Disable transit mode.
