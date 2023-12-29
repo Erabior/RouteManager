@@ -8,12 +8,16 @@ using RouteManager.v2.UI;
 using RouteManager.v2.core;
 using RMLogger = RouteManager.v2.Logging.Logger;
 using RouteManager.v2.dataStructures;
+using UnityEngine.SceneManagement;
+using System;
+using UnityEngine.Device;
 
 
 namespace RouteManager
 {
     [BepInPlugin(modGUID, modName, modVersion)]
-    public class ModLoader : BaseUnityPlugin
+    public class RouteManagerLoader : BaseUnityPlugin
+
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
@@ -68,7 +72,7 @@ namespace RouteManager
                     erabiorDispatcher.AddComponent<Dispatcher>();
 
                     //Enable Experimental UI
-                    if(SettingsData.experimentalUI)
+                    if (SettingsData.experimentalUI)
                         erabiorDispatcher.AddComponent<ModInterface>();
                 }
             }
@@ -88,5 +92,5 @@ namespace RouteManager
                     RMLogger.LogToDebug("Applied Settings.", RMLogger.logLevel.Debug);
             }
         }
-    } 
+    }
 }

@@ -25,6 +25,7 @@ namespace RouteManager.v2
         //Default unity hook.
         void Awake()
         {
+
             //Log status
             Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
             Logger.LogToDebug("Dispatcher Initializing");

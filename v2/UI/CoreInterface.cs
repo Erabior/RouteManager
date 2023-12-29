@@ -10,37 +10,65 @@ namespace RouteManager.v2.UI
 {
     public class CoreInterface : MonoBehaviour
     {
+        GameObject mainUIPanel;
 
-        public CoreInterface(GameObject interfaceRootGameObject)
+        public CoreInterface()
         {
-            GameObject myText;
-            Canvas myCanvas;
-            Text text;
-            RectTransform rectTransform;
 
-            // Canvas
-            interfaceRootGameObject.name = "TestCanvas";
-            interfaceRootGameObject.AddComponent<Canvas>();
+            //Create Canvas to Contain RRE Elements
+            GameObject parentObject = GameObject.Find("Erabior.Dispatcher");
+            Canvas canvas = parentObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            parentObject.AddComponent<CanvasScaler>();
+            GraphicRaycaster temp = parentObject.AddComponent<GraphicRaycaster>();
+            //temp.blockingMask = LayerMask.NameToLayer("GameUI");
 
-            myCanvas = interfaceRootGameObject.GetComponent<Canvas>();
-            myCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            interfaceRootGameObject.AddComponent<CanvasScaler>();
-            interfaceRootGameObject.AddComponent<GraphicRaycaster>();
 
-            // Text
-            myText = new GameObject();
-            myText.transform.parent = interfaceRootGameObject.transform;
-            myText.name = "wibble";
+            //Create Panel to draw to.
+            mainUIPanel = new GameObject("UI Panel");
+            mainUIPanel.AddComponent<CanvasRenderer>();
 
-            text = myText.AddComponent<Text>();
-            text.font = (Font)Resources.Load("MyFont");
-            text.text = "wobble";
-            text.fontSize = 100;
+            //Give Panel some color for testing
+            Image i = mainUIPanel.AddComponent<Image>();
+            i.color = new Color(0, 0, 0, .5f);
+            i.rectTransform.sizeDelta = new Vector2(960, 540);
 
-            // Text position
-            rectTransform = text.GetComponent<RectTransform>();
-            rectTransform.localPosition = new Vector3(0, 0, 0);
-            rectTransform.sizeDelta = new Vector2(400, 200);
+            //Add Panel to Canvas
+            mainUIPanel.transform.SetParent(canvas.transform, false);
+
+            //Add button for testing
+            var buttonObject = new GameObject("Button");
+            var image = buttonObject.AddComponent<Image>();
+            image.transform.SetParent(mainUIPanel.transform);
+            image.rectTransform.sizeDelta = new Vector2(180, 50);
+            image.rectTransform.anchoredPosition = Vector3.zero;
+            image.color = new Color(1, 1, 1);
+
+            var button = buttonObject.AddComponent<Button>();
+            button.targetGraphic = image;
+            button.onClick.AddListener(() => Console.Log("Button Was Clicked!"));
+
+            var textObject = new GameObject("Text");
+            textObject.transform.SetParent(buttonObject.transform);
+            var text = textObject.AddComponent<Text>();
+            text.rectTransform.anchoredPosition = new Vector2(.5f, .5f);
+            text.text = "Hello World!";
+            text.font = Resources.FindObjectsOfTypeAll<Font>()[0];
+            text.fontSize = 20;
+            text.color = Color.black;
+            text.alignment = TextAnchor.MiddleCenter;
+        }
+
+        public void togglePanel()
+        {
+            if (mainUIPanel.activeSelf)
+            {
+                mainUIPanel.SetActive(false);
+            }
+            else
+            {
+                mainUIPanel.SetActive(true);
+            }
         }
     }
 }

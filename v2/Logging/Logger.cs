@@ -27,19 +27,19 @@ namespace RouteManager.v2.Logging
 
         public static void LogToConsole(string message)
         {
-            Console.Log(String.Format("{0}: {1}",ModLoader.getModName(), message));
+            Console.Log(String.Format("{0}: {1}",RouteManagerLoader.getModName(), message));
             LogToDebug("[CONSOLE OUTPUT] " + message);
         }
 
         public static void LogToDebug(string message, logLevel messageLevel = logLevel.Informational)
         {
             if(messageLevel>=currentLogLevel)
-                Debug.Log(String.Format("{0} - {1}_V{2}: {3}", DateTime.Now.ToString("u"), ModLoader.getModName(), ModLoader.getModVersion(), message));
+                Debug.Log(String.Format("{0} - {1}_V{2}: {3}", DateTime.Now.ToString("u"), RouteManagerLoader.getModName(), RouteManagerLoader.getModVersion(), message));
         }
 
         public static void LogToError(string message)
         {
-            Debug.LogError(String.Format("{0} - {1}_V{2}: {3}", DateTime.Now.ToString("u"), ModLoader.getModName(), ModLoader.getModVersion(), message));
+            Debug.LogError(String.Format("{0} - {1}_V{2}: {3}", DateTime.Now.ToString("u"), RouteManagerLoader.getModName(), RouteManagerLoader.getModVersion(), message));
         }
     }
 }

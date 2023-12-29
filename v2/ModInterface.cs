@@ -18,8 +18,6 @@ namespace RouteManager.v2.UI
 {
     public class ModInterface : MonoBehaviour
     {
-
-        GameObject interfaceRootGameObject;
         CoreInterface coreUserInterface;
 
         void Awake()
@@ -30,9 +28,7 @@ namespace RouteManager.v2.UI
             Logger.LogToDebug("Dispatcher UI Initializing");
             Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
 
-
-            interfaceRootGameObject = new GameObject();
-            coreUserInterface = new CoreInterface(interfaceRootGameObject);
+            coreUserInterface = new CoreInterface();
 
             //Log status
             Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
@@ -45,20 +41,10 @@ namespace RouteManager.v2.UI
             if (Input.GetKeyUp(KeyCode.Insert))
             {
                 Logger.LogToDebug("Dispatcher UI Toggled!");
-                togglePanel();
+                coreUserInterface.togglePanel();
             }
         }
 
-        public void togglePanel()
-        {
-            if (interfaceRootGameObject.activeSelf)
-            {
-                interfaceRootGameObject.SetActive(false);
-            }
-            else
-            {
-                interfaceRootGameObject.SetActive(true);
-            }
-        }
+
     }
 }

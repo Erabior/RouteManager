@@ -94,7 +94,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ModLoader.cs" />
+    <Compile Include="RouteManagerLoader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="v2\core\AutoEngineer.cs" />
     <Compile Include="v2\core\SettingsManager.cs" />
