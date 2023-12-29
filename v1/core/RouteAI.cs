@@ -380,6 +380,7 @@ namespace RouteManager
                             trainVelocity = Math.Abs(locomotive.velocity * 2.23694f);
                             if (trainVelocity > 0.1)
                             {
+                                ManagedTrains.RMbell(locomotive, true);
                                 yield return new WaitForSeconds(1);
                             }
                             else
