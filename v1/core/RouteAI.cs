@@ -131,7 +131,7 @@ namespace RouteManager
                             {
                                 //Give Warning
                                 lowcoalwarngiven = true;
-                                Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}T of coal remaining", locomotive.DisplayName,minCoalQuantity));
+                                Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}T of coal remaining", Hyperlink.To(locomotive), minCoalQuantity));
                             }
                         }
                         else
@@ -151,7 +151,7 @@ namespace RouteManager
                             {
                                 //Give Warning
                                 lowwaterwarngiven = true;
-                                Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}Gallons of Water remaining", locomotive.DisplayName, minWaterQuantity));
+                                Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}Gallons of Water remaining", Hyperlink.To(locomotive), minWaterQuantity));
                             }
                         }
                         else
@@ -175,7 +175,7 @@ namespace RouteManager
                             {
                                 //Give warning
                                 lowfuelwarngiven = true;
-                                Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}Gallons of Diesel-Fuel remaining", locomotive.DisplayName, minDieselQuantity));
+                                Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}Gallons of Diesel-Fuel remaining", Hyperlink.To(locomotive), minDieselQuantity));
                             }
                         }
                         else
@@ -339,7 +339,7 @@ namespace RouteManager
                     //Feature Enahncement: Issue #24
                     //Write to console the arrival of the train consist at station X
                     string currentStation = LocoTelem.LocomotiveDestination[locomotive];
-                    Logger.LogToConsole(String.Format("{0} has arrived at {1} station",locomotive.DisplayName, currentStation.ToUpper()));
+                    Logger.LogToConsole(String.Format("{0} has arrived at {1} station", Hyperlink.To(locomotive), currentStation.ToUpper()));
                     ManagedTrains.RMbell(locomotive, false);
 
                     Logger.LogToDebug($"about to set new destination, curent destination {LocoTelem.LocomotiveDestination[locomotive].ToUpper()}");
@@ -424,7 +424,7 @@ namespace RouteManager
                                     if (waterlevel < minWaterQuantity)
                                     {
                                         //Below minimums notate as such and hold loco
-                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on {1} and is holding at {2}", locomotive.DisplayName, "water" , LocoTelem.LocomotivePrevDestination[locomotive] ));
+                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on {1} and is holding at {2}", Hyperlink.To(locomotive), "water" , LocoTelem.LocomotivePrevDestination[locomotive] ));
                                         clearedForDeparture = false;
 
                                         //Check again in 30 seconds. 
@@ -438,7 +438,7 @@ namespace RouteManager
                                     //Check if below minimums
                                     if (coallevel < minCoalQuantity)
                                     {
-                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on {1} and is holding at {2}", locomotive.DisplayName, "coal", LocoTelem.LocomotivePrevDestination[locomotive]));
+                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on {1} and is holding at {2}", Hyperlink.To(locomotive), "coal", LocoTelem.LocomotivePrevDestination[locomotive]));
                                         clearedForDeparture = false;
                                         yield return new WaitForSeconds(30);
                                     }
@@ -453,7 +453,7 @@ namespace RouteManager
                                     //Check if below minimums
                                     if (diesellevel < minDieselQuantity)
                                     {
-                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on {1} and is holding at {2}", locomotive.DisplayName, "diesel-fuel", LocoTelem.LocomotivePrevDestination[locomotive]));
+                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on {1} and is holding at {2}", Hyperlink.To(locomotive), "diesel-fuel", LocoTelem.LocomotivePrevDestination[locomotive]));
                                         clearedForDeparture = false;
                                         yield return new WaitForSeconds(30);
                                     }
@@ -468,7 +468,7 @@ namespace RouteManager
                                 //Feature Enahncement: Issue #24
                                 //Write to console the departure of the train consist at station X
                                 //Bugfix: Fixed Erronious departure messages if not cleared for departure.
-                                Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", locomotive.DisplayName, currentStation.ToUpper(), LocoTelem.LocomotiveDestination[locomotive].ToUpper()));
+                                Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), currentStation.ToUpper(), LocoTelem.LocomotiveDestination[locomotive].ToUpper()));
 
                                 yield return new WaitForSeconds(1);
                             }
