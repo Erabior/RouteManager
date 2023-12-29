@@ -69,6 +69,15 @@ namespace RouteManager.v2.core
             return 0f;
         }
 
+        public static IEnumerator standardWhistle(Car locomotive)
+        {
+            yield return TrainManager.RMblow(locomotive, 0.25f, 1.5f);
+            yield return TrainManager.RMblow(locomotive, 1f, 2.5f);
+            yield return TrainManager.RMblow(locomotive, 1f, 1.75f, 0.25f);
+            yield return TrainManager.RMblow(locomotive, 1f, 0.25f);
+            yield return TrainManager.RMblow(locomotive, 0f);
+        }
+
         public static IEnumerator RMblow(Car locomotive, float intensity, float duration = 1f, float quillFinal = -1f)
         {
             duration = Mathf.Max(duration, 0.1f);

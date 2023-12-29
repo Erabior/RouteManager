@@ -1,11 +1,13 @@
 ﻿using Game.Messages;
 using Game.State;
+using Microsoft.SqlServer.Server;
 using Model;
 using RouteManager.v2.dataStructures;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Hosting;
 using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Messaging;
 using System.Text;
@@ -34,14 +36,14 @@ namespace RouteManager.v2.core
                 DestinationManager.GetNextDestination(locomotive);
             }
 
+
+            //Probably could move a lot of this to the loco telem class...
             bool lowCoalWarningGiven    = false;
             bool lowWaterWarningGiven   = false;
             bool lowFuelWarningGiven    = false;
-            float RMmaxSpeed            = 0;
             float distanceToStation     = 0;
             float olddist               = float.MaxValue;
             bool delayExecution         = false;
-            bool aproachBlastrequired   = false;
             float trainVelocity         = 0;
 
 
@@ -163,97 +165,89 @@ namespace RouteManager.v2.core
                          * 
                          *****************************************************************/
 
+                        /*****************************************************************
+                         * 
+                         * Start Locomotive Direction Check
+                         * 
+                         *****************************************************************/
 
+                        //We may be able to avoid this with better logic elsewhere...
+                        Logger.LogToDebug(String.Format("Locomotive: {0} Distance to Station: {1} Prev Distance: {2}", locomotive.DisplayName, distanceToStation, olddist), Logger.logLevel.Verbose);
+                        
+                        if (distanceToStation > olddist && (trainVelocity > 1f && trainVelocity < 10f))
+                        {
+                            bool brakeApplied = locomotive.air.handbrakeApplied || locomotive.air.BrakeCylinder.Pressure > 2f;
+
+                            if (!brakeApplied)
+                            {
+                                LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
+                                Logger.LogToDebug("Was driving in the wrong direction! Changing direction");
+                                Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {(int)LocoTelem.RMMaxSpeed[locomotive]}",Logger.logLevel.Debug);
+                                StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+                            }
+                            else
+                            {
+                                Logger.LogToDebug(String.Format("Locomotive {0} appears to be stopping or stopped",locomotive.DisplayName),Logger.logLevel.Debug);
+                            }
+                            yield return new WaitForSeconds(5);
+                        }
+
+                        /*****************************************************************
+                         * 
+                         * END Locomotive Direction Check
+                         * 
+                         *****************************************************************/
+
+
+                        /*****************************************************************
+                         * 
+                         * START Locomotive Movements
+                         * 
+                         *****************************************************************/
 
                         //Get Current train speed.
                         trainVelocity = Math.Abs(locomotive.velocity * 2.23694f);
 
-
-                        if (distanceToStation > 350)
+                        //Enroute to Destination
+                        if (distanceToStation > 500)
                         {
-
-                            //We may be able to avoid this with better logic elsewhere...
-                            
-                            if (distanceToStation > olddist && (trainVelocity > 1f && trainVelocity < 10f))
-                            {
-                                LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
-                                Logger.LogToDebug("Was driving in the wrong direction. Reversing Direction");
-                                RMmaxSpeed = 100;
-                                Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
-                                StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
-                                yield return new WaitForSeconds(30);
-                            }
-                            
-
-                            RMmaxSpeed = 100;
-                            Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
-                            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
-
-                            //Blow Train Horn
-                            if (distanceToStation < 500f)
-                            {
-                                Logger.LogToDebug("checking if blast required");
-                                if (aproachBlastrequired)
-                                {
-                                    Logger.LogToDebug("attempting to perform approach blast");
-                                    yield return TrainManager.RMblow(locomotive, 0.25f, 1.5f);
-                                    yield return TrainManager.RMblow(locomotive, 1f, 2.5f);
-                                    yield return TrainManager.RMblow(locomotive, 1f, 1.75f, 0.25f);
-                                    yield return TrainManager.RMblow(locomotive, 1f, 0.25f);
-                                    yield return TrainManager.RMblow(locomotive, 0f);
-                                    aproachBlastrequired = false;
-                                }
-
-                            }
-                            else
-                            {
-                                aproachBlastrequired = true;
-                            }
+                            Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {(int)LocoTelem.RMMaxSpeed[locomotive]}");
+                            generalTransit(locomotive);
 
                             yield return new WaitForSeconds(5);
-
                         }
-                        else if (distanceToStation <= 350 && distanceToStation > 10)
+                        //Entering Destination Boundary
+                        else if (distanceToStation <= 500)
                         {
-                            //We may be able to avoid this with better logic elsewhere...
-                            if (distanceToStation > olddist && (trainVelocity > 1f && trainVelocity < 15f))
-                            {
-                                LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
-                                Logger.LogToDebug("Was driving in the wrong direction. Reversing Direction");
-                                RMmaxSpeed = 100;
-                                Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
-                                StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
-                                yield return new WaitForSeconds(30);
-                            }
-                            
+                            onApproachLongDist(locomotive);
 
-                            RMmaxSpeed = distanceToStation / 8f;
-                            if (RMmaxSpeed < 5f)
-                            {
-                                RMmaxSpeed = 5f;
-                            }
-
-                            //Activate Bell
-                            TrainManager.RMbell(locomotive, true);
-
-                            Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
-                            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)RMmaxSpeed, null));
                             yield return new WaitForSeconds(1);
-
                         }
-                        else if (distanceToStation <= 10 && distanceToStation > 0)
+                        //Approaching platform
+                        else if (distanceToStation < 400 && distanceToStation > 100)
                         {
-                            RMmaxSpeed = 0f;
-                            Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {RMmaxSpeed}");
-                            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], 0, null));
-                            LocoTelem.TransitMode[locomotive] = false;
+                            onApproachMediumDist(locomotive, distanceToStation);
                             yield return new WaitForSeconds(1);
-
                         }
+                        //Entering Platform
+                        else if (distanceToStation < 100 && distanceToStation > 10)
+                        {
+                            onApproachShortDist(locomotive, distanceToStation);
+                            yield return new WaitForSeconds(1);
+                        }
+                        //Train in platform
+                        else if(distanceToStation <= 10 && distanceToStation > 0)
+                        {
+                            onArrival(locomotive);
+                            yield return new WaitForSeconds(1);
+                        }
+
+                        /*****************************************************************
+                         * 
+                         * END Locomotive Movements
+                         * 
+                         *****************************************************************/
                     }
-
-
-
 
                 }
                 /********************************************************************************************************************
@@ -448,6 +442,126 @@ namespace RouteManager.v2.core
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: AutoEngineerControlRoutine", Logger.logLevel.Trace);
         }
+
+
+
+        //Train is enroute to destination
+        private void generalTransit(Car locomotive)
+        {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: generalTransit", Logger.logLevel.Trace);
+
+            //Set AI Maximum speed
+            //Track max speed takes precedence. 
+            LocoTelem.RMMaxSpeed[locomotive] = 100f;
+
+            //Apply Updated Max Speed
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+
+            //Trace Function
+            Logger.LogToDebug("EXITING FUNCTION: generalTransit", Logger.logLevel.Trace);
+        }
+
+
+
+        //Train is approaching location
+        private void onApproachLongDist(Car locomotive)
+        {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: onApproachLongDist", Logger.logLevel.Trace);
+
+            //If yet to whistle on approach, then whistle
+            if (!LocoTelem.approachWhistleSounded[locomotive])
+            {
+                TrainManager.standardWhistle(locomotive);
+                LocoTelem.approachWhistleSounded[locomotive] = true;
+            }
+
+            //Trace Function
+            Logger.LogToDebug("EXITING FUNCTION: onApproachLongDist", Logger.logLevel.Trace);
+        }
+
+
+
+        //Train is approaching platform
+        private void onApproachMediumDist(Car locomotive, float distanceToStation)
+        {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: onApproachMediumDist", Logger.logLevel.Trace);
+
+            //Gradually reduce maximum speed the closer to the platform we get. 
+            float calculatedSpeed = distanceToStation / 8f;
+
+            //Minimum speed should not be less than 15Mph
+            if (calculatedSpeed < 15f)
+            {
+                LocoTelem.RMMaxSpeed[locomotive] = 15f;
+            }
+            else
+            {
+                LocoTelem.RMMaxSpeed[locomotive] = calculatedSpeed;
+            }
+
+            //Apply Updated Max Speed
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+
+            //Trace Function
+            Logger.LogToDebug("EXITING FUNCTION: onApproachMediumDist", Logger.logLevel.Trace);
+        }
+
+
+
+        //Train is entering platform
+        private void onApproachShortDist(Car locomotive, float distanceToStation)
+        {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: onApproachShortDist", Logger.logLevel.Trace);
+
+            //Gradually reduce maximum speed the closer to the platform we get. 
+            float calculatedSpeed = distanceToStation / 8f;
+
+            //Minimum speed should not be less than 15Mph
+            if (calculatedSpeed < 5f)
+            {
+                LocoTelem.RMMaxSpeed[locomotive] = 5f;
+            }
+            else
+            {
+                LocoTelem.RMMaxSpeed[locomotive] = calculatedSpeed;
+            }
+
+            //Apply Bell
+            TrainManager.RMbell(locomotive, false);
+
+            //Appply updated maxSpeed
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int) LocoTelem.RMMaxSpeed[locomotive], null));
+
+            //Trace Function
+            Logger.LogToDebug("EXITING FUNCTION: onApproachShortDist", Logger.logLevel.Trace);
+        }
+
+
+
+        //Train Arrived at station
+        private void onArrival(Car locomotive)
+        {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: onArrival", Logger.logLevel.Trace);
+
+            //Train Arrived
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], 0, null));
+
+            //Disable bell
+            TrainManager.RMbell(locomotive, false);
+
+            //Disable transit mode.
+            LocoTelem.TransitMode[locomotive] = false;
+
+            //Trace Function
+            Logger.LogToDebug("EXITING FUNCTION: onArrival", Logger.logLevel.Trace);
+        }
+
+
 
         //Initial checks to determine if we can continue with the coroutine
         private bool cancelTransitModeIfNeeded(Car locomotive)
