@@ -384,6 +384,7 @@ namespace RouteManager
                             }
                             else
                             {
+                                ManagedTrains.RMbell(locomotive, false);
                                 yield return new WaitForSeconds(3);
                             }
                             
