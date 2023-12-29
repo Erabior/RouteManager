@@ -632,13 +632,13 @@ namespace RouteManager.v2.core
             {
 
                 //If coal is below minimums
-                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "coal") / 2000, Settings.minCoalQuantity))
+                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "coal") / 2000, SettingsData.minCoalQuantity))
                 {
                     fuelCheckResults.Add(new KeyValuePair<string, float>("coal", TrainManager.GetLoadInfoForLoco(locomotive, "coal") / 2000));
                 }
 
                 //If water is below minimums
-                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "water"), Settings.minWaterQuantity))
+                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "water"), SettingsData.minWaterQuantity))
                 {
                     fuelCheckResults.Add(new KeyValuePair<string, float>("coal", TrainManager.GetLoadInfoForLoco(locomotive, "water")));
                 }
@@ -648,7 +648,7 @@ namespace RouteManager.v2.core
             else if (locomotive.Archetype == Model.Definition.CarArchetype.LocomotiveDiesel)
             {
                 //If diesel level is below defined minimums
-                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "diesel-fuel"),Settings.minDieselQuantity))
+                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "diesel-fuel"),SettingsData.minDieselQuantity))
                 {
                     fuelCheckResults.Add(new KeyValuePair<string, float>("coal", TrainManager.GetLoadInfoForLoco(locomotive, "diesel-fuel")));
                 }

@@ -4,6 +4,10 @@ using HarmonyLib;
 using UnityEngine;
 using UI.Menu;
 using RouteManager.v2;
+using RouteManager.v2.UI;
+using RouteManager.v2.core;
+using RMLogger = RouteManager.v2.Logging.Logger;
+using RouteManager.v2.dataStructures;
 
 
 namespace RouteManager
@@ -50,6 +54,9 @@ namespace RouteManager
         {
             public static void Postfix(bool show)
             {
+                //Load Mod Settings
+                loadSettings();
+
                 //I am sure that there is probably a better way of ensuring that only one GameObject is generated.
                 //Multiple instances can and will cause issues with multiple actions triggering and more.
                 if (GameObject.FindObjectsOfType(typeof(Dispatcher)).Length == 0)
@@ -59,7 +66,26 @@ namespace RouteManager
 
                     //Bind the Route AI component to the Game Object instance
                     erabiorDispatcher.AddComponent<Dispatcher>();
+
+                    //Enable Experimental UI
+                    if(SettingsData.experimentalUI)
+                        erabiorDispatcher.AddComponent<ModInterface>();
                 }
+            }
+
+            private static void loadSettings()
+            {
+                //Load Route Manager Configuration
+                if (!SettingsManager.Load())
+                    RMLogger.LogToError("FAILED TO LOAD SETTINGS!");
+                else
+                    RMLogger.LogToDebug("Loaded Settings.", RMLogger.logLevel.Debug);
+
+                //Attempt to apply settings
+                if (!SettingsManager.Apply())
+                    RMLogger.LogToError("FAILED TO APPLY SETTINGS!");
+                else
+                    RMLogger.LogToDebug("Applied Settings.", RMLogger.logLevel.Debug);
             }
         }
     } 

@@ -8,7 +8,7 @@ using static RouteManager.v2.Logging.Logger;
 
 namespace RouteManager.v2.dataStructures
 {
-    public class Settings
+    public class SettingsData
     {
         public static logLevel currentLogLevel  = logLevel.Informational;
 
@@ -17,5 +17,7 @@ namespace RouteManager.v2.dataStructures
         public static float minWaterQuantity    = 500;
 
         public static float minCoalQuantity     = 0.5f;
+
+        public static bool experimentalUI       = false;
     }
 }

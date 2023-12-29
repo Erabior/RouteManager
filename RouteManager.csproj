@@ -82,9 +82,15 @@
     <Reference Include="UnityEngine.InputModule">
       <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.InputModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.UIModule.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -95,7 +101,7 @@
     <Compile Include="v2\core\DestinationManager.cs" />
     <Compile Include="v2\core\TrainManager.cs" />
     <Compile Include="v2\dataStructures\LocoTelem.cs" />
-    <Compile Include="v2\dataStructures\Settings.cs" />
+    <Compile Include="v2\dataStructures\SettingsData.cs" />
     <Compile Include="v2\dataStructures\StationMapData.cs" />
     <Compile Include="v2\dataStructures\StationInformation.cs" />
     <Compile Include="v2\Dispatcher.cs" />
@@ -104,10 +110,16 @@
     <Compile Include="v2\helpers\IniFile.cs" />
     <Compile Include="v2\helpers\Utilities.cs" />
     <Compile Include="v2\Logging\Logger.cs" />
+    <Compile Include="v2\ModInterface.cs" />
+    <Compile Include="v2\UI\CoreInterface.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Patches\" />
-    <Folder Include="v2\UI\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="v2\configs\RouteManager.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
