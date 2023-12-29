@@ -80,21 +80,37 @@ namespace RouteManager.v2.core
 
         public static IEnumerator RMblow(Car locomotive, float intensity, float duration = 1f, float quillFinal = -1f)
         {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: RMblow", Logger.logLevel.Trace);
+
+            Logger.LogToDebug(String.Format("Locomotive {0} Whistling! Intensity: {1} Duration: {2} quillFinal: {3}", locomotive.DisplayName, intensity, duration, quillFinal), Logger.logLevel.Verbose);
+
             duration = Mathf.Max(duration, 0.1f);
 
             float finalIntensity = quillFinal < 0 ? intensity : quillFinal;
+
             if (intensity == 0 && quillFinal == -1f)
             {
+                Logger.LogToDebug(String.Format("Locomotive {0} Now Whistling at Intensity: {1} with finalquill -1f for", locomotive.DisplayName, intensity), Logger.logLevel.Verbose);
                 StateManager.ApplyLocal(new PropertyChange(locomotive.id, Control.Horn, intensity));
                 yield break;
             }
 
-            float timeDelta = 0.05f; // Time interval for updates
-            int intervals = (int)(duration / timeDelta); // Total number of intervals
-            float intensityChangePerInterval = (finalIntensity - intensity) / intervals; // Change in intensity per interval
+            // Time interval for updates
+            float timeDelta = 0.05f;
 
-            if (quillFinal == -1f) //if final intensity is not specified then set a flat intensity with duration
+            // Total number of intervals
+            int intervals = (int)(duration / timeDelta);
+
+            // Change in intensity per interval
+            float intensityChangePerInterval = (finalIntensity - intensity) / intervals;
+
+            Logger.LogToDebug(String.Format("Locomotive {0} Whistl Calculated Values timeDelta: {1} intervals: {2} intensityChangePerInterval: {3}", locomotive.DisplayName, timeDelta, intervals, intensityChangePerInterval), Logger.logLevel.Verbose);
+
+            //if final intensity is not specified then set a flat intensity with duration
+            if (quillFinal == -1f) 
             {
+                Logger.LogToDebug(String.Format("Locomotive {0} Now Whistling at Intensity: {1} for {2} seconds", locomotive.DisplayName, intensity, duration), Logger.logLevel.Verbose);
                 StateManager.ApplyLocal(new PropertyChange(locomotive.id, Control.Horn, intensity));
                 yield return new WaitForSeconds(duration);
             }
@@ -103,11 +119,14 @@ namespace RouteManager.v2.core
                 for (int i = 0; i <= intervals; i++)
                 {
                     float currentIntensity = intensity + intensityChangePerInterval * i;
+                    Logger.LogToDebug(String.Format("Locomotive {0} Now Whistling at Intensity: {1} for {2} intervals over {3} seconds", locomotive.DisplayName, currentIntensity, intervals , timeDelta), Logger.logLevel.Verbose);
                     StateManager.ApplyLocal(new PropertyChange(locomotive.id, Control.Horn, currentIntensity));
                     yield return new WaitForSeconds(timeDelta);
                 }
             }
 
+            //Trace Function
+            Logger.LogToDebug("EXITING FUNCTION: RMblow", Logger.logLevel.Trace);
         }
         public static void RMbell(Car locomotive, bool IsBell)
         {

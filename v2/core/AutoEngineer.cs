@@ -221,6 +221,17 @@ namespace RouteManager.v2.core
                         {
                             onApproachLongDist(locomotive);
 
+                            if (!LocoTelem.approachWhistleSounded[locomotive])
+                            {
+                                Logger.LogToDebug(String.Format("Locomotive {0} activating Appproach Whistle", locomotive.DisplayName), Logger.logLevel.Verbose);
+                                yield return TrainManager.RMblow(locomotive, 0.25f, 1.5f);
+                                yield return TrainManager.RMblow(locomotive, 1f, 2.5f);
+                                yield return TrainManager.RMblow(locomotive, 1f, 1.75f, 0.25f);
+                                yield return TrainManager.RMblow(locomotive, 1f, 0.25f);
+                                yield return TrainManager.RMblow(locomotive, 0f);
+                                LocoTelem.approachWhistleSounded[locomotive] = true;
+                            }
+
                             yield return new WaitForSeconds(1);
                         }
                         //Approaching platform
@@ -473,13 +484,15 @@ namespace RouteManager.v2.core
             Logger.LogToDebug("ENTERED FUNCTION: onApproachLongDist", Logger.logLevel.Trace);
 
             Logger.LogToDebug(String.Format("Locomotive {0} triggered Long Approach.",locomotive.DisplayName), Logger.logLevel.Verbose);
-            //If yet to whistle on approach, then whistle
-            if (!LocoTelem.approachWhistleSounded[locomotive])
-            {
-                Logger.LogToDebug(String.Format("Locomotive {0} activating Appproach Whistle", locomotive.DisplayName), Logger.logLevel.Verbose);
-                TrainManager.standardWhistle(locomotive);
-                LocoTelem.approachWhistleSounded[locomotive] = true;
-            }
+
+            // Appears that this will not work through abstraction outside of the autoengineer enumerator.
+            ////If yet to whistle on approach, then whistle
+            //if (!LocoTelem.approachWhistleSounded[locomotive])
+            //{
+            //    Logger.LogToDebug(String.Format("Locomotive {0} activating Appproach Whistle", locomotive.DisplayName), Logger.logLevel.Verbose);
+            //    TrainManager.standardWhistle(locomotive);
+            //    LocoTelem.approachWhistleSounded[locomotive] = true;
+            //}
 
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: onApproachLongDist", Logger.logLevel.Trace);
@@ -540,7 +553,7 @@ namespace RouteManager.v2.core
 
             //Apply Bell
             Logger.LogToDebug(String.Format("Locomotive {0} activating Approach Bell", locomotive.DisplayName), Logger.logLevel.Verbose);
-            TrainManager.RMbell(locomotive, false);
+            TrainManager.RMbell(locomotive, true);
 
             //Appply updated maxSpeed
             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int) LocoTelem.RMMaxSpeed[locomotive], null));
@@ -565,6 +578,9 @@ namespace RouteManager.v2.core
             //Disable bell
             Logger.LogToDebug(String.Format("Locomotive {0} deactivating Approach Bell", locomotive.DisplayName), Logger.logLevel.Verbose);
             TrainManager.RMbell(locomotive, false);
+
+            //Reset Approach whistle
+            LocoTelem.approachWhistleSounded[locomotive] = false;
 
             //Disable transit mode.
             LocoTelem.TransitMode[locomotive] = false;
