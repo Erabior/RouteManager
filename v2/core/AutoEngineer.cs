@@ -38,13 +38,13 @@ namespace RouteManager.v2.core
 
 
             //Probably could move a lot of this to the loco telem class...
-            bool lowCoalWarningGiven    = false;
-            bool lowWaterWarningGiven   = false;
-            bool lowFuelWarningGiven    = false;
-            float distanceToStation     = 0;
-            float olddist               = float.MaxValue;
-            bool delayExecution         = false;
-            float trainVelocity         = 0;
+            bool    lowCoalWarningGiven     = false;
+            bool    lowWaterWarningGiven    = false;
+            bool    lowFuelWarningGiven     = false;
+            float   distanceToStation       = 0;
+            float   olddist                 = float.MaxValue;
+            bool    delayExecution          = false;
+            float   trainVelocity           = 0;
 
 
             while (LocoTelem.RouteMode[locomotive])
@@ -101,18 +101,18 @@ namespace RouteManager.v2.core
                                 if (type.Key == "coal" && lowCoalWarningGiven == false)
                                 {
                                     lowCoalWarningGiven = true;
-                                    Logger.LogToConsole(String.Format("Locomotive {0} has less than {1} tons of coal remaining", locomotive.DisplayName, type.Value));
+                                    Logger.LogToConsole(String.Format("Locomotive {0} has less than {1} tons of coal remaining", Hyperlink.To(locomotive), type.Value));
                                 }
                                 if (type.Key == "water" && lowWaterWarningGiven == false)
                                 {
                                     lowWaterWarningGiven = true;
-                                    Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}G of water remaining", locomotive.DisplayName, type.Value));
+                                    Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}G of water remaining", Hyperlink.To(locomotive), type.Value));
                                 }
 
                                 if (type.Key == "diesel-fuel" && lowFuelWarningGiven == false)
                                 {
                                     lowFuelWarningGiven = true;
-                                    Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}G of diesel remaining", locomotive.DisplayName, type.Value));
+                                    Logger.LogToConsole(String.Format("Locomotive {0} has less than {1}G of diesel remaining", Hyperlink.To(locomotive), type.Value));
                                 }
                             }
                         }
@@ -291,7 +291,7 @@ namespace RouteManager.v2.core
                     //Feature Enahncement: Issue #24
                     //Write to console the arrival of the train consist at station X
                     string currentStation = LocoTelem.LocomotiveDestination[locomotive];
-                    Logger.LogToConsole(String.Format("{0} has arrived at {1} station", locomotive.DisplayName, currentStation.ToUpper()));
+                    Logger.LogToConsole(String.Format("{0} has arrived at {1} station", Hyperlink.To(locomotive), currentStation.ToUpper()));
 
                     //Deactivate Bell
                     TrainManager.RMbell(locomotive, false);
@@ -391,18 +391,18 @@ namespace RouteManager.v2.core
                                     if (type.Key == "coal" && lowCoalWarningGiven == false)
                                     {
                                         clearedForDeparture = false;
-                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on coal and is holding at {1}", locomotive.DisplayName, LocoTelem.LocomotivePrevDestination[locomotive]));
+                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on coal and is holding at {1}", Hyperlink.To(locomotive), LocoTelem.LocomotivePrevDestination[locomotive]));
                                     }
                                     if (type.Key == "water" && lowWaterWarningGiven == false)
                                     {
                                         clearedForDeparture = false;
-                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on water and is holding at {1}", locomotive.DisplayName, LocoTelem.LocomotivePrevDestination[locomotive]));
+                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on water and is holding at {1}", Hyperlink.To(locomotive), LocoTelem.LocomotivePrevDestination[locomotive]));
                                     }
 
                                     if (type.Key == "diesel-fuel" && lowFuelWarningGiven == false)
                                     {
                                         clearedForDeparture = false;
-                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on diesel and is holding at {1}", locomotive.DisplayName, LocoTelem.LocomotivePrevDestination[locomotive]));
+                                        Logger.LogToConsole(String.Format("Locomotive {0} is low on diesel and is holding at {1}", Hyperlink.To(locomotive), LocoTelem.LocomotivePrevDestination[locomotive]));
                                     }
                                 }
                             }
@@ -420,7 +420,7 @@ namespace RouteManager.v2.core
                                 //Feature Enahncement: Issue #24
                                 //Write to console the departure of the train consist at station X
                                 //Bugfix: message would previously be generated even when departure was not cleared. 
-                                Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", locomotive.DisplayName, currentStation.ToUpper(), LocoTelem.LocomotiveDestination[locomotive].ToUpper()));
+                                Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), currentStation.ToUpper(), LocoTelem.LocomotiveDestination[locomotive].ToUpper()));
 
                                 yield return new WaitForSeconds(30);
                             }
