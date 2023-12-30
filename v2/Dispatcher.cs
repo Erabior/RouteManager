@@ -100,6 +100,7 @@ namespace RouteManager.v2
             LocoTelem.lowFuelQuantities[currentLoco] = new Dictionary<string, float>();
             LocoTelem.closestStation[currentLoco] = (null,0);
             LocoTelem.currentDestination[currentLoco] = default(PassengerStop);
+            LocoTelem.clearedForDeparture[currentLoco] = false;
 
             if (!LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
             {
@@ -141,6 +142,9 @@ namespace RouteManager.v2
 
             if (LocoTelem.currentDestination.ContainsKey(currentLoco))
                 LocoTelem.currentDestination.Remove(currentLoco);
+
+            if (LocoTelem.clearedForDeparture.ContainsKey(currentLoco))
+                LocoTelem.clearedForDeparture.Remove(currentLoco);
         }
 
 
