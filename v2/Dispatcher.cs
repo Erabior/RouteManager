@@ -3,6 +3,7 @@ using GalaSoft.MvvmLight.Messaging;
 using Game.Events;
 using Game.Messages;
 using Model;
+using RollingStock;
 using RouteManager.v2.core;
 using RouteManager.v2.dataStructures;
 using RouteManager.v2.helpers;
@@ -96,6 +97,9 @@ namespace RouteManager.v2
             LocoTelem.RMMaxSpeed[currentLoco] = 0;
             LocoTelem.locomotiveCoroutines[currentLoco] = true;
             LocoTelem.approachWhistleSounded[currentLoco] = false;
+            LocoTelem.lowFuelQuantities[currentLoco] = new Dictionary<string, float>();
+            LocoTelem.closestStation[currentLoco] = (null,0);
+            LocoTelem.currentDestination[currentLoco] = default(PassengerStop);
 
             if (!LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
             {
@@ -128,6 +132,15 @@ namespace RouteManager.v2
 
             if (LocoTelem.locomotiveCoroutines.ContainsKey(currentLoco))
                 LocoTelem.locomotiveCoroutines.Remove(currentLoco);
+
+            if (LocoTelem.lowFuelQuantities.ContainsKey(currentLoco))
+                LocoTelem.lowFuelQuantities.Remove(currentLoco);
+
+            if (LocoTelem.closestStation.ContainsKey(currentLoco))
+                LocoTelem.closestStation.Remove(currentLoco);
+
+            if (LocoTelem.currentDestination.ContainsKey(currentLoco))
+                LocoTelem.currentDestination.Remove(currentLoco);
         }
 
 

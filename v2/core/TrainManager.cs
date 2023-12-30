@@ -306,5 +306,72 @@ namespace RouteManager.v2.core
             return;
         }
 
+
+        public static float GetTrainVelocity(Car locomotive)
+        {
+            return Math.Abs(locomotive.velocity * 2.23694f);
+        }
+
+
+        //Separate out the core fuel check logic
+        public static void locoLowFuelCheck(Car locomotive)
+        {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: locoLowFuelCheck", Logger.logLevel.Trace);
+
+            Dictionary <string, float> fuelCheckResults = new Dictionary<string, float>();
+
+            //If steam locomotive Check the water and coal levels
+            if (locomotive.Archetype == Model.Definition.CarArchetype.LocomotiveSteam)
+            {
+
+                //If coal is below minimums
+                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "coal") / 2000, SettingsData.minCoalQuantity))
+                {
+                    fuelCheckResults.Add("coal", GetLoadInfoForLoco(locomotive, "coal") / 2000);
+                }
+
+                //If water is below minimums
+                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "water"), SettingsData.minWaterQuantity))
+                {
+                    fuelCheckResults.Add("water", GetLoadInfoForLoco(locomotive, "water"));
+                }
+
+            }
+            //If Diesel locomotive diesel levels
+            else if (locomotive.Archetype == Model.Definition.CarArchetype.LocomotiveDiesel)
+            {
+                //If diesel level is below defined minimums
+                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "diesel-fuel"), SettingsData.minDieselQuantity))
+                {
+                    fuelCheckResults.Add("diesel-fuel", GetLoadInfoForLoco(locomotive, "diesel-fuel"));
+                }
+            }
+
+            LocoTelem.lowFuelQuantities[locomotive] = fuelCheckResults;
+
+            //Trace Method
+            Logger.LogToDebug("EXITING FUNCTION: locoLowFuelCheck", Logger.logLevel.Trace);
+        }
+
+        //Methodize repeated code of fuel check. 
+        //Method could be re-integrated into calling method now that additional checks have been rendered null from further code improvements.
+        private static bool compareAgainstMinVal(float inputValue, float minimumValue)
+        {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: compareAgainstMinVal", Logger.logLevel.Trace);
+
+            //Compare to minimums
+            if (inputValue < minimumValue)
+                return true;
+
+            //Trace Method
+            Logger.LogToDebug("EXITING FUNCTION: compareAgainstMinVal", Logger.logLevel.Trace);
+
+            //Something unexpected happened or fuel is above minimums.
+            //Either way return false here as there is nothing further we can do. 
+            return false;
+        }
     }
+
 }
