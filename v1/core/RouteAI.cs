@@ -340,14 +340,22 @@ namespace RouteManager
                     //Write to console the arrival of the train consist at station X
                     string currentStation = LocoTelem.LocomotiveDestination[locomotive];
                     Logger.LogToConsole(String.Format("{0} has arrived at {1} station", Hyperlink.To(locomotive), currentStation.ToUpper()));
-                    ManagedTrains.RMbell(locomotive, false);
+                    if (trainVelocity > 0.01)
+                    {
+                        ManagedTrains.RMbell(locomotive, true);
+                    }
+                    else
+                    {
+                        ManagedTrains.RMbell(locomotive, false);
+                    }
+                    
 
                     Logger.LogToDebug($"about to set new destination, curent destination {LocoTelem.LocomotiveDestination[locomotive].ToUpper()}");
                     ManagedTrains.GetNextDestination(locomotive);
                     Logger.LogToDebug($"New destination was set, destination: {LocoTelem.LocomotiveDestination[locomotive].ToUpper()}");
 
                     Logger.LogToDebug("Starting loading mode");
-                    ManagedTrains.CopyStationsFromLocoToCoaches(locomotive);
+                    //ManagedTrains.CopyStationsFromLocoToCoaches(locomotive);
                     
                     List<int> numPassInTrain = new List<int> { int.MaxValue, int.MaxValue, int.MaxValue, int.MaxValue, int.MaxValue };
                     

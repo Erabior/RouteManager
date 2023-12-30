@@ -432,7 +432,7 @@ namespace RouteManager
 
                     if (currentIndex == orderedSelectedStations.Count - 1)
                     {
-                        Logger.LogToDebug($"Reached {currentStation} and is the end of the line. Reversing travel direction back to {orderedSelectedStations[currentIndex - 1]}");
+                        Logger.LogToDebug($"Reached {currentStation} and is the West most end of the line. Reversing travel direction back to {orderedSelectedStations[currentIndex - 1]}");
                         CopyStationsFromLocoToCoaches(locomotive);
 
                         LocoTelem.LineDirectionEastWest[locomotive] = false;
@@ -453,8 +453,8 @@ namespace RouteManager
 
                     if (currentIndex == 0)
                     {
-                        Logger.LogToDebug($"Reached {currentStation} and is the end of the line. Reversing travel direction back to {orderedSelectedStations[currentIndex + 1]}");
-
+                        Logger.LogToDebug($"Reached {currentStation} and is the East most end of the line. Reversing travel direction back to {orderedSelectedStations[currentIndex + 1]}");
+                        CopyStationsFromLocoToCoaches(locomotive);
                         LocoTelem.LineDirectionEastWest[locomotive] = true;
                         LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
                         LocoTelem.LocomotiveDestination[locomotive] = orderedSelectedStations[currentIndex + 1];
@@ -689,26 +689,26 @@ namespace RouteManager
             Logger.LogToDebug($"Copying Stations from loco: {locomotive.DisplayName} to coupled coaches");
             string currentStation = LocoTelem.LocomotiveDestination[locomotive];
             int currentStationIndex = orderedStations.IndexOf(currentStation);
-            bool isEastWest = LocoTelem.LineDirectionEastWest[locomotive]; // true if traveling West
+            //bool isEastWest = LocoTelem.LineDirectionEastWest[locomotive]; // true if traveling West
 
-            // Determine the range of stations to include based on travel direction
-            IEnumerable<string> relevantStations = isEastWest ?
-                orderedStations.Skip(currentStationIndex) :
-                orderedStations.Take(currentStationIndex + 1).Reverse();
+            //// Determine the range of stations to include based on travel direction
+            //IEnumerable<string> relevantStations = isEastWest ?
+            //    orderedStations.Skip(currentStationIndex) :
+            //    orderedStations.Take(currentStationIndex + 1).Reverse();
 
             // Filter to include only selected stations
             HashSet<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
                 .Select(stop => stop.identifier)
                 .ToHashSet();
 
-            HashSet<string> filteredStations = relevantStations
-                .Where(station => selectedStationIdentifiers.Contains(station))
-                .ToHashSet();
+            //HashSet<string> filteredStations = relevantStations
+            //    .Where(station => selectedStationIdentifiers.Contains(station))
+            //    .ToHashSet();
 
             // Apply the filtered stations to each coach
             foreach (Car coach in locomotive.EnumerateCoupled().Where(car => car.Archetype == CarArchetype.Coach))
             {
-                StateManager.ApplyLocal(new SetPassengerDestinations(coach.id, filteredStations.ToList()));
+                StateManager.ApplyLocal(new SetPassengerDestinations(coach.id, selectedStationIdentifiers.ToList()));
             }
         }
 
