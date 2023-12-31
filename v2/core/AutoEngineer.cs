@@ -11,6 +11,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Hosting;
 using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Messaging;
@@ -35,10 +36,6 @@ namespace RouteManager.v2.core
 
             //Setup departure clearances
             LocoTelem.clearedForDeparture[locomotive] = false;
-
-            //TEST CODE
-            //locomotive.transform.rota
-            //END TEST CODE
 
             //Route Mode is enabled!
             while (LocoTelem.RouteMode[locomotive])
@@ -80,11 +77,15 @@ namespace RouteManager.v2.core
         public static IEnumerator locomotiveTransitControl(Car locomotive)
         {
 
-            //Check to make sure we are not already at our desired station
+            //Are we in a station?
             if (StationManager.isTrainInStation(locomotive))
             {
-                LocoTelem.TransitMode[locomotive] = false;
-                yield return new WaitForSeconds(1);
+                //Is that staion the same as our current destination?
+                if (LocoTelem.currentDestination[locomotive].identifier ==  StationManager.GetClosestStation(locomotive).Item1.identifier)
+                {
+                    LocoTelem.TransitMode[locomotive] = false;
+                    yield return new WaitForSeconds(1);
+                }
             }
 
             //Determine direction to move
@@ -262,20 +263,16 @@ namespace RouteManager.v2.core
                     }
                 }
 
-                //Train Confirmed to be stopped...
-
-                //Passenger Load / Unload Logic Here
-                //Temporarily wait 10 seconds before clearing loco for departure...
-                wasCurrentStopServed(locomotive);
-
-                checkFuelQuantities(locomotive);
+                //Now that train is stopped, perform station ops and check fuel quantities before departure.
+                if(wasCurrentStopServed(locomotive) && checkFuelQuantities(locomotive))
+                    LocoTelem.clearedForDeparture[locomotive] = true;
 
                 //Loco now clear for station departure. 
                 if (LocoTelem.clearedForDeparture[locomotive])
                 {
 
                     //Update Destination
-                    //LocoTelem.currentDestination[locomotive] = DestinationManager.findNextDestination(locomotive);
+                    LocoTelem.currentDestination[locomotive] = StationManager.getNextStation(locomotive);
 
                     //Transition to transit mode
                     LocoTelem.TransitMode[locomotive] = true;
@@ -461,33 +458,99 @@ namespace RouteManager.v2.core
 
 
         //Check to see if passengers are unloaded
-        private static void wasCurrentStopServed(Car locomotive)
+        private static bool wasCurrentStopServed(Car locomotive)
         {
-            try
-            {
-                PassengerMarker? marker = default(PassengerMarker);
-                foreach (Car currentCar in locomotive.EnumerateCoupled())
-                {
-                    if (currentCar.Archetype == Model.Definition.CarArchetype.Coach)
-                    {
-                        marker = currentCar.GetPassengerMarker();
+            bool carsLoaded     = true;
+            bool passWaiting    = true;
 
-                        if (marker != null && marker.HasValue)
+            //Initialize Variable
+            PassengerMarker? marker = default(PassengerMarker);
+
+            carsLoaded = carsStillLoaded(locomotive, marker);
+
+            passWaiting = passStillWaiting (locomotive, marker);
+
+            //if both cars have no pendding peope and station has no pending passengers
+            if(!carsLoaded && !passWaiting)
+            {
+                Logger.LogToDebug(String.Format("Locomotive {0} has finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), Logger.logLevel.Verbose);
+                return true;
+            }
+
+            Logger.LogToDebug(String.Format("Locomotive {0} has not finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), Logger.logLevel.Verbose);
+
+            //Always assume stop has not been served unless determined otherwise. 
+            return false;
+        }
+
+
+
+        private static bool carsStillLoaded (Car locomotive, PassengerMarker? marker)
+        {
+            bool loadCheck = false;
+
+            foreach (Car currentCar in locomotive.EnumerateCoupled())
+            {
+                //If the current car is a passenger car lets try to get the passenger data.
+                if (currentCar.Archetype == Model.Definition.CarArchetype.Coach)
+                {
+                    //Get data for the current car
+                    marker = currentCar.GetPassengerMarker();
+
+                    //Since this type is nullable, make sure its not null...
+                    if (marker != null && marker.HasValue)
+                    {
+                        //Loop through the list of passenger data for the current coach.
+                        foreach (var stop in marker.Value.Groups)
                         {
-                            foreach (var stop in marker.Value.Groups)
+                            //Logger.LogToDebug(String.Format("Passenger Car {0} has {1} passengers for the stop at {2}", currentCar.DisplayName, stop.Count, stop.Destination), Logger.logLevel.Verbose);
+                            if (stop.Destination == LocoTelem.currentDestination[locomotive].identifier)
                             {
-                                Logger.LogToDebug(String.Format("Passenger Car {0} has {1} passengers for the stop at {2}", currentCar.DisplayName, stop.Count, stop.Destination), Logger.logLevel.Verbose);
+                                loadCheck = true;
                             }
-                            //Logger.LogToDebug(String.Format("Passenger Car {0} has {1} passengers for the current stop at {2}", currentCar.DisplayName, marker.Value.CountPassengersForStop(LocoTelem.currentDestination[locomotive].identifier), LocoTelem.currentDestination[locomotive].identifier), Logger.logLevel.Verbose);
                         }
+                        //StationManager.getNumberPassengersWaitingForDestination()
+                        //Logger.LogToDebug(String.Format("Passenger Car {0} has {1} passengers for the current stop at {2}", currentCar.DisplayName, marker.Value.CountPassengersForStop(LocoTelem.currentDestination[locomotive].identifier), LocoTelem.currentDestination[locomotive].identifier), Logger.logLevel.Verbose);
                     }
                 }
             }
-            catch (Exception e) 
+
+            return loadCheck;
+        }
+
+
+        private static bool passStillWaiting(Car locomotive, PassengerMarker? marker)
+        {
+            bool passWaiting = false;
+
+
+            foreach (Car currentCar in locomotive.EnumerateCoupled())
             {
-                Logger.LogToDebug("Darn it.");
-                Logger.LogToDebug(e.StackTrace);
+                //If the current car is a passenger car lets try to get the passenger data.
+                if (currentCar.Archetype == Model.Definition.CarArchetype.Coach)
+                {
+                    //Get data for the current car
+                    marker = currentCar.GetPassengerMarker();
+
+                    //Since this type is nullable, make sure its not null...
+                    if (marker != null && marker.HasValue)
+                    {
+                        //Loop through the list of passenger data for the current coach.
+                        foreach (var selectedStop in marker.Value.Destinations)
+                        {
+                            //Logger.LogToDebug(String.Format("Passenger Car {0} has {1} passengers for the stop at {2}", currentCar.DisplayName, stop.Count, stop.Destination), Logger.logLevel.Verbose);
+                            if (StationManager.getNumberPassengersWaitingForDestination(LocoTelem.closestStation[locomotive].Item1, selectedStop) > 0) 
+                            {
+                                passWaiting = true;
+                            }
+                        }
+                        //StationManager.getNumberPassengersWaitingForDestination()
+                        //Logger.LogToDebug(String.Format("Passenger Car {0} has {1} passengers for the current stop at {2}", currentCar.DisplayName, marker.Value.CountPassengersForStop(LocoTelem.currentDestination[locomotive].identifier), LocoTelem.currentDestination[locomotive].identifier), Logger.logLevel.Verbose);
+                    }
+                }
             }
+
+            return passWaiting;
         }
 
 
@@ -519,15 +582,15 @@ namespace RouteManager.v2.core
             return false;
         }
 
-        private static void checkFuelQuantities(Car locomotive)
+        private static bool checkFuelQuantities(Car locomotive)
         {
             //Update Fuel quantities
             TrainManager.locoLowFuelCheck(locomotive);
 
             if (LocoTelem.lowFuelQuantities[locomotive].Count == 0)
-                return;
+                return true;
 
-            LocoTelem.clearedForDeparture[locomotive] = false;
+            return false;
         }
     }
 }

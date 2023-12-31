@@ -154,9 +154,10 @@ namespace RouteManager.v2.core
             List<string> orderedSelectedStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
 
             //Parse orderedSelected stops to PassengerStops
-            LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedPassengerStops);
+            //LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedPassengerStops);
 
-            return calculateNextStation(orderedSelectedStations, selectedPassengerStops, currentStation, locomotive);
+
+            return calculateNextStation(orderedSelectedStations, LocoTelem.SelectedStations[locomotive], currentStation, locomotive);
 
         }
 
