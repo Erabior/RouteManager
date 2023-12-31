@@ -14,6 +14,7 @@ using UnityEngine;
 using Logger = RouteManager.v2.Logging.Logger;
 using Track;
 using RouteManager.v2.dataStructures;
+using UnityEngine.InputSystem.EnhancedTouch;
 
 namespace RouteManager.v2.core
 {
@@ -220,10 +221,11 @@ namespace RouteManager.v2.core
 
         public static void CopyStationsFromLocoToCoaches(Car locomotive)
         {
-            Logger.LogToDebug($"Copying Stations from loco: {locomotive.DisplayName} to coupled coaches");
-            string currentStation = LocoTelem.LocomotiveDestination[locomotive];
+            Logger.LogToDebug(String.Format("Loco: {0} update coach station selection", locomotive.DisplayName),Logger.logLevel.Verbose);
+
+            string currentStation = LocoTelem.currentDestination[locomotive].identifier;
             int currentStationIndex = DestinationManager.orderedStations.IndexOf(currentStation);
-            bool isEastWest = LocoTelem.LineDirectionEastWest[locomotive]; // true if traveling West
+            bool isEastWest = LocoTelem.locoTravelingWestward[locomotive]; // true if traveling West
 
             // Determine the range of stations to include based on travel direction
             IEnumerable<string> relevantStations = isEastWest ?
@@ -239,11 +241,15 @@ namespace RouteManager.v2.core
                 .Where(station => selectedStationIdentifiers.Contains(station))
                 .ToHashSet();
 
+            Logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), Logger.logLevel.Debug);
             // Apply the filtered stations to each coach
             foreach (Car coach in locomotive.EnumerateCoupled().Where(car => car.Archetype == CarArchetype.Coach))
             {
+                Logger.LogToDebug(String.Format("Applying station selection to car", coach.DisplayName), Logger.logLevel.Verbose);
                 StateManager.ApplyLocal(new SetPassengerDestinations(coach.id, filteredStations.ToList()));
             }
+
+            LocoTelem.needToUpdatePassengerCoaches[locomotive] = false;
         }
 
         public static bool IsRouteModeEnabled(Car locomotive)
@@ -306,5 +312,72 @@ namespace RouteManager.v2.core
             return;
         }
 
+
+        public static float GetTrainVelocity(Car locomotive)
+        {
+            return Math.Abs(locomotive.velocity * 2.23694f);
+        }
+
+
+        //Separate out the core fuel check logic
+        public static void locoLowFuelCheck(Car locomotive)
+        {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: locoLowFuelCheck", Logger.logLevel.Trace);
+
+            Dictionary <string, float> fuelCheckResults = new Dictionary<string, float>();
+
+            //If steam locomotive Check the water and coal levels
+            if (locomotive.Archetype == Model.Definition.CarArchetype.LocomotiveSteam)
+            {
+
+                //If coal is below minimums
+                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "coal") / 2000, SettingsData.minCoalQuantity))
+                {
+                    fuelCheckResults.Add("coal", GetLoadInfoForLoco(locomotive, "coal") / 2000);
+                }
+
+                //If water is below minimums
+                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "water"), SettingsData.minWaterQuantity))
+                {
+                    fuelCheckResults.Add("water", GetLoadInfoForLoco(locomotive, "water"));
+                }
+
+            }
+            //If Diesel locomotive diesel levels
+            else if (locomotive.Archetype == Model.Definition.CarArchetype.LocomotiveDiesel)
+            {
+                //If diesel level is below defined minimums
+                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "diesel-fuel"), SettingsData.minDieselQuantity))
+                {
+                    fuelCheckResults.Add("diesel-fuel", GetLoadInfoForLoco(locomotive, "diesel-fuel"));
+                }
+            }
+
+            LocoTelem.lowFuelQuantities[locomotive] = fuelCheckResults;
+
+            //Trace Method
+            Logger.LogToDebug("EXITING FUNCTION: locoLowFuelCheck", Logger.logLevel.Trace);
+        }
+
+        //Methodize repeated code of fuel check. 
+        //Method could be re-integrated into calling method now that additional checks have been rendered null from further code improvements.
+        private static bool compareAgainstMinVal(float inputValue, float minimumValue)
+        {
+            //Trace Function
+            Logger.LogToDebug("ENTERED FUNCTION: compareAgainstMinVal", Logger.logLevel.Trace);
+
+            //Compare to minimums
+            if (inputValue < minimumValue)
+                return true;
+
+            //Trace Method
+            Logger.LogToDebug("EXITING FUNCTION: compareAgainstMinVal", Logger.logLevel.Trace);
+
+            //Something unexpected happened or fuel is above minimums.
+            //Either way return false here as there is nothing further we can do. 
+            return false;
+        }
     }
+
 }

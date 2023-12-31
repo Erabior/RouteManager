@@ -215,7 +215,10 @@ namespace RouteManager.v2.core
                     }
 
                 }
+                //if current station is not in selected stations
                 isSelectedInSelectedStations = selectedStops.Any(stop => stop.identifier == LocoTelem.LocomotiveDestination[locomotive]);
+
+                
                 isSelectedInUISelectedStations = LocoTelem.UIStationSelections[locomotive].TryGetValue(LocoTelem.LocomotiveDestination[locomotive], out bool uiSelected) && uiSelected;
 
                 if (!isSelectedInSelectedStations || !isSelectedInUISelectedStations)
@@ -242,28 +245,29 @@ namespace RouteManager.v2.core
 
         public static float GetDistanceToDest(Car locomotive)
         {
+            Logger.LogToDebug(String.Format("Loco: {0} getting distance to destination", locomotive.DisplayName));
+
             // Check if the locomotive is null
             if (locomotive == null)
             {
-
                 Logger.LogToError("Locomotive is null in GetDistanceToDest.");
                 return -6969; // Return a default value or handle this case as needed
             }
 
             // Check if the locomotive key exists in the LocomotiveDestination dictionary
-            if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
+            if (!LocoTelem.currentDestination.ContainsKey(locomotive))
             {
                 Logger.LogToError($"LocomotiveDestination does not contain key: {locomotive}");
-                LocoTelem.LocomotiveDestination[locomotive] = GetClosestSelectedStation(locomotive);
+                LocoTelem.currentDestination[locomotive] = StationManager.GetClosestStation(locomotive).Item1;
 
-                if (!LocoTelem.LocomotiveDestination.ContainsKey(locomotive))
+                if (!LocoTelem.currentDestination.ContainsKey(locomotive))
                 {
                     return -6969f; // Or handle this scenario appropriately
                 }
 
             }
             Vector3 locomotivePosition = new Vector3();
-            string destination = LocoTelem.LocomotiveDestination[locomotive];
+            string destination = LocoTelem.currentDestination[locomotive].identifier;
 
             if (destination == null)
             {

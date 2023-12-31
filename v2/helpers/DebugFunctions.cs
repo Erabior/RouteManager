@@ -17,6 +17,19 @@ namespace RouteManager.v2.helpers
 {
     internal class DebugFunctions
     {
+
+        public static void logAllWaitingPassengers()
+        {
+            foreach (PassengerStop stop in PassengerStop.FindAll())
+            {
+                Logger.LogToDebug(String.Format("Stop: {0} ", stop.DisplayName));
+                foreach (KeyValuePair<string, int> pair in stop.Waiting)
+                {
+                    Logger.LogToDebug(String.Format("\t Has {0} Passengers for {1}", pair.Value, pair.Key));
+                }
+            }
+        }
+
         public static void TestLoadInfo(Car locomotive, string loadIdentifier)
         {
 
