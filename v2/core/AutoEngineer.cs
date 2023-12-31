@@ -521,8 +521,6 @@ namespace RouteManager.v2.core
 
         private static bool passStillWaiting(Car locomotive, PassengerMarker? marker)
         {
-            bool passWaiting = false;
-
 
             foreach (Car currentCar in locomotive.EnumerateCoupled())
             {
@@ -535,22 +533,20 @@ namespace RouteManager.v2.core
                     //Since this type is nullable, make sure its not null...
                     if (marker != null && marker.HasValue)
                     {
-                        //Loop through the list of passenger data for the current coach.
+                        //Loop through the list of selected stations for the current coach.
                         foreach (var selectedStop in marker.Value.Destinations)
                         {
-                            //Logger.LogToDebug(String.Format("Passenger Car {0} has {1} passengers for the stop at {2}", currentCar.DisplayName, stop.Count, stop.Destination), Logger.logLevel.Verbose);
+                            //If any destinations have a passsenger still in the platform bail out and return true. 
                             if (StationManager.getNumberPassengersWaitingForDestination(LocoTelem.closestStation[locomotive].Item1, selectedStop) > 0) 
                             {
-                                passWaiting = true;
+                                return true;
                             }
                         }
-                        //StationManager.getNumberPassengersWaitingForDestination()
-                        //Logger.LogToDebug(String.Format("Passenger Car {0} has {1} passengers for the current stop at {2}", currentCar.DisplayName, marker.Value.CountPassengersForStop(LocoTelem.currentDestination[locomotive].identifier), LocoTelem.currentDestination[locomotive].identifier), Logger.logLevel.Verbose);
                     }
                 }
             }
 
-            return passWaiting;
+            return false;
         }
 
 
