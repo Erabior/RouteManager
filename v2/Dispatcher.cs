@@ -104,8 +104,9 @@ namespace RouteManager.v2
             LocoTelem.clearedForDeparture[currentLoco] = false;
             LocoTelem.CenterCar[currentLoco] = currentLoco;
             LocoTelem.locoTravelingWestward[currentLoco] = true;
+            LocoTelem.needToUpdatePassengerCoaches[currentLoco] = false;
 
-            if (!LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
+                if (!LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
             {
                 LocoTelem.LineDirectionEastWest[currentLoco] = true;
             }
@@ -151,6 +152,9 @@ namespace RouteManager.v2
             
             if (LocoTelem.CenterCar.ContainsKey(currentLoco))
                     LocoTelem.CenterCar.Remove(currentLoco);
+
+            if (LocoTelem.needToUpdatePassengerCoaches.ContainsKey(currentLoco))
+                LocoTelem.needToUpdatePassengerCoaches.Remove(currentLoco);
 
         }
 

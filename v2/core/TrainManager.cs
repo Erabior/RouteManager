@@ -14,6 +14,7 @@ using UnityEngine;
 using Logger = RouteManager.v2.Logging.Logger;
 using Track;
 using RouteManager.v2.dataStructures;
+using UnityEngine.InputSystem.EnhancedTouch;
 
 namespace RouteManager.v2.core
 {
@@ -220,10 +221,20 @@ namespace RouteManager.v2.core
 
         public static void CopyStationsFromLocoToCoaches(Car locomotive)
         {
-            Logger.LogToDebug($"Copying Stations from loco: {locomotive.DisplayName} to coupled coaches");
-            string currentStation = LocoTelem.LocomotiveDestination[locomotive];
+            Logger.LogToDebug(String.Format("Loco: {0} update coach station selection", locomotive.DisplayName),Logger.logLevel.Verbose);
+
+            string currentStation = LocoTelem.currentDestination[locomotive].identifier;
+            Logger.LogToDebug(String.Format("currentStation", currentStation), Logger.logLevel.Verbose);
+
             int currentStationIndex = DestinationManager.orderedStations.IndexOf(currentStation);
-            bool isEastWest = LocoTelem.LineDirectionEastWest[locomotive]; // true if traveling West
+
+            Logger.LogToDebug(String.Format("currentStationIndex", currentStationIndex), Logger.logLevel.Verbose);
+
+            bool isEastWest = LocoTelem.locoTravelingWestward[locomotive]; // true if traveling West
+
+            Logger.LogToDebug(String.Format("isEastWest", isEastWest), Logger.logLevel.Verbose);
+
+            Logger.LogToDebug(String.Format("Loco: {0} calculating stations to apply", locomotive.DisplayName), Logger.logLevel.Verbose);
 
             // Determine the range of stations to include based on travel direction
             IEnumerable<string> relevantStations = isEastWest ?
@@ -239,9 +250,11 @@ namespace RouteManager.v2.core
                 .Where(station => selectedStationIdentifiers.Contains(station))
                 .ToHashSet();
 
+            Logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), Logger.logLevel.Debug);
             // Apply the filtered stations to each coach
             foreach (Car coach in locomotive.EnumerateCoupled().Where(car => car.Archetype == CarArchetype.Coach))
             {
+                Logger.LogToDebug(String.Format("Applying station selection to car", coach.DisplayName), Logger.logLevel.Verbose);
                 StateManager.ApplyLocal(new SetPassengerDestinations(coach.id, filteredStations.ToList()));
             }
         }

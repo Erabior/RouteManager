@@ -37,9 +37,16 @@ namespace RouteManager.v2.core
             //Setup departure clearances
             LocoTelem.clearedForDeparture[locomotive] = false;
 
+            //Set Initial Destination
+            LocoTelem.currentDestination[locomotive] = StationManager.getNextStation(locomotive);
+
             //Route Mode is enabled!
             while (LocoTelem.RouteMode[locomotive])
             {
+                //Update passenger markers as needed.
+                if (LocoTelem.needToUpdatePassengerCoaches[locomotive])
+                    TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+
                 //Update Center & closest station
                 LocoTelem.CenterCar[locomotive] = TrainManager.GetCenterCoach(locomotive);
                  
@@ -118,8 +125,10 @@ namespace RouteManager.v2.core
                     distanceToStation = DestinationManager.GetDistanceToDest(locomotive);
                     delayExecution = false;
                 }
-                catch
+                catch (Exception e)
                 {
+                    Logger.LogToDebug(e.Message,Logger.logLevel.Error);
+                    Logger.LogToDebug(e.StackTrace, Logger.logLevel.Error);
                     //If after delaying execution for 5 seconds, stop coroutine for locomotive
                     if (delayExecution)
                     {

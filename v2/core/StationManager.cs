@@ -4,6 +4,7 @@ using RollingStock;
 using RouteManager.v2.dataStructures;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Remoting.Messaging;
 using System.Text;
@@ -132,7 +133,7 @@ namespace RouteManager.v2.core
             PassengerStop currentStation = default(PassengerStop);
 
             //Set a current destination if it does not exist, else use the current destination.
-            if (!LocoTelem.currentDestination.ContainsKey(locomotive))
+            if (!LocoTelem.currentDestination.ContainsKey(locomotive) || LocoTelem.currentDestination[locomotive] == default(PassengerStop))
             {
                 //No Destination set so for now, assume closest station.
                 currentStation = GetClosestStation(locomotive).Item1;
@@ -156,8 +157,11 @@ namespace RouteManager.v2.core
             //Parse orderedSelected stops to PassengerStops
             //LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedPassengerStops);
 
+            PassengerStop nextStop = calculateNextStation(orderedSelectedStations, LocoTelem.SelectedStations[locomotive], currentStation, locomotive);
 
-            return calculateNextStation(orderedSelectedStations, LocoTelem.SelectedStations[locomotive], currentStation, locomotive);
+            Logger.LogToDebug(nextStop.identifier, Logger.logLevel.Debug);
+
+            return nextStop;
 
         }
 
@@ -167,7 +171,7 @@ namespace RouteManager.v2.core
         private static PassengerStop calculateNextStation(List<string> orderedSelectedStations, List<PassengerStop> selectedPassengerStops, PassengerStop currentStation, Car locomotive)
         {
 
-            Logger.LogToDebug("Loco {0} calculating next station", Logger.logLevel.Verbose);
+            Logger.LogToDebug(String.Format("Loco {0} calculating next station",locomotive.DisplayName), Logger.logLevel.Verbose);
 
             //Make sure we have stations after all that parsing was done...
             if (selectedPassengerStops != null && selectedPassengerStops.Count > 1)
@@ -178,38 +182,48 @@ namespace RouteManager.v2.core
                 //Current station is is not a valid selected station...
                 if (currentIndex! < 0)
                 {
-                    Logger.LogToDebug("Loco {0} Current station is not selected. Defaulting to First Selected station", Logger.logLevel.Verbose);
+                    Logger.LogToDebug(String.Format("Loco {0} Current station is not selected. Defaulting to First Selected station", locomotive.DisplayName), Logger.logLevel.Verbose);
                     return selectedPassengerStops.First();
                 }
+
+                Logger.LogToDebug(String.Format("Loco {0} determining direction of travel for station selection", locomotive.DisplayName), Logger.logLevel.Verbose);
 
                 //If we are traveling torward Anderson from Silva
                 if (LocoTelem.locoTravelingWestward[locomotive])
                 {
-                    if(currentIndex == selectedPassengerStops.Count - 1) 
+                    Logger.LogToDebug(String.Format("Loco {0} Traveleing West", locomotive.DisplayName), Logger.logLevel.Debug);
+                    if (currentIndex == selectedPassengerStops.Count - 1) 
                     {
+                        Logger.LogToDebug(String.Format("Loco {0} at end of line", locomotive.DisplayName), Logger.logLevel.Debug);
                         LocoTelem.locoTravelingWestward[locomotive] = false;
-                        LocoTelem.currentDestination[locomotive] = selectedPassengerStops[currentIndex - 1];
-                        TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+                        LocoTelem.needToUpdatePassengerCoaches[locomotive] = false;
+
+                        return LocoTelem.currentDestination[locomotive] = selectedPassengerStops[currentIndex - 1];
                     }
                     else
                     {
-                        LocoTelem.currentDestination[locomotive] = selectedPassengerStops[currentIndex + 1];
+                       return selectedPassengerStops[currentIndex + 1];
                     }
                 }
                 else
                 {
+                    Logger.LogToDebug(String.Format("Loco {0} Traveleing East", locomotive.DisplayName), Logger.logLevel.Debug);
                     if (currentIndex == 0)
                     {
+                        Logger.LogToDebug(String.Format("Loco {0} at end of line", locomotive.DisplayName), Logger.logLevel.Debug);
                         LocoTelem.locoTravelingWestward[locomotive] = true;
-                        LocoTelem.currentDestination[locomotive] = selectedPassengerStops[currentIndex + 1];
-                        TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+                        LocoTelem.needToUpdatePassengerCoaches[locomotive] = false;
+
+                        return LocoTelem.currentDestination[locomotive] = selectedPassengerStops[currentIndex + 1];
                     }
                     else
                     {
-                        LocoTelem.currentDestination[locomotive] = selectedPassengerStops[currentIndex - 1];
+                        return selectedPassengerStops[currentIndex - 1];
                     }
                 }
             }
+
+            Logger.LogToDebug(String.Format("Loco {0} faild to find next station ... Defaulting to first stop", locomotive.DisplayName), Logger.logLevel.Verbose);
 
             //Worst case, start from the beginning...
             return selectedPassengerStops.First();

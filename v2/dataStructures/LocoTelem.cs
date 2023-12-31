@@ -24,6 +24,8 @@ namespace RouteManager.v2.dataStructures
 
         public static Dictionary<Car, bool>     locoTravelingWestward           { get; private set; } = new Dictionary<Car, bool>();
 
+        public static Dictionary<Car, bool>     needToUpdatePassengerCoaches    { get; private set; } = new Dictionary<Car, bool>();
+
         public static Dictionary<Car, PassengerStop>             currentDestination      { get; private set; } = new Dictionary<Car, PassengerStop>();
         public static Dictionary<Car, Dictionary<string, float>> lowFuelQuantities       { get; private set; } = new Dictionary<Car, Dictionary<string, float>>();
         public static Dictionary<Car, Dictionary<string, bool>>  UIStationSelections     { get; private set; } = new Dictionary<Car, Dictionary<string, bool>>();
