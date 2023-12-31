@@ -2,6 +2,7 @@
 using GalaSoft.MvvmLight.Messaging;
 using Game.Events;
 using Game.Messages;
+using Game.State;
 using Model;
 using RollingStock;
 using RouteManager.v2.core;
@@ -21,7 +22,7 @@ namespace RouteManager.v2
     public class Dispatcher : MonoBehaviour
     {
 
-        AutoEngineer engineerAi;
+        AutoEngineer Engineer;
 
 
         //Default unity hook.
@@ -36,7 +37,7 @@ namespace RouteManager.v2
             //Hook the map unload event to gracefully stop all instances prior to map unload. 
             Messenger.Default.Register<MapDidUnloadEvent>(this, GameMapUnloaded);
 
-            engineerAi = new AutoEngineer();
+            Engineer = new AutoEngineer();
 
             //Log status
             Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
@@ -70,7 +71,7 @@ namespace RouteManager.v2
 
                         prepareDataStructures(currentLoco);
 
-                        StartCoroutine(engineerAi.AutoEngineerControlRoutine(currentLoco));
+                        StartCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
 
                     }
                     else if (LocoTelem.locomotiveCoroutines[currentLoco] && !LocoTelem.RouteMode[currentLoco])
@@ -79,7 +80,7 @@ namespace RouteManager.v2
 
                         cleanDataStructures(currentLoco);
 
-                        StopCoroutine(engineerAi.AutoEngineerControlRoutine(currentLoco));
+                        StopCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
                     }
                 }
             }
@@ -173,11 +174,30 @@ namespace RouteManager.v2
                 LocoTelem.clearedForDeparture.Remove(currentLoco);
             
             if (LocoTelem.CenterCar.ContainsKey(currentLoco))
-                    LocoTelem.CenterCar.Remove(currentLoco);
+                LocoTelem.CenterCar.Remove(currentLoco);
 
             if (LocoTelem.needToUpdatePassengerCoaches.ContainsKey(currentLoco))
                 LocoTelem.needToUpdatePassengerCoaches.Remove(currentLoco);
 
+        }
+
+
+        private void clearDicts()
+        {
+            LocoTelem.DriveForward.Clear();
+            LocoTelem.LineDirectionEastWest.Clear();
+            LocoTelem.TransitMode.Clear();
+            LocoTelem.RMMaxSpeed.Clear();
+            LocoTelem.approachWhistleSounded.Clear();
+            LocoTelem.LineDirectionEastWest.Clear();
+            LocoTelem.LocomotivePrevDestination.Clear();
+            LocoTelem.locomotiveCoroutines.Clear();
+            LocoTelem.lowFuelQuantities.Clear();
+            LocoTelem.closestStation.Clear();
+            LocoTelem.currentDestination.Clear();
+            LocoTelem.clearedForDeparture.Clear();
+            LocoTelem.CenterCar.Clear();
+            LocoTelem.needToUpdatePassengerCoaches.Clear();
         }
 
 
@@ -198,9 +218,17 @@ namespace RouteManager.v2
 
                 for (int i = 0; i < keys.Count(); i++)
                 {
-                    //StopCoroutine(AutoEngineerControlRoutine(keys[i]));
+                    StopCoroutine(Engineer.AutoEngineerControlRoutine(keys[i]));
+
+                    //Attempt to prevent trains from taking off before route manager can be re-configured
+                    try
+                    {
+                        StateManager.ApplyLocal(new AutoEngineerCommand(keys[i].id, AutoEngineerMode.Road, LocoTelem.DriveForward[keys[i]], 0, null));
+                    }
+                    catch { }
+
                 }
-                //clearDicts();
+                clearDicts();
             }
         }
     }

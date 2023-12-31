@@ -224,17 +224,8 @@ namespace RouteManager.v2.core
             Logger.LogToDebug(String.Format("Loco: {0} update coach station selection", locomotive.DisplayName),Logger.logLevel.Verbose);
 
             string currentStation = LocoTelem.currentDestination[locomotive].identifier;
-            Logger.LogToDebug(String.Format("currentStation", currentStation), Logger.logLevel.Verbose);
-
             int currentStationIndex = DestinationManager.orderedStations.IndexOf(currentStation);
-
-            Logger.LogToDebug(String.Format("currentStationIndex", currentStationIndex), Logger.logLevel.Verbose);
-
             bool isEastWest = LocoTelem.locoTravelingWestward[locomotive]; // true if traveling West
-
-            Logger.LogToDebug(String.Format("isEastWest", isEastWest), Logger.logLevel.Verbose);
-
-            Logger.LogToDebug(String.Format("Loco: {0} calculating stations to apply", locomotive.DisplayName), Logger.logLevel.Verbose);
 
             // Determine the range of stations to include based on travel direction
             IEnumerable<string> relevantStations = isEastWest ?

@@ -36,10 +36,15 @@ namespace RouteManager.v2.core
 
             //Setup departure clearances
             LocoTelem.clearedForDeparture[locomotive] = false;
+
+            Logger.LogToDebug(String.Format("Loco: {0} \t has ID: {1}", locomotive.DisplayName, locomotive.id), Logger.logLevel.Debug);
             LocoTelem.locoTravelingWestward[locomotive] = true;
 
-            //Set Initial Destination
-            LocoTelem.currentDestination[locomotive] = StationManager.getNextStation(locomotive);
+            //Set some initial values
+            LocoTelem.currentDestination[locomotive]            = StationManager.getNextStation(locomotive);
+            LocoTelem.closestStation[locomotive]                = StationManager.GetClosestStation(locomotive);
+            LocoTelem.closestStationNeedsUpdated[locomotive]    = false;
+            LocoTelem.CenterCar[locomotive]                     = TrainManager.GetCenterCoach(locomotive);
 
             //Route Mode is enabled!
             while (LocoTelem.RouteMode[locomotive])
@@ -47,12 +52,6 @@ namespace RouteManager.v2.core
                 //Update passenger markers as needed.
                 if (LocoTelem.needToUpdatePassengerCoaches[locomotive])
                     TrainManager.CopyStationsFromLocoToCoaches(locomotive);
-
-                //Update Center & closest station
-                LocoTelem.CenterCar[locomotive] = TrainManager.GetCenterCoach(locomotive);
-                 
-                //Calculate the closest station
-                LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation(locomotive);
 
                 Logger.LogToDebug(String.Format("Locomotive {0} center of train is car {1}", locomotive.DisplayName, LocoTelem.CenterCar[locomotive].DisplayName), Logger.logLevel.Verbose);
 
@@ -77,10 +76,6 @@ namespace RouteManager.v2.core
             yield return null;
         }
 
-
-
-
-
         //Locomotive Enroute to Destination
         public static IEnumerator locomotiveTransitControl(Car locomotive)
         {
@@ -89,7 +84,7 @@ namespace RouteManager.v2.core
             if (StationManager.isTrainInStation(locomotive))
             {
                 //Is that staion the same as our current destination?
-                if (LocoTelem.currentDestination[locomotive].identifier ==  StationManager.GetClosestStation(locomotive).Item1.identifier)
+                if (LocoTelem.currentDestination[locomotive].identifier == LocoTelem.closestStation[locomotive].Item1.identifier)
                 {
                     LocoTelem.TransitMode[locomotive] = false;
                     yield return new WaitForSeconds(1);
@@ -103,17 +98,37 @@ namespace RouteManager.v2.core
 
             //TEMP LOGIC
             float distanceToStation     = float.MaxValue;
-            bool delayExecution         = false;
+            bool  delayExecution        = false;
             float olddist               = float.MaxValue;
-            float trainVelocity = 0;
+            float trainVelocity         = 0;
 
             //Loop through transit logic
             while (LocoTelem.TransitMode[locomotive])
             {
 
                 //Potential fix for edge case where loco reverses directions multiple times due to a race condition
-                if(Math.Abs(olddist-distanceToStation)>5)
+                if (Math.Abs(olddist - distanceToStation) > 5)
+                {
                     olddist = distanceToStation;
+                }
+
+                //Getting close to a station update some values...
+                //Cheeky optimization to reduce excessive logging...
+                if (distanceToStation != float.MaxValue)
+                {
+                    if (Math.Abs(distanceToStation) <= 1000 && LocoTelem.closestStationNeedsUpdated[locomotive])
+                    {
+                        //Update Center & closest station
+                        LocoTelem.CenterCar[locomotive] = TrainManager.GetCenterCoach(locomotive);
+                        LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation(locomotive);
+                        LocoTelem.closestStationNeedsUpdated[locomotive] = false;
+                    }
+                    else if (Math.Abs(distanceToStation) > 1000)
+                    {
+                        //Reset closestStationNeedsUpdated
+                        LocoTelem.closestStationNeedsUpdated[locomotive] = true;
+                    }
+                }
 
                 /*****************************************************************
                  * 
@@ -283,6 +298,7 @@ namespace RouteManager.v2.core
 
                     //Update Destination
                     LocoTelem.currentDestination[locomotive] = StationManager.getNextStation(locomotive);
+                    LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation(locomotive);
 
                     //Transition to transit mode
                     LocoTelem.TransitMode[locomotive] = true;

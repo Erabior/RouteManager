@@ -192,6 +192,7 @@ namespace RouteManager.v2.core
                 //For some reason the index does not exist here...
                 //Its initialized twice once in Dispatcher.cs to a default value 
                 //A second time in AutoEngineer for good measure. It should exist but it does not...
+                Logger.LogToDebug(String.Format("Loco: {0} \t has ID: {1}", locomotive.DisplayName, locomotive.id), Logger.logLevel.Debug);
                 if (LocoTelem.locoTravelingWestward[locomotive])
                 {
                     Logger.LogToDebug(String.Format("Loco {0} Traveleing West", locomotive.DisplayName), Logger.logLevel.Debug);
