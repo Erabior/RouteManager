@@ -215,7 +215,10 @@ namespace RouteManager.v2.core
                     }
 
                 }
+                //if current station is not in selected stations
                 isSelectedInSelectedStations = selectedStops.Any(stop => stop.identifier == LocoTelem.LocomotiveDestination[locomotive]);
+
+                
                 isSelectedInUISelectedStations = LocoTelem.UIStationSelections[locomotive].TryGetValue(LocoTelem.LocomotiveDestination[locomotive], out bool uiSelected) && uiSelected;
 
                 if (!isSelectedInSelectedStations || !isSelectedInUISelectedStations)

@@ -74,13 +74,13 @@ namespace RouteManager.v2.core
             return false;
         }
 
-        public static (PassengerStop,float) GetClosestStation(Car locomotive)
+        public static (PassengerStop,float) GetClosestStation(Car currentCar)
         {
             //Trace Logging
             Logger.LogToDebug("ENTERED FUNCTION: GetClosestStation", Logger.logLevel.Trace);
 
             //Debugging Output
-            Logger.LogToDebug(String.Format("Loco {0} calculating closest station...",locomotive.DisplayName), Logger.logLevel.Debug);
+            Logger.LogToDebug(String.Format("Car {0} calculating closest station...", currentCar.DisplayName), Logger.logLevel.Debug);
 
             // Initialize variables;
             PassengerStop closestStation = null;
@@ -89,7 +89,7 @@ namespace RouteManager.v2.core
 
 
             //Get Locomotive Center on the map
-            Vector3? locoMotivePosition = locomotive.GetCenterPosition(graph);
+            Vector3? locoMotivePosition = currentCar.GetCenterPosition(graph);
 
             // If centerpoint is null then bail
             if (locoMotivePosition == null)
@@ -99,13 +99,13 @@ namespace RouteManager.v2.core
             }
 
             //Debugging Output
-            Logger.LogToDebug(String.Format("Loco {0} centerpoint {1} has value {2})", locomotive, locoMotivePosition, locoMotivePosition.Value), Logger.logLevel.Verbose);
+            Logger.LogToDebug(String.Format("Car {0} centerpoint {1} has value {2})", currentCar, locoMotivePosition, locoMotivePosition.Value), Logger.logLevel.Verbose);
 
             // Iterate over each selected station using a for loop
             foreach ( PassengerStop station in UnityEngine.Object.FindObjectsOfType<PassengerStop>())
             {
                 Logger.LogToDebug($"Station center was: {station.CenterPoint}",Logger.logLevel.Verbose);
-                Logger.LogToDebug($"Loco center was: {locoMotivePosition.Value}", Logger.logLevel.Verbose);
+                Logger.LogToDebug($"Car center was: {locoMotivePosition.Value}", Logger.logLevel.Verbose);
 
                 // Calculate the distance between the locomotive and the station's center point
                 float distance = Vector3.Distance(locoMotivePosition.Value, station.CenterPoint);
@@ -119,7 +119,7 @@ namespace RouteManager.v2.core
             }
 
             //Debug output
-            Logger.LogToDebug(String.Format("Loco {0} Closest Station was: {1}", locomotive.DisplayName, closestStation.DisplayName), Logger.logLevel.Debug);
+            Logger.LogToDebug(String.Format("Car {0} Closest Station was: {1}", currentCar.DisplayName, closestStation.DisplayName), Logger.logLevel.Debug);
 
             //Trace Logging
             Logger.LogToDebug("EXITING FUNCTION: GetClosestStation", Logger.logLevel.Trace);
@@ -127,12 +127,100 @@ namespace RouteManager.v2.core
             return (closestStation, closestDistance);
         }
 
+        public static PassengerStop getNextStation(Car locomotive)
+        {
+            PassengerStop currentStation = default(PassengerStop);
+
+            //Set a current destination if it does not exist, else use the current destination.
+            if (!LocoTelem.currentDestination.ContainsKey(locomotive))
+            {
+                //No Destination set so for now, assume closest station.
+                currentStation = GetClosestStation(locomotive).Item1;
+                Logger.LogToDebug("Loco {0} does not have destination. Defaulting to closest station {1}",Logger.logLevel.Debug);
+            }
+            else
+            {
+                currentStation = LocoTelem.currentDestination[locomotive];
+            }
+
+            //Get Selected menu items
+            List<string> selectedStationIdentifiers = LocoTelem.SelectedStations
+                .SelectMany(pair => pair.Value)
+                .Select(passengerStop => passengerStop.identifier)
+                .Distinct()
+                .ToList();
+
+            //Convert selected menu items into an ordered list of station stops
+            List<string> orderedSelectedStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
+
+            //Parse orderedSelected stops to PassengerStops
+            LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedPassengerStops);
+
+            return calculateNextStation(orderedSelectedStations, selectedPassengerStops, currentStation, locomotive);
+
+        }
+
+
+
+
+        private static PassengerStop calculateNextStation(List<string> orderedSelectedStations, List<PassengerStop> selectedPassengerStops, PassengerStop currentStation, Car locomotive)
+        {
+
+            Logger.LogToDebug("Loco {0} calculating next station", Logger.logLevel.Verbose);
+
+            //Make sure we have stations after all that parsing was done...
+            if (selectedPassengerStops != null && selectedPassengerStops.Count > 1)
+            {
+                //Current station index
+                int currentIndex = orderedSelectedStations.IndexOf(currentStation.identifier);
+
+                //Current station is is not a valid selected station...
+                if (currentIndex! < 0)
+                {
+                    Logger.LogToDebug("Loco {0} Current station is not selected. Defaulting to First Selected station", Logger.logLevel.Verbose);
+                    return selectedPassengerStops.First();
+                }
+
+                //If we are traveling torward Anderson from Silva
+                if (LocoTelem.locoTravelingWestward[locomotive])
+                {
+                    if(currentIndex == selectedPassengerStops.Count - 1) 
+                    {
+                        LocoTelem.locoTravelingWestward[locomotive] = false;
+                        LocoTelem.currentDestination[locomotive] = selectedPassengerStops[currentIndex - 1];
+                        TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+                    }
+                    else
+                    {
+                        LocoTelem.currentDestination[locomotive] = selectedPassengerStops[currentIndex + 1];
+                    }
+                }
+                else
+                {
+                    if (currentIndex == 0)
+                    {
+                        LocoTelem.locoTravelingWestward[locomotive] = true;
+                        LocoTelem.currentDestination[locomotive] = selectedPassengerStops[currentIndex + 1];
+                        TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+                    }
+                    else
+                    {
+                        LocoTelem.currentDestination[locomotive] = selectedPassengerStops[currentIndex - 1];
+                    }
+                }
+            }
+
+            //Worst case, start from the beginning...
+            return selectedPassengerStops.First();
+        }
+
+
 
 
         //Will need adjusting
-        public static bool isLocomotiveInStation(Car locomotive)
+        public static bool isTrainInStation(Car currentCar)
         {
-            if(Vector3.Distance(LocoTelem.closestStation[locomotive].Item1.CenterPoint, locomotive.GetCenterPosition(Graph.Shared)) <= 15f)
+            if(Vector3.Distance(LocoTelem.closestStation[currentCar].Item1.CenterPoint, currentCar.GetCenterPosition(Graph.Shared)) <= 15f)
             {
                 return true;
             }

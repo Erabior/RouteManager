@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Track;
 using UnityEngine;
 using Logger = RouteManager.v2.Logging.Logger;
 
@@ -101,6 +102,8 @@ namespace RouteManager.v2
             LocoTelem.closestStation[currentLoco] = (null,0);
             LocoTelem.currentDestination[currentLoco] = default(PassengerStop);
             LocoTelem.clearedForDeparture[currentLoco] = false;
+            LocoTelem.CenterCar[currentLoco] = currentLoco;
+            LocoTelem.locoTravelingWestward[currentLoco] = true;
 
             if (!LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
             {
@@ -145,6 +148,10 @@ namespace RouteManager.v2
 
             if (LocoTelem.clearedForDeparture.ContainsKey(currentLoco))
                 LocoTelem.clearedForDeparture.Remove(currentLoco);
+            
+            if (LocoTelem.CenterCar.ContainsKey(currentLoco))
+                    LocoTelem.CenterCar.Remove(currentLoco);
+
         }
 
 
