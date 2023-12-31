@@ -257,6 +257,8 @@ namespace RouteManager.v2.core
                 Logger.LogToDebug(String.Format("Applying station selection to car", coach.DisplayName), Logger.logLevel.Verbose);
                 StateManager.ApplyLocal(new SetPassengerDestinations(coach.id, filteredStations.ToList()));
             }
+
+            LocoTelem.needToUpdatePassengerCoaches[locomotive] = false;
         }
 
         public static bool IsRouteModeEnabled(Car locomotive)

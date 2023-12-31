@@ -92,24 +92,46 @@ namespace RouteManager.v2
 
         private void prepareDataStructures(Car currentLoco)
         {
-            LocoTelem.DriveForward[currentLoco] = true;
-            LocoTelem.LineDirectionEastWest[currentLoco] = true;
-            LocoTelem.TransitMode[currentLoco] = true;
-            LocoTelem.RMMaxSpeed[currentLoco] = 0;
-            LocoTelem.locomotiveCoroutines[currentLoco] = true;
-            LocoTelem.approachWhistleSounded[currentLoco] = false;
-            LocoTelem.lowFuelQuantities[currentLoco] = new Dictionary<string, float>();
-            LocoTelem.closestStation[currentLoco] = (null,0);
-            LocoTelem.currentDestination[currentLoco] = default(PassengerStop);
-            LocoTelem.clearedForDeparture[currentLoco] = false;
-            LocoTelem.CenterCar[currentLoco] = currentLoco;
-            LocoTelem.locoTravelingWestward[currentLoco] = true;
-            LocoTelem.needToUpdatePassengerCoaches[currentLoco] = false;
 
-                if (!LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
-            {
+            if (!LocoTelem.DriveForward.ContainsKey(currentLoco))
+                LocoTelem.DriveForward[currentLoco] = true;
+
+            if (!LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
                 LocoTelem.LineDirectionEastWest[currentLoco] = true;
-            }
+
+            if (!LocoTelem.TransitMode.ContainsKey(currentLoco))
+                LocoTelem.TransitMode[currentLoco] = true;
+
+            if (!LocoTelem.RMMaxSpeed.ContainsKey(currentLoco))
+                LocoTelem.RMMaxSpeed[currentLoco] = 0;
+
+            if (!LocoTelem.locomotiveCoroutines.ContainsKey(currentLoco))
+                LocoTelem.locomotiveCoroutines[currentLoco] = true;
+
+            if (!LocoTelem.approachWhistleSounded.ContainsKey(currentLoco))
+                LocoTelem.approachWhistleSounded[currentLoco] = false;
+
+            if (!LocoTelem.lowFuelQuantities.ContainsKey(currentLoco))
+                LocoTelem.lowFuelQuantities[currentLoco] = new Dictionary<string, float>();
+
+            if (!LocoTelem.closestStation.ContainsKey(currentLoco))
+                LocoTelem.closestStation[currentLoco] = (null, 0);
+
+            if (!LocoTelem.currentDestination.ContainsKey(currentLoco))
+                LocoTelem.currentDestination[currentLoco] = default(PassengerStop);
+
+            if (!LocoTelem.clearedForDeparture.ContainsKey(currentLoco))
+                LocoTelem.clearedForDeparture[currentLoco] = false;
+
+            if (!LocoTelem.CenterCar.ContainsKey(currentLoco))
+                LocoTelem.CenterCar[currentLoco] = currentLoco;
+
+            if (!LocoTelem.locoTravelingWestward.ContainsKey(currentLoco))
+                LocoTelem.locoTravelingWestward[currentLoco] = true;
+
+            if (!LocoTelem.needToUpdatePassengerCoaches.ContainsKey(currentLoco))
+                LocoTelem.needToUpdatePassengerCoaches[currentLoco] = false;
+
         }
 
         private void cleanDataStructures(Car currentLoco)

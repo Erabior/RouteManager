@@ -36,6 +36,7 @@ namespace RouteManager.v2.core
 
             //Setup departure clearances
             LocoTelem.clearedForDeparture[locomotive] = false;
+            LocoTelem.locoTravelingWestward[locomotive] = true;
 
             //Set Initial Destination
             LocoTelem.currentDestination[locomotive] = StationManager.getNextStation(locomotive);
