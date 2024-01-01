@@ -295,10 +295,15 @@ namespace RouteManager.v2.core
                 //Loco now clear for station departure. 
                 if (LocoTelem.clearedForDeparture[locomotive])
                 {
+                    string previousDestination = LocoTelem.currentDestination[locomotive].identifier;
+                    Logger.LogToDebug(String.Format("Locomotive {0} is cleared for departure.", locomotive.DisplayName));
 
                     //Update Destination
                     LocoTelem.currentDestination[locomotive] = StationManager.getNextStation(locomotive);
+                    Logger.LogToDebug(String.Format("Locomotive {0} currentDestination is now {1}", locomotive.DisplayName, LocoTelem.currentDestination[locomotive].identifier),Logger.logLevel.Debug);
+
                     LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation(locomotive);
+                    Logger.LogToDebug(String.Format("Locomotive {0} closestStation is now {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.identifier), Logger.logLevel.Debug);
 
                     //Transition to transit mode
                     LocoTelem.TransitMode[locomotive] = true;
@@ -306,7 +311,7 @@ namespace RouteManager.v2.core
                     //Feature Enahncement: Issue #24
                     //Write to console the departure of the train consist at station X
                     //Bugfix: message would previously be generated even when departure was not cleared. 
-                    Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper(), LocoTelem.LocomotiveDestination[locomotive].ToUpper()));
+                    Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), previousDestination.ToUpper(), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
                 }
                 else
                 {
@@ -404,6 +409,8 @@ namespace RouteManager.v2.core
                 LocoTelem.RMMaxSpeed[locomotive] = calculatedSpeed;
             }
 
+            Logger.LogToDebug(String.Format("Locomotive {0} on Medium Approach: Speed limited to {1}", locomotive.DisplayName, LocoTelem.RMMaxSpeed[locomotive]), Logger.logLevel.Debug);
+
             //Apply Updated Max Speed
             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
 
@@ -434,13 +441,19 @@ namespace RouteManager.v2.core
                 Logger.LogToDebug(String.Format("Locomotive {0} activating Approach Bell", locomotive.DisplayName), Logger.logLevel.Verbose);
                 TrainManager.RMbell(locomotive, true);
             }
+            else if(distanceToStation < 30)
+            {
+                //Apply Bell
+                Logger.LogToDebug(String.Format("Locomotive {0} activating Approach Bell", locomotive.DisplayName), Logger.logLevel.Verbose);
+                TrainManager.RMbell(locomotive, true);
+            }
             else
             {
                 LocoTelem.RMMaxSpeed[locomotive] = calculatedSpeed;
             }
 
+            Logger.LogToDebug(String.Format("Locomotive {0} on Short Approach! Speed limited to {1}", locomotive.DisplayName, LocoTelem.RMMaxSpeed[locomotive]), Logger.logLevel.Debug);
 
-            
             //Appply updated maxSpeed
             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
 
