@@ -80,9 +80,9 @@ namespace RouteManager.v2
                     {
                         Logger.LogToDebug($"loco {currentLoco.DisplayName} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {currentLoco.DisplayName}");
 
-                        cleanDataStructures(currentLoco);
-
                         StopCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
+
+                        cleanDataStructures(currentLoco);
                     }
                 }
             }
@@ -95,13 +95,6 @@ namespace RouteManager.v2
 
         private void prepareDataStructures(Car currentLoco)
         {
-
-            if (!LocoTelem.DriveForward.ContainsKey(currentLoco))
-                LocoTelem.DriveForward[currentLoco] = true;
-
-            if (!LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
-                LocoTelem.LineDirectionEastWest[currentLoco] = true;
-
             if (!LocoTelem.TransitMode.ContainsKey(currentLoco))
                 LocoTelem.TransitMode[currentLoco] = true;
 
@@ -126,8 +119,8 @@ namespace RouteManager.v2
             if (!LocoTelem.CenterCar.ContainsKey(currentLoco))
                 LocoTelem.CenterCar[currentLoco] = currentLoco;
 
-            if (!LocoTelem.locoTravelingWestward.ContainsKey(currentLoco))
-                LocoTelem.locoTravelingWestward[currentLoco] = true;
+            if (!LocoTelem.locoTravelingEastWard.ContainsKey(currentLoco))
+                LocoTelem.locoTravelingEastWard[currentLoco] = true;
 
             if (!LocoTelem.needToUpdatePassengerCoaches.ContainsKey(currentLoco))
                 LocoTelem.needToUpdatePassengerCoaches[currentLoco] = false;
@@ -136,12 +129,6 @@ namespace RouteManager.v2
 
         private void cleanDataStructures(Car currentLoco)
         {
-            if(LocoTelem.DriveForward.ContainsKey(currentLoco))
-                LocoTelem.DriveForward.Remove(currentLoco) ;
-
-            if (LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
-                LocoTelem.LineDirectionEastWest.Remove(currentLoco);
-
             if (LocoTelem.TransitMode.ContainsKey(currentLoco))
                 LocoTelem.TransitMode.Remove(currentLoco);
 
@@ -180,12 +167,9 @@ namespace RouteManager.v2
 
         private void clearDicts()
         {
-            LocoTelem.DriveForward.Clear();
-            LocoTelem.LineDirectionEastWest.Clear();
             LocoTelem.TransitMode.Clear();
             LocoTelem.RMMaxSpeed.Clear();
             LocoTelem.approachWhistleSounded.Clear();
-            LocoTelem.LineDirectionEastWest.Clear();
             LocoTelem.LocomotivePrevDestination.Clear();
             LocoTelem.locomotiveCoroutines.Clear();
             LocoTelem.lowFuelQuantities.Clear();
@@ -219,11 +203,12 @@ namespace RouteManager.v2
                     //Attempt to prevent trains from taking off before route manager can be re-configured
                     try
                     {
-                        StateManager.ApplyLocal(new AutoEngineerCommand(keys[i].id, AutoEngineerMode.Road, LocoTelem.DriveForward[keys[i]], 0, null));
+                        StateManager.ApplyLocal(new AutoEngineerCommand(keys[i].id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[keys[i]], 0, null));
                     }
                     catch { }
 
                 }
+
                 clearDicts();
             }
         }

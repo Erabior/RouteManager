@@ -187,7 +187,7 @@ namespace RouteManager.v2.core
                 if (currentIndex == 0)
                 {
                     Logger.LogToDebug(String.Format("Loco {0} at end of line, returning west", locomotive.DisplayName), Logger.logLevel.Debug);
-                    LocoTelem.locoTravelingWestward[locomotive] = true;
+                    LocoTelem.locoTravelingEastWard[locomotive] = false;
                     LocoTelem.needToUpdatePassengerCoaches[locomotive] = true;
 
                     return stringIdentToStation(orderedSelectedStations[currentIndex + 1]);
@@ -196,7 +196,7 @@ namespace RouteManager.v2.core
                 else if (currentIndex == orderedSelectedStations.Count - 1)
                 {
                     Logger.LogToDebug(String.Format("Loco {0} at end of line, returning east", locomotive.DisplayName), Logger.logLevel.Debug);
-                    LocoTelem.locoTravelingWestward[locomotive] = false;
+                    LocoTelem.locoTravelingEastWard[locomotive] = true;
                     LocoTelem.needToUpdatePassengerCoaches[locomotive] = true;
 
                     station = stringIdentToStation(orderedSelectedStations[currentIndex - 1]);
@@ -207,7 +207,7 @@ namespace RouteManager.v2.core
                 else
                 {
                     //If we are traveling torward Anderson from Silva
-                    if (LocoTelem.locoTravelingWestward[locomotive])
+                    if (LocoTelem.locoTravelingEastWard[locomotive])
                     {
                         Logger.LogToDebug(String.Format("Loco {0} next station is to the west", locomotive.DisplayName), Logger.logLevel.Verbose);
                         station = stringIdentToStation(orderedSelectedStations[currentIndex + 1]);
@@ -258,13 +258,13 @@ namespace RouteManager.v2.core
                 Logger.LogToDebug(String.Format("Loco {0} determining direction of travel for station selection", locomotive.DisplayName), Logger.logLevel.Verbose);
 
                 //If we are traveling torward Anderson from Silva
-                if (LocoTelem.locoTravelingWestward[locomotive])
+                if (LocoTelem.locoTravelingEastWard[locomotive])
                 {
                     Logger.LogToDebug(String.Format("Loco {0} Traveleing West", locomotive.DisplayName), Logger.logLevel.Debug);
                     if (currentIndex == selectedPassengerStops.Count - 1) 
                     {
                         Logger.LogToDebug(String.Format("Loco {0} at end of line, returning east", locomotive.DisplayName), Logger.logLevel.Debug);
-                        LocoTelem.locoTravelingWestward[locomotive] = !LocoTelem.locoTravelingWestward[locomotive];
+                        LocoTelem.locoTravelingEastWard[locomotive] = !LocoTelem.locoTravelingEastWard[locomotive];
                         LocoTelem.needToUpdatePassengerCoaches[locomotive] = true;
 
                         return selectedPassengerStops[currentIndex - 1];
@@ -281,7 +281,7 @@ namespace RouteManager.v2.core
                     if (currentIndex == 0)
                     {
                         Logger.LogToDebug(String.Format("Loco {0} at end of line, returning west", locomotive.DisplayName), Logger.logLevel.Debug);
-                        LocoTelem.locoTravelingWestward[locomotive] = !LocoTelem.locoTravelingWestward[locomotive];
+                        LocoTelem.locoTravelingEastWard[locomotive] = !LocoTelem.locoTravelingEastWard[locomotive];
                         LocoTelem.needToUpdatePassengerCoaches[locomotive] = true;
 
                         return selectedPassengerStops[currentIndex + 1];

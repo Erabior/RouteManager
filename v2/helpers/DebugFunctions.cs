@@ -160,14 +160,6 @@ namespace RouteManager.v2.helpers
             {
                 Logger.LogToDebug("No Transit Mode recorded for this car.", Logger.logLevel.Debug);
             }
-            if (LocoTelem.LineDirectionEastWest.TryGetValue(car, out bool isEastWest))
-            {
-                Logger.LogToDebug($"Line Direction East/West: {isEastWest}", Logger.logLevel.Debug);
-            }
-            else
-            {
-                Logger.LogToDebug("No Line Direction East/West recorded for this car.", Logger.logLevel.Debug);
-            }
             if (LocoTelem.DriveForward.TryGetValue(car, out bool driveForward))
             {
                 Logger.LogToDebug($"Drive Forward: {driveForward}", Logger.logLevel.Debug);

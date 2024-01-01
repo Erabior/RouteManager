@@ -38,7 +38,7 @@ namespace RouteManager.v2.core
             LocoTelem.clearedForDeparture[locomotive] = false;
 
             Logger.LogToDebug(String.Format("Loco: {0} \t has ID: {1}", locomotive.DisplayName, locomotive.id), Logger.logLevel.Debug);
-            LocoTelem.locoTravelingWestward[locomotive] = true;
+            LocoTelem.locoTravelingEastWard[locomotive] = true;
 
             //Set some initial values
             LocoTelem.currentDestination[locomotive]            = StationManager.getNextStation(locomotive);
@@ -192,10 +192,10 @@ namespace RouteManager.v2.core
                 if (distanceToStation > olddist && (trainVelocity > 1f && trainVelocity < 10f))
                 {
 
-                    LocoTelem.locoTravelingWestward[locomotive] = !LocoTelem.locoTravelingWestward[locomotive];
+                    LocoTelem.locoTravelingEastWard[locomotive] = !LocoTelem.locoTravelingEastWard[locomotive];
                     Logger.LogToDebug("Was driving in the wrong direction! Changing direction");
                     Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {(int)LocoTelem.RMMaxSpeed[locomotive]}", Logger.logLevel.Debug);
-                    StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingWestward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+                    StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
 
                     yield return new WaitForSeconds(10);
                 }
@@ -367,7 +367,7 @@ namespace RouteManager.v2.core
             LocoTelem.RMMaxSpeed[locomotive] = 100f;
 
             //Apply Updated Max Speed
-            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingWestward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
 
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: generalTransit", Logger.logLevel.Trace);
@@ -422,7 +422,7 @@ namespace RouteManager.v2.core
             Logger.LogToDebug(String.Format("Locomotive {0} on Medium Approach: Speed limited to {1}", locomotive.DisplayName, LocoTelem.RMMaxSpeed[locomotive]), Logger.logLevel.Debug);
 
             //Apply Updated Max Speed
-            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingWestward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
 
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: onApproachMediumDist", Logger.logLevel.Trace);
@@ -462,7 +462,7 @@ namespace RouteManager.v2.core
             Logger.LogToDebug(String.Format("Locomotive {0} on Short Approach! Speed limited to {1}", locomotive.DisplayName, LocoTelem.RMMaxSpeed[locomotive]), Logger.logLevel.Debug);
 
             //Appply updated maxSpeed
-            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingWestward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
 
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: onApproachShortDist", Logger.logLevel.Trace);
@@ -479,7 +479,7 @@ namespace RouteManager.v2.core
             Logger.LogToDebug(String.Format("Locomotive {0} triggered on Arrival.", locomotive.DisplayName), Logger.logLevel.Verbose);
 
             //Train Arrived
-            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingWestward[locomotive], 0, null));
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], 0, null));
 
             //Wait for loco to crawl to a stop. 
             if (Math.Abs(locomotive.velocity * 2.23694f) < .1f)

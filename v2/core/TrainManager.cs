@@ -225,7 +225,7 @@ namespace RouteManager.v2.core
 
             string currentStation = LocoTelem.currentDestination[locomotive].identifier;
             int currentStationIndex = DestinationManager.orderedStations.IndexOf(currentStation);
-            bool isEastWest = LocoTelem.locoTravelingWestward[locomotive]; // true if traveling West
+            bool isEastWest = LocoTelem.locoTravelingEastWard[locomotive]; // true if traveling West
 
             // Determine the range of stations to include based on travel direction
             IEnumerable<string> relevantStations = isEastWest ?
