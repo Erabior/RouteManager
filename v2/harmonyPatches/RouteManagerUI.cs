@@ -13,6 +13,8 @@ using RouteManager;
 using Model;
 using RouteManager.v2.core;
 using RouteManager.v2.dataStructures;
+using UI.Common;
+using Logger = RouteManager.v2.Logging.Logger;
 
 namespace RouteManager.v2.harmonyPatches
 {
@@ -23,6 +25,26 @@ namespace RouteManager.v2.harmonyPatches
 
         static bool Prefix(CarInspector __instance, UIPanelBuilder builder)
         {
+            /**********************************************************************************
+            *
+            *
+            *        UI HACKS
+            *
+            *
+            **********************************************************************************/
+
+            RectTransform uiPanel = UnityEngine.Object.FindFirstObjectByType<CarInspector>().GetComponent<RectTransform>();
+            Logger.LogToDebug("Ui Panel Size was:" + uiPanel.sizeDelta.ToString(), Logger.logLevel.Verbose);
+            uiPanel.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 500);
+
+            /**********************************************************************************
+            *
+            *
+            *        END UI HACKS
+            *
+            *
+            **********************************************************************************/
+
             // Access the _car field using reflection
             var carField = typeof(CarInspector).GetField("_car", BindingFlags.NonPublic | BindingFlags.Instance);
 
