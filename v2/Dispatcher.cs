@@ -69,6 +69,8 @@ namespace RouteManager.v2
                     {
                         Logger.LogToDebug($"loco {currentLoco.DisplayName} currently has not called a coroutine - Calling the Coroutine with {currentLoco.DisplayName} as an arguement");
 
+                        LocoTelem.locomotiveCoroutines[currentLoco] = true;
+
                         prepareDataStructures(currentLoco);
 
                         StartCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
@@ -105,9 +107,6 @@ namespace RouteManager.v2
 
             if (!LocoTelem.RMMaxSpeed.ContainsKey(currentLoco))
                 LocoTelem.RMMaxSpeed[currentLoco] = 0;
-
-            if (!LocoTelem.locomotiveCoroutines.ContainsKey(currentLoco))
-                LocoTelem.locomotiveCoroutines[currentLoco] = true;
 
             if (!LocoTelem.approachWhistleSounded.ContainsKey(currentLoco))
                 LocoTelem.approachWhistleSounded[currentLoco] = false;
