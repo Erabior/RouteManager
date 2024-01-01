@@ -60,10 +60,13 @@ namespace RouteManager.v2
                 List<Car> keys = LocoTelem.locomotiveCoroutines.Keys.ToList();
 
                 //For each locomotive in the Coroutine list
-                foreach(Car currentLoco in keys) 
+                foreach (Car currentLoco in keys) 
                 {
                     //Disable LogMessage for Update Thread unless REALLY NEEDED. 
                     //Logger.LogToDebug(String.Format("Loco {0} has not called coroutine. Calling Coroutine for {1}",currentLoco,currentLoco.DisplayName),Logger.logLevel.Verbose);
+
+                    //Logger.LogToDebug($"Coroutine LocoTelem.locomotiveCoroutines[currentLoco] value was {LocoTelem.locomotiveCoroutines[currentLoco]}");
+                    //Logger.LogToDebug($"Coroutine LocoTelem.RouteMode[currentLoco] value was {LocoTelem.RouteMode[currentLoco]}");
 
                     if (!LocoTelem.locomotiveCoroutines[currentLoco] && LocoTelem.RouteMode[currentLoco])
                     {
@@ -76,13 +79,19 @@ namespace RouteManager.v2
                         StartCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
 
                     }
-                    else if (LocoTelem.locomotiveCoroutines[currentLoco] && !LocoTelem.RouteMode[currentLoco])
+                    else if (LocoTelem.locomotiveCoroutines.ContainsKey(currentLoco))
                     {
-                        Logger.LogToDebug($"loco {currentLoco.DisplayName} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {currentLoco.DisplayName}");
+                        if (LocoTelem.locomotiveCoroutines[currentLoco] && !LocoTelem.RouteMode[currentLoco])
+                        {
+                            Logger.LogToDebug($"loco {currentLoco.DisplayName} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {currentLoco.DisplayName}");
 
-                        StopCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
+                            StopCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
 
-                        cleanDataStructures(currentLoco);
+                            LocoTelem.locomotiveCoroutines[currentLoco] = false;
+
+                            Logger.LogToDebug($"Stopped Coroutine for {currentLoco.DisplayName}");
+                            //cleanDataStructures(currentLoco);
+                        }
                     }
                 }
             }

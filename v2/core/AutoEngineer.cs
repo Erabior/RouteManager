@@ -49,6 +49,11 @@ namespace RouteManager.v2.core
             //Route Mode is enabled!
             while (LocoTelem.RouteMode[locomotive])
             {
+                if (needToExitCoroutine(locomotive))
+                {
+                    StopCoroutine(AutoEngineerControlRoutine(locomotive));
+                }
+
                 //Update passenger markers as needed.
                 if (LocoTelem.needToUpdatePassengerCoaches[locomotive])
                     TrainManager.CopyStationsFromLocoToCoaches(locomotive);
@@ -63,17 +68,18 @@ namespace RouteManager.v2.core
                 else
                 {
                     Logger.LogToDebug(String.Format("Locomotive {0} is entering into Station Stop mode", locomotive.DisplayName), Logger.logLevel.Verbose);
-                    yield return locomotiveStationStopControl(locomotive);
+                    //yield return locomotiveStationStopControl(locomotive);
                 }
+
+                yield return null;
             }
 
             //Locomotive is no longer in Route Mode
             Logger.LogToDebug(String.Format("Loco: {0} \t Route mode was disabled! Stopping Coroutine.", locomotive.DisplayName, Logger.logLevel.Debug));
-            StopCoroutine(AutoEngineerControlRoutine(locomotive));
 
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: AutoEngineerControlRoutine", Logger.logLevel.Trace);
-            yield return null;
+            yield break;
         }
 
         //Locomotive Enroute to Destination
@@ -154,7 +160,7 @@ namespace RouteManager.v2.core
                     if (delayExecution)
                     {
                         Logger.LogToConsole("Unable to determine distance to station. Disabling Dispatcher control of locomotive: " + locomotive.DisplayName);
-                        yield break;
+                        StopCoroutine(AutoEngineerControlRoutine(locomotive));
                     }
 
                     //Try again in 5 seconds
@@ -268,6 +274,8 @@ namespace RouteManager.v2.core
 
                 yield return null;
             }
+
+            yield return null;
         }
 
 
@@ -282,7 +290,7 @@ namespace RouteManager.v2.core
             {
                 if(needToExitCoroutine(locomotive))
                 {
-                    yield break;
+                    StopCoroutine(AutoEngineerControlRoutine(locomotive));
                 }
 
                 //Ensure the train is at a complete stop. Else wait for it to stop...
@@ -607,7 +615,6 @@ namespace RouteManager.v2.core
             {
                 Logger.LogToConsole("No stations selected. Stopping Coroutine for: " + locomotive.DisplayName);
                 TrainManager.SetRouteModeEnabled(false, locomotive);
-                StopCoroutine(AutoEngineerControlRoutine(locomotive));
                 return true;
             }
 
@@ -615,7 +622,6 @@ namespace RouteManager.v2.core
             if (!LocoTelem.RouteMode[locomotive])
             {
                 Logger.LogToDebug("Locomotive no longer in Route Mode. Stopping Coroutine for: " + locomotive.DisplayName, Logger.logLevel.Debug);
-                StopCoroutine(AutoEngineerControlRoutine(locomotive));
                 return true;
             }
 

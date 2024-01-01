@@ -272,8 +272,6 @@ namespace RouteManager.v2.core
         public static event Action<Car> OnRouteModeChanged;
         public static void SetRouteModeEnabled(bool IsOn, Car locomotive)
         {
-
-
             if (DestinationManager.IsAnyStationSelectedForLocomotive(locomotive) && IsOn)
             {
                 if (!LocoTelem.RouteMode.ContainsKey(locomotive))

@@ -156,22 +156,10 @@ namespace RouteManager.v2.harmonyPatches
                 if (!LocoTelem.RouteMode[car])
                 {
                     int num = MaxSpeedMphForMode(mode2);
-                    RectTransform control = builder.AddSlider(() => persistence.Orders.MaxSpeedMph / 5, delegate
+                    RectTransform control = builder.AddSlider(() => persistence.Orders.MaxSpeedMph / 5, () => persistence.Orders.MaxSpeedMph.ToString(), delegate (float value)
                     {
-                        //New Logic that appears to be tied to the mod. Purpose not fully known
-                        //Suspected use related to auto centering of train in station platform.
-                        int maxSpeedMph4 = persistence.Orders.MaxSpeedMph;
-                        return maxSpeedMph4.ToString();
-                    }, delegate (float value)
-                    {
-                        
-                        //If station Manager is inactive set max speed to RR Logic Max Speed
-                        if (!DestinationManager.IsAnyStationSelectedForLocomotive(car))
-                        {
-                            //Minor code ehancement: No need to calculate unless the condition is true.
-                            int? maxSpeedMph3 = (int)(value * 5f);
-                            SetOrdersValue(null, null, maxSpeedMph3, null);
-                        }
+                        int? maxSpeedMph3 = (int)(value * 5f);
+                        SetOrdersValue(null, null, maxSpeedMph3, null);
                     }, 0f, num / 5, wholeNumbers: true);
                     builder.AddField("Max Speed", control);
                 }

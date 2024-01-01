@@ -143,12 +143,12 @@ namespace RouteManager.v2.core
         public static bool IsStationSelected(PassengerStop stop, Car locomotive)
         {
             //Trace Function
-            Logger.LogToDebug("ENTERED FUNCTION: IsStationSelected", Logger.logLevel.Trace);
+            //Logger.LogToDebug("ENTERED FUNCTION: IsStationSelected", Logger.logLevel.Trace);
 
             bool result =  LocoTelem.UIStationSelections[locomotive].TryGetValue(stop.identifier, out bool isSelected) && isSelected;
 
             //Trace Function
-            Logger.LogToDebug("EXITING FUNCTION: IsStationSelected", Logger.logLevel.Trace);
+            //Logger.LogToDebug("EXITING FUNCTION: IsStationSelected", Logger.logLevel.Trace);
             return result; 
         }
 
