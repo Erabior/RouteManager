@@ -151,9 +151,6 @@ namespace RouteManager.v2
             if (LocoTelem.approachWhistleSounded.ContainsKey(currentLoco))
                 LocoTelem.approachWhistleSounded.Remove(currentLoco);
 
-            if (LocoTelem.LineDirectionEastWest.ContainsKey(currentLoco))
-                LocoTelem.LineDirectionEastWest.Remove(currentLoco);
-
             if (LocoTelem.LocomotivePrevDestination.ContainsKey(currentLoco))
                 LocoTelem.LocomotivePrevDestination.Remove(currentLoco);
 
