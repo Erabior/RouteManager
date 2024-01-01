@@ -64,18 +64,18 @@ namespace RouteManager.v2.core
             SettingsData.currentLogLevel = Utilities.ParseEnum<Logger.logLevel>(IniFile.Read("LogLevel", "Core"));
 
             //Set Min Water Level
-            if (float.TryParse(IniFile.Read("WaterWarningLevel", "Warnings"), out outValueFloat))
-                SettingsData.minWaterQuantity = outValueFloat == 0 ? 500f : outValueFloat;
+            if (float.TryParse(IniFile.Read("WaterLevel", "Alerts"), out outValueFloat))
+                SettingsData.minWaterQuantity = outValueFloat >= 0 ? 500f : outValueFloat;
 
             //Set Min Coal Level
-            if (float.TryParse(IniFile.Read("CoalWarningLevel", "Warnings"), out outValueFloat))
-                SettingsData.minCoalQuantity = outValueFloat == 0 ? 0.5f : outValueFloat;
+            if (float.TryParse(IniFile.Read("CoalLevel", "Alerts"), out outValueFloat))
+                SettingsData.minCoalQuantity = outValueFloat >= 0 ? 0.5f : outValueFloat;
 
             //Set Min Diesel Level
-            if (float.TryParse(IniFile.Read("CoalDieselLevel", "Warnings"), out outValueFloat))
-                SettingsData.minCoalQuantity = outValueFloat == 0 ? 100f : outValueFloat;
+            if (float.TryParse(IniFile.Read("DieselLevel", "Alerts"), out outValueFloat))
+                SettingsData.minCoalQuantity = outValueFloat >= 0 ? 100f : outValueFloat;
 
-            if(bool.TryParse(IniFile.Read("enableNewInterface", "Experimental"), out outValueBool))
+            if(bool.TryParse(IniFile.Read("NewInterface", "Dev"), out outValueBool))
                 SettingsData.experimentalUI = outValueBool;
 
             //Trace Logging
