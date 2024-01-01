@@ -38,7 +38,7 @@ namespace RouteManager.v2.core
             LocoTelem.clearedForDeparture[locomotive] = false;
 
             Logger.LogToDebug(String.Format("Loco: {0} \t has ID: {1}", locomotive.DisplayName, locomotive.id), Logger.logLevel.Debug);
-            LocoTelem.locoTravelingWestward[locomotive] = true;
+            LocoTelem.locoTravelingEastWard[locomotive] = true;
 
             //Set some initial values
             LocoTelem.currentDestination[locomotive]            = StationManager.getNextStation(locomotive);
@@ -49,6 +49,11 @@ namespace RouteManager.v2.core
             //Route Mode is enabled!
             while (LocoTelem.RouteMode[locomotive])
             {
+                if (needToExitCoroutine(locomotive))
+                {
+                    StopCoroutine(AutoEngineerControlRoutine(locomotive));
+                }
+
                 //Update passenger markers as needed.
                 if (LocoTelem.needToUpdatePassengerCoaches[locomotive])
                     TrainManager.CopyStationsFromLocoToCoaches(locomotive);
@@ -63,21 +68,22 @@ namespace RouteManager.v2.core
                 else
                 {
                     Logger.LogToDebug(String.Format("Locomotive {0} is entering into Station Stop mode", locomotive.DisplayName), Logger.logLevel.Verbose);
-                    yield return locomotiveStationStopControl(locomotive);
+                    //yield return locomotiveStationStopControl(locomotive);
                 }
+
+                yield return null;
             }
 
             //Locomotive is no longer in Route Mode
             Logger.LogToDebug(String.Format("Loco: {0} \t Route mode was disabled! Stopping Coroutine.", locomotive.DisplayName, Logger.logLevel.Debug));
-            StopCoroutine(AutoEngineerControlRoutine(locomotive));
 
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: AutoEngineerControlRoutine", Logger.logLevel.Trace);
-            yield return null;
+            yield break;
         }
 
         //Locomotive Enroute to Destination
-        public static IEnumerator locomotiveTransitControl(Car locomotive)
+        public IEnumerator locomotiveTransitControl(Car locomotive)
         {
 
             //Are we in a station?
@@ -105,6 +111,11 @@ namespace RouteManager.v2.core
             //Loop through transit logic
             while (LocoTelem.TransitMode[locomotive])
             {
+
+                if (needToExitCoroutine(locomotive))
+                {
+                    yield break;
+                }
 
                 //Potential fix for edge case where loco reverses directions multiple times due to a race condition
                 if (Math.Abs(olddist - distanceToStation) > 5)
@@ -149,7 +160,7 @@ namespace RouteManager.v2.core
                     if (delayExecution)
                     {
                         Logger.LogToConsole("Unable to determine distance to station. Disabling Dispatcher control of locomotive: " + locomotive.DisplayName);
-                        yield break;
+                        StopCoroutine(AutoEngineerControlRoutine(locomotive));
                     }
 
                     //Try again in 5 seconds
@@ -187,10 +198,10 @@ namespace RouteManager.v2.core
                 if (distanceToStation > olddist && (trainVelocity > 1f && trainVelocity < 10f))
                 {
 
-                    LocoTelem.DriveForward[locomotive] = !LocoTelem.DriveForward[locomotive];
+                    LocoTelem.locoTravelingEastWard[locomotive] = !LocoTelem.locoTravelingEastWard[locomotive];
                     Logger.LogToDebug("Was driving in the wrong direction! Changing direction");
                     Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {(int)LocoTelem.RMMaxSpeed[locomotive]}", Logger.logLevel.Debug);
-                    StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+                    StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
 
                     yield return new WaitForSeconds(10);
                 }
@@ -263,18 +274,25 @@ namespace RouteManager.v2.core
 
                 yield return null;
             }
+
+            yield return null;
         }
 
 
 
         //Stopped at station
-        private static IEnumerator locomotiveStationStopControl(Car locomotive)
+        private IEnumerator locomotiveStationStopControl(Car locomotive)
         {
             float currentTrainVelocity = 100f;
 
             //Loop through station logic while loco is not in transit mode...
             while (!LocoTelem.TransitMode[locomotive])
             {
+                if(needToExitCoroutine(locomotive))
+                {
+                    StopCoroutine(AutoEngineerControlRoutine(locomotive));
+                }
+
                 //Ensure the train is at a complete stop. Else wait for it to stop...
                 while ((currentTrainVelocity = TrainManager.GetTrainVelocity(locomotive)) > .1f)
                 {
@@ -295,10 +313,15 @@ namespace RouteManager.v2.core
                 //Loco now clear for station departure. 
                 if (LocoTelem.clearedForDeparture[locomotive])
                 {
+                    string previousDestination = LocoTelem.currentDestination[locomotive].identifier;
+                    Logger.LogToDebug(String.Format("Locomotive {0} is cleared for departure.", locomotive.DisplayName));
 
                     //Update Destination
                     LocoTelem.currentDestination[locomotive] = StationManager.getNextStation(locomotive);
+                    Logger.LogToDebug(String.Format("Locomotive {0} currentDestination is now {1}", locomotive.DisplayName, LocoTelem.currentDestination[locomotive].identifier),Logger.logLevel.Debug);
+
                     LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation(locomotive);
+                    Logger.LogToDebug(String.Format("Locomotive {0} closestStation is now {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.identifier), Logger.logLevel.Debug);
 
                     //Transition to transit mode
                     LocoTelem.TransitMode[locomotive] = true;
@@ -306,7 +329,7 @@ namespace RouteManager.v2.core
                     //Feature Enahncement: Issue #24
                     //Write to console the departure of the train consist at station X
                     //Bugfix: message would previously be generated even when departure was not cleared. 
-                    Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper(), LocoTelem.LocomotiveDestination[locomotive].ToUpper()));
+                    Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), previousDestination.ToUpper(), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
                 }
                 else
                 {
@@ -352,7 +375,7 @@ namespace RouteManager.v2.core
             LocoTelem.RMMaxSpeed[locomotive] = 100f;
 
             //Apply Updated Max Speed
-            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
 
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: generalTransit", Logger.logLevel.Trace);
@@ -404,8 +427,10 @@ namespace RouteManager.v2.core
                 LocoTelem.RMMaxSpeed[locomotive] = calculatedSpeed;
             }
 
+            Logger.LogToDebug(String.Format("Locomotive {0} on Medium Approach: Speed limited to {1}", locomotive.DisplayName, LocoTelem.RMMaxSpeed[locomotive]), Logger.logLevel.Debug);
+
             //Apply Updated Max Speed
-            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
 
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: onApproachMediumDist", Logger.logLevel.Trace);
@@ -429,20 +454,23 @@ namespace RouteManager.v2.core
             {
                 //Set max speed to 5 mph for now.
                 LocoTelem.RMMaxSpeed[locomotive] = 5f;
-
-                //Apply Bell
-                Logger.LogToDebug(String.Format("Locomotive {0} activating Approach Bell", locomotive.DisplayName), Logger.logLevel.Verbose);
-                TrainManager.RMbell(locomotive, true);
             }
             else
             {
                 LocoTelem.RMMaxSpeed[locomotive] = calculatedSpeed;
             }
 
+            if (distanceToStation < 50)
+            {
+                //Apply Bell
+                Logger.LogToDebug(String.Format("Locomotive {0} activating Approach Bell", locomotive.DisplayName), Logger.logLevel.Verbose);
+                TrainManager.RMbell(locomotive, true);
+            }
 
-            
+            Logger.LogToDebug(String.Format("Locomotive {0} on Short Approach! Speed limited to {1}", locomotive.DisplayName, LocoTelem.RMMaxSpeed[locomotive]), Logger.logLevel.Debug);
+
             //Appply updated maxSpeed
-            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
 
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: onApproachShortDist", Logger.logLevel.Trace);
@@ -459,7 +487,7 @@ namespace RouteManager.v2.core
             Logger.LogToDebug(String.Format("Locomotive {0} triggered on Arrival.", locomotive.DisplayName), Logger.logLevel.Verbose);
 
             //Train Arrived
-            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.DriveForward[locomotive], 0, null));
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], 0, null));
 
             //Wait for loco to crawl to a stop. 
             if (Math.Abs(locomotive.velocity * 2.23694f) < .1f)
@@ -578,16 +606,15 @@ namespace RouteManager.v2.core
 
 
         //Initial checks to determine if we can continue with the coroutine
-        private bool cancelTransitModeIfNeeded(Car locomotive)
+        private bool needToExitCoroutine(Car locomotive)
         {
             //Trace Function
-            Logger.LogToDebug("ENTERED FUNCTION: cancelTransitModeIfNeeded", Logger.logLevel.Trace);
+            Logger.LogToDebug("ENTERED FUNCTION: needToExitCoroutine", Logger.logLevel.Trace);
             //If no stations are selected for the locmotive, end the coroutine
             if (!DestinationManager.IsAnyStationSelectedForLocomotive(locomotive))
             {
                 Logger.LogToConsole("No stations selected. Stopping Coroutine for: " + locomotive.DisplayName);
                 TrainManager.SetRouteModeEnabled(false, locomotive);
-                StopCoroutine(AutoEngineerControlRoutine(locomotive));
                 return true;
             }
 
@@ -595,12 +622,11 @@ namespace RouteManager.v2.core
             if (!LocoTelem.RouteMode[locomotive])
             {
                 Logger.LogToDebug("Locomotive no longer in Route Mode. Stopping Coroutine for: " + locomotive.DisplayName, Logger.logLevel.Debug);
-                StopCoroutine(AutoEngineerControlRoutine(locomotive));
                 return true;
             }
 
             //Trace Method
-            Logger.LogToDebug("EXITING FUNCTION: cancelTransitModeIfNeeded", Logger.logLevel.Trace);
+            Logger.LogToDebug("EXITING FUNCTION: needToExitCoroutine", Logger.logLevel.Trace);
             return false;
         }
 

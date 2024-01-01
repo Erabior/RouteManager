@@ -225,7 +225,7 @@ namespace RouteManager.v2.core
 
             string currentStation = LocoTelem.currentDestination[locomotive].identifier;
             int currentStationIndex = DestinationManager.orderedStations.IndexOf(currentStation);
-            bool isEastWest = LocoTelem.locoTravelingWestward[locomotive]; // true if traveling West
+            bool isEastWest = LocoTelem.locoTravelingEastWard[locomotive]; // true if traveling West
 
             // Determine the range of stations to include based on travel direction
             IEnumerable<string> relevantStations = isEastWest ?
@@ -272,8 +272,6 @@ namespace RouteManager.v2.core
         public static event Action<Car> OnRouteModeChanged;
         public static void SetRouteModeEnabled(bool IsOn, Car locomotive)
         {
-
-
             if (DestinationManager.IsAnyStationSelectedForLocomotive(locomotive) && IsOn)
             {
                 if (!LocoTelem.RouteMode.ContainsKey(locomotive))
