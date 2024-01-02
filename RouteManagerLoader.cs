@@ -90,6 +90,8 @@ namespace RouteManager
                     RMLogger.LogToError("FAILED TO APPLY SETTINGS!");
                 else
                     RMLogger.LogToDebug("Applied Settings.", RMLogger.logLevel.Debug);
+
+                RMLogger.LogToDebug("Log Level is now: " + RMLogger.currentLogLevel.ToString());
             }
         }
     }

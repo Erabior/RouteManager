@@ -120,7 +120,7 @@ namespace RouteManager.v2.core
             }
 
             //Debug output
-            Logger.LogToDebug(String.Format("Car {0} Closest Station was: {1}", currentCar.DisplayName, closestStation.DisplayName), Logger.logLevel.Debug);
+            Logger.LogToDebug(String.Format("Car {0} Closest Station was: {1}", currentCar.DisplayName, closestStation.identifier), Logger.logLevel.Debug);
 
             //Trace Logging
             Logger.LogToDebug("EXITING FUNCTION: GetClosestStation", Logger.logLevel.Trace);
