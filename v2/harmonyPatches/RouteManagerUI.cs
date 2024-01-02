@@ -106,7 +106,8 @@ namespace RouteManager.v2.harmonyPatches
 
             if (!persistence.Orders.Enabled)
             {
-                builder.AddExpandingVerticalSpacer();
+                if(mode2 != AutoEngineerMode.Road)
+                    builder.AddExpandingVerticalSpacer();
                 //Alteration: Return but do not allow original logic to run.
                 return false;
             }
@@ -243,7 +244,6 @@ namespace RouteManager.v2.harmonyPatches
                         });
                     }
                 });
-
 
                 bool anyStationSelected = DestinationManager.IsAnyStationSelectedForLocomotive(car);
 

@@ -10,7 +10,7 @@ namespace RouteManager.v2.dataStructures
 {
     public class SettingsData
     {
-        public static logLevel currentLogLevel  = logLevel.Informational;
+        public static logLevel currentLogLevel  = logLevel.Info;
 
         public static float minDieselQuantity   = 100;
 

@@ -18,9 +18,9 @@ namespace RouteManager.v2.Logging
         public enum logLevel
         {
             Trace,
-            Debug,
             Verbose,
-            Informational,
+            Debug,
+            Info,
             Warning,
             Error
         }
@@ -31,15 +31,15 @@ namespace RouteManager.v2.Logging
             LogToDebug("[CONSOLE OUTPUT] " + message);
         }
 
-        public static void LogToDebug(string message, logLevel messageLevel = logLevel.Informational)
+        public static void LogToDebug(string message, logLevel messageLevel = logLevel.Info)
         {
             if(messageLevel>=currentLogLevel)
-                Debug.Log(String.Format("{0} - {1}_V{2}: {3}", DateTime.Now.ToString("u"), RouteManagerLoader.getModName(), RouteManagerLoader.getModVersion(), message));
+                Debug.Log(String.Format("{0} - {1}_V{2} - {3}: {4}", DateTime.Now.ToString("u"), RouteManagerLoader.getModName(), RouteManagerLoader.getModVersion(),messageLevel.ToString().ToUpper().Substring(0,3), message));
         }
 
         public static void LogToError(string message)
         {
-            Debug.LogError(String.Format("{0} - {1}_V{2}: {3}", DateTime.Now.ToString("u"), RouteManagerLoader.getModName(), RouteManagerLoader.getModVersion(), message));
+            Debug.LogError(String.Format("{0} - {1}_V{2} - ERR:   {3}", DateTime.Now.ToString("u"), RouteManagerLoader.getModName(), RouteManagerLoader.getModVersion(), message));
         }
     }
 }

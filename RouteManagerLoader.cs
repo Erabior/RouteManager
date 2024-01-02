@@ -21,7 +21,7 @@ namespace RouteManager
     {
         private const string modGUID = "Erabior.Dispatcher";
         private const string modName = "Dispatcher";
-        private const string modVersion = "2.0.0.0";
+        private const string modVersion = "2.0.0.1";
         private readonly Harmony harmony = new Harmony(modGUID);
         public static ManualLogSource mls;
 
@@ -90,6 +90,8 @@ namespace RouteManager
                     RMLogger.LogToError("FAILED TO APPLY SETTINGS!");
                 else
                     RMLogger.LogToDebug("Applied Settings.", RMLogger.logLevel.Debug);
+
+                RMLogger.LogToDebug("Log Level is now: " + RMLogger.currentLogLevel.ToString());
             }
         }
     }
