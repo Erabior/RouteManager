@@ -352,6 +352,7 @@ namespace RouteManager.v2.core
 
                     //Transition to transit mode
                     LocoTelem.TransitMode[locomotive] = true;
+                    LocoTelem.initialSpeedSliderSet[locomotive] = false;
 
                     //Feature Enahncement: Issue #24
                     //Write to console the departure of the train consist at station X
