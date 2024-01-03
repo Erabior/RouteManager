@@ -32,29 +32,28 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\BepInEx\core\0Harmony.dll</HintPath>
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\BepInEx\core\0Harmony.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="BepInEx">
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\BepInEx\core\BepInEx.dll</HintPath>
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\BepInEx\core\BepInEx.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="Core, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Core.dll</HintPath>
+    <Reference Include="Core">
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Core.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="Definition, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Definition.dll</HintPath>
+    <Reference Include="Definition">
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Definition.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="KeyValue.Runtime, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\KeyValue.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Serilog, Version=2.0.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Serilog.dll</HintPath>
+    <Reference Include="KeyValue.Runtime">
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\KeyValue.Runtime.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -65,32 +64,52 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="Unity.InputSystem">
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Unity.InputSystem.dll</HintPath>
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Unity.InputSystem.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Unity.InputSystem.ForUI">
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Unity.InputSystem.ForUI.dll</HintPath>
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Unity.InputSystem.ForUI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.InputModule">
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.InputModule.dll</HintPath>
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.InputModule.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
       <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.UI.dll</HintPath>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIElementsModule">
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.UIElementsModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIElementsNativeModule">
+      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.UIElementsNativeModule.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>

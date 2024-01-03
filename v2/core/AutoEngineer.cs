@@ -661,13 +661,16 @@ namespace RouteManager.v2.core
                 return true;
             }
 
-            if (LocoTelem.previousDestination.ContainsKey(locomotive) && LocoTelem.currentDestination.ContainsKey(locomotive))
+            if (LocoTelem.SelectedStations[locomotive].Count <= 1)
             {
-                if (LocoTelem.currentDestination[locomotive] == LocoTelem.previousDestination[locomotive])
+                if (LocoTelem.previousDestination.ContainsKey(locomotive) && LocoTelem.currentDestination.ContainsKey(locomotive))
                 {
-                    Logger.LogToConsole(String.Format("{0} has no more stations. Halting Control.", Hyperlink.To(locomotive)));
-                    TrainManager.SetRouteModeEnabled(false, locomotive);
-                    return true;
+                    if (LocoTelem.currentDestination[locomotive] == LocoTelem.previousDestination[locomotive])
+                    {
+                        Logger.LogToConsole(String.Format("{0} has no more stations. Halting Control.", Hyperlink.To(locomotive)));
+                        TrainManager.SetRouteModeEnabled(false, locomotive);
+                        return true;
+                    }
                 }
             }
 
