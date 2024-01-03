@@ -108,7 +108,7 @@ namespace RouteManager.v2
                 LocoTelem.TransitMode[currentLoco] = true;
 
             if (!LocoTelem.RMMaxSpeed.ContainsKey(currentLoco))
-                LocoTelem.RMMaxSpeed[currentLoco] = 0;
+                LocoTelem.RMMaxSpeed[currentLoco] = 45;
 
             if (!LocoTelem.approachWhistleSounded.ContainsKey(currentLoco))
                 LocoTelem.approachWhistleSounded[currentLoco] = false;

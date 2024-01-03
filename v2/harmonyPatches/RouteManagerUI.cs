@@ -133,37 +133,42 @@ namespace RouteManager.v2.harmonyPatches
                 *
                 *
                 **********************************************************************************/
-                builder.AddField("Direction", builder.ButtonStrip(delegate (UIPanelBuilder builder)
+
+                //Remove forward and reverse if route mode is enabled. Our AI should handle this.
+                if (!LocoTelem.RouteMode[car])
                 {
-                    builder.AddObserver(persistence.ObserveOrders(delegate
+                    builder.AddField("Direction", builder.ButtonStrip(delegate (UIPanelBuilder builder)
                     {
-                        builder.Rebuild();
-                    }, callInitial: false));
-                    builder.AddButtonSelectable("Reverse", !persistence.Orders.Forward, delegate
-                    {
-                        bool? forward3 = false;
-
-                        //IF STATEMENT wrapper for Station Management Logic
-                        if (!DestinationManager.IsAnyStationSelectedForLocomotive(car))
+                        builder.AddObserver(persistence.ObserveOrders(delegate
                         {
-                            //Original Code
-                            SetOrdersValue(null, forward3, null, null);
-                        }
-
-                    });
-                    builder.AddButtonSelectable("Forward", persistence.Orders.Forward, delegate
-                    {
-                        bool? forward2 = true;
-
-                        //IF STATEMENT wrapper for Station Management Logic
-                        if (!DestinationManager.IsAnyStationSelectedForLocomotive(car))
+                            builder.Rebuild();
+                        }, callInitial: false));
+                        builder.AddButtonSelectable("Reverse", !persistence.Orders.Forward, delegate
                         {
-                            //Original Code
-                            SetOrdersValue(null, forward2, null, null);
-                        }
+                            bool? forward3 = false;
 
-                    });
-                }));
+                            //IF STATEMENT wrapper for Station Management Logic
+                            if (!DestinationManager.IsAnyStationSelectedForLocomotive(car))
+                            {
+                                //Original Code
+                                SetOrdersValue(null, forward3, null, null);
+                            }
+
+                        });
+                        builder.AddButtonSelectable("Forward", persistence.Orders.Forward, delegate
+                        {
+                            bool? forward2 = true;
+
+                            //IF STATEMENT wrapper for Station Management Logic
+                            if (!DestinationManager.IsAnyStationSelectedForLocomotive(car))
+                            {
+                                //Original Code
+                                SetOrdersValue(null, forward2, null, null);
+                            }
+
+                        });
+                    }));
+                }
 
                 /**********************************************************************************
                 *
@@ -176,16 +181,15 @@ namespace RouteManager.v2.harmonyPatches
 
             if (mode2 == AutoEngineerMode.Road)
             {
-                if (!LocoTelem.RouteMode[car])
+                //ImplementFeature enhancement #30
+                //Renable the max speed slider. 
+                int num = MaxSpeedMphForMode(mode2);
+                RectTransform control = builder.AddSlider(() => persistence.Orders.MaxSpeedMph / 5, () => persistence.Orders.MaxSpeedMph.ToString(), delegate (float value)
                 {
-                    int num = MaxSpeedMphForMode(mode2);
-                    RectTransform control = builder.AddSlider(() => persistence.Orders.MaxSpeedMph / 5, () => persistence.Orders.MaxSpeedMph.ToString(), delegate (float value)
-                    {
-                        int? maxSpeedMph3 = (int)(value * 5f);
-                        SetOrdersValue(null, null, maxSpeedMph3, null);
-                    }, 0f, num / 5, wholeNumbers: true);
-                    builder.AddField("Max Speed", control);
-                }
+                    LocoTelem.RMMaxSpeed[car] = (int)(value * 5f);
+                    SetOrdersValue(null, null, (int) LocoTelem.RMMaxSpeed[car], null);
+                }, 0f, num / 5, wholeNumbers: true);
+                builder.AddField("Max Speed", control);
 
                 /**********************************************************************************
                 *

@@ -4,6 +4,7 @@ using Game.Messages;
 using Game.State;
 using Microsoft.SqlServer.Server;
 using Model;
+using Model.AI;
 using Model.OpsNew;
 using RollingStock;
 using RouteManager.v2.dataStructures;
@@ -45,6 +46,9 @@ namespace RouteManager.v2.core
             LocoTelem.closestStation[locomotive]                = StationManager.GetClosestStation(locomotive);
             LocoTelem.closestStationNeedsUpdated[locomotive]    = false;
             LocoTelem.CenterCar[locomotive]                     = TrainManager.GetCenterCoach(locomotive);
+
+            //Feature Ehancement #30
+            LocoTelem.initialSpeedSliderSet[locomotive]         = false;
 
             //Route Mode is enabled!
             while (LocoTelem.RouteMode[locomotive])
@@ -396,10 +400,24 @@ namespace RouteManager.v2.core
 
             //Set AI Maximum speed
             //Track max speed takes precedence. 
-            LocoTelem.RMMaxSpeed[locomotive] = 100f;
+            //ImplementFeature enhancement #30
+            //LocoTelem.RMMaxSpeed[locomotive] = 100f;
 
+            //Optimization of code. No need to repetitively spam the statemanager with data that is not changing.
             //Apply Updated Max Speed
-            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+
+            if (LocoTelem.initialSpeedSliderSet[locomotive] == false)
+            {
+                StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], 45, null));
+                LocoTelem.initialSpeedSliderSet[locomotive] = true;
+            }
+            else
+            {
+                AutoEngineerPersistence persistence = new AutoEngineerPersistence(locomotive.KeyValueObject);
+
+                if (LocoTelem.locoTravelingEastWard[locomotive] != persistence.Orders.Forward || (int)LocoTelem.RMMaxSpeed[locomotive] != (int)persistence.Orders.MaxSpeedMph)
+                    StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+            }
 
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: generalTransit", Logger.logLevel.Trace);
@@ -446,17 +464,13 @@ namespace RouteManager.v2.core
             //Minimum speed should not be less than 15Mph
             if (calculatedSpeed < 15f)
             {
-                LocoTelem.RMMaxSpeed[locomotive] = 15f;
-            }
-            else
-            {
-                LocoTelem.RMMaxSpeed[locomotive] = calculatedSpeed;
+                calculatedSpeed = 15f;
             }
 
-            Logger.LogToDebug(String.Format("Locomotive {0} on Medium Approach: Speed limited to {1}", locomotive.DisplayName, LocoTelem.RMMaxSpeed[locomotive]), Logger.logLevel.Debug);
+            Logger.LogToDebug(String.Format("Locomotive {0} on Medium Approach: Speed limited to {1}", locomotive.DisplayName, (int) calculatedSpeed), Logger.logLevel.Debug);
 
             //Apply Updated Max Speed
-            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)calculatedSpeed, null));
 
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: onApproachMediumDist", Logger.logLevel.Trace);
@@ -481,10 +495,6 @@ namespace RouteManager.v2.core
                 //Set max speed to 5 mph for now.
                 LocoTelem.RMMaxSpeed[locomotive] = 5f;
             }
-            else
-            {
-                LocoTelem.RMMaxSpeed[locomotive] = calculatedSpeed;
-            }
 
             if (distanceToStation < 50)
             {
@@ -493,10 +503,10 @@ namespace RouteManager.v2.core
                 TrainManager.RMbell(locomotive, true);
             }
 
-            Logger.LogToDebug(String.Format("Locomotive {0} on Short Approach! Speed limited to {1}", locomotive.DisplayName, LocoTelem.RMMaxSpeed[locomotive]), Logger.logLevel.Debug);
+            Logger.LogToDebug(String.Format("Locomotive {0} on Short Approach! Speed limited to {1}", locomotive.DisplayName, (int) calculatedSpeed), Logger.logLevel.Debug);
 
             //Appply updated maxSpeed
-            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int) calculatedSpeed, null));
 
             //Trace Function
             Logger.LogToDebug("EXITING FUNCTION: onApproachShortDist", Logger.logLevel.Trace);
