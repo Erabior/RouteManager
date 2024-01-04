@@ -490,11 +490,11 @@ namespace RouteManager.v2.core
             //Gradually reduce maximum speed the closer to the platform we get. 
             float calculatedSpeed = distanceToStation / 6f;
 
-            //Minimum speed should not be less than 15Mph
+            //Minimum speed should not be less than 5Mph
             if (calculatedSpeed < 5f)
             {
                 //Set max speed to 5 mph for now.
-                LocoTelem.RMMaxSpeed[locomotive] = 5f;
+                calculatedSpeed = 5f;
             }
 
             if (distanceToStation < 50)
