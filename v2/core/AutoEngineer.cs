@@ -1,4 +1,4 @@
-﻿using GalaSoft.MvvmLight.Messaging;
+using GalaSoft.MvvmLight.Messaging;
 using Game.Events;
 using Game.Messages;
 using Game.State;
@@ -46,6 +46,7 @@ namespace RouteManager.v2.core
             LocoTelem.closestStation[locomotive]                = StationManager.GetClosestStation(locomotive);
             LocoTelem.closestStationNeedsUpdated[locomotive]    = false;
             LocoTelem.CenterCar[locomotive]                     = TrainManager.GetCenterCoach(locomotive);
+            LocoTelem.needToUpdatePassengerCoaches[locomotive]  = true;
 
             //Feature Ehancement #30
             LocoTelem.initialSpeedSliderSet[locomotive]         = false;
