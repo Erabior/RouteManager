@@ -206,17 +206,17 @@ namespace RouteManager.v2.core
                 //Keep going in the direction previously travelled...
                 else
                 {
-                    //If we are traveling torward Anderson from Silva
+                    //If we are traveling torward Silva from Anderson
                     if (LocoTelem.locoTravelingEastWard[locomotive])
                     {
-                        Logger.LogToDebug(String.Format("Loco {0} next station is to the west", locomotive.DisplayName), Logger.logLevel.Verbose);
-                        station = stringIdentToStation(orderedSelectedStations[currentIndex + 1]);
+                        Logger.LogToDebug(String.Format("Loco {0} next station is to the east", locomotive.DisplayName), Logger.logLevel.Debug);
+                        station = stringIdentToStation(orderedSelectedStations[currentIndex - 1]);
                         return station != null ? station : selectedPassengerStops.First();
                     }
                     else
                     {
-                        Logger.LogToDebug(String.Format("Loco {0} next station is to the east", locomotive.DisplayName), Logger.logLevel.Debug);
-                        station = stringIdentToStation(orderedSelectedStations[currentIndex - 1]);
+                        Logger.LogToDebug(String.Format("Loco {0} next station is to the west", locomotive.DisplayName), Logger.logLevel.Debug);
+                        station = stringIdentToStation(orderedSelectedStations[currentIndex + 1]);
                         return station != null ? station : selectedPassengerStops.First();
                     }
                 }
