@@ -25,7 +25,7 @@ https://github.com/Erabior/RouteManager/releases/latest
 
 5. Finish installation of BepInEx by running the game once.
 
-6. Close the game and copy RouteManager.dll into the plugins folder that was generated after launching the game.(Railroader/BepInEx/plugins) 
+6. Close the game and copy RouteManager.dll into the plugins folder that was generated after launching the game.(Railroader/BepInEx/plugins)
 ![image](https://github.com/Erabior/RouteManager/assets/7718625/d8719272-514b-4b7d-96f4-f765bb751eca)
 
 7. Prosper
@@ -35,13 +35,13 @@ https://github.com/Erabior/RouteManager/releases/latest
 **Usage:**
 
 1. Select a locomotive (preferably with coaches coupled)
-    
+
 2. Go to the 'Orders' Panel
-    
+
 3. Select 'Road' mode
-    
+
 4. Select all of the stations you want your train to stop at. Note: Although you may only see a single station, it is indeed a scroll-able list. (Hopefully will be addressed i a future release.)
-    
+
 5. Click 'Enable Route Mode'
 
 ***
@@ -75,7 +75,7 @@ Basic alerting of low consumables has been implemented as of v1.0.2.0
 
 **Building From Source:**
 
-Note: This assumes you have some fundamental understanding of how Github & visual studio work and so is intended more as a quick start than a full guide. 
+Note: This assumes you have some fundamental understanding of how Github & visual studio work and so is intended more as a quick start than a full guide.
  1. Download and install Visual Studio community edition. Not visual Studio Code.
  2. Clone / download this repository to your computer.
  3. Open the Project solution.
