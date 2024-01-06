@@ -128,6 +128,51 @@ namespace RouteManager.v2.core
             return (closestStation, closestDistance);
         }
 
+
+        //Attempt to determine midroute station better when starting the coroutine.
+        public static PassengerStop getInitialDestination(Car locomotive)
+        {
+            PassengerStop nextStation = getNextStation(locomotive);
+
+            Logger.LogToDebug(String.Format("Loco {0} determining initial destination",locomotive.DisplayName),Logger.logLevel.Debug);
+
+            //Make sure a previous destination is set
+            if (LocoTelem.previousDestinations.ContainsKey(locomotive))
+            {
+                Logger.LogToDebug(String.Format("Loco {0} has previous destinations", locomotive.DisplayName), Logger.logLevel.Verbose);
+                //Compare Previous Destination
+                //If we have not visited the closest station
+                if (!LocoTelem.previousDestinations[locomotive].Contains(LocoTelem.closestStation[locomotive].Item1))
+                {
+                    Logger.LogToDebug(String.Format("Loco {0} has previous destinations not containing closeset station", locomotive.DisplayName), Logger.logLevel.Verbose);
+                    //If the closest station is selected....
+                    if (LocoTelem.SelectedStations[locomotive].Contains(LocoTelem.closestStation[locomotive].Item1))
+                    {
+                        Logger.LogToDebug(String.Format("Loco {0} Initial destintion is the closest: {1}", locomotive.DisplayName , LocoTelem.closestStation[locomotive].Item1));
+                        return LocoTelem.closestStation[locomotive].Item1;
+                    }
+                }
+            }
+            else
+            {
+                //If the closest station is selected....
+                if (LocoTelem.SelectedStations[locomotive].Contains(LocoTelem.closestStation[locomotive].Item1))
+                {
+                    Logger.LogToDebug(String.Format("Loco {0} Initial destintion is the closest: {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1));
+                    return LocoTelem.closestStation[locomotive].Item1;
+                }
+                else
+                {
+                    Logger.LogToDebug(String.Format("Loco {0} Initial destintion is not the closest: {1}", locomotive.DisplayName, nextStation));
+                    return nextStation;
+                }
+            }
+
+            //Worst case, Just default to the next station
+            Logger.LogToDebug(String.Format("Loco {0} getInitialDestination reached default case! Station was: {1}", locomotive.DisplayName, nextStation),Logger.logLevel.Error);
+            return nextStation;
+        }
+
         public static PassengerStop getNextStation(Car locomotive)
         {
             PassengerStop currentStation = default(PassengerStop);
@@ -187,21 +232,33 @@ namespace RouteManager.v2.core
                 if (currentIndex == 0)
                 {
                     Logger.LogToDebug(String.Format("Loco {0} at end of line, returning west", locomotive.DisplayName), Logger.logLevel.Debug);
-                    LocoTelem.locoTravelingEastWard[locomotive] = false;
-                    LocoTelem.needToUpdatePassengerCoaches[locomotive] = true;
 
-                    return stringIdentToStation(orderedSelectedStations[currentIndex + 1]);
+                    //Update telemetry
+                    updateLocoTelemEndOfLine(locomotive, false);
+
+                    //Bounds Checking
+                    if (currentIndex + 1 <= orderedSelectedStations.Count)
+                        station = stringIdentToStation(orderedSelectedStations[currentIndex + 1]);
+                    else
+                        station = stringIdentToStation(orderedSelectedStations[currentIndex]);
+
+                    return station != null ? station : selectedPassengerStops.Last();
                 }
                 //At last station go East
                 else if (currentIndex == orderedSelectedStations.Count - 1)
                 {
                     Logger.LogToDebug(String.Format("Loco {0} at end of line, returning east", locomotive.DisplayName), Logger.logLevel.Debug);
-                    LocoTelem.locoTravelingEastWard[locomotive] = true;
-                    LocoTelem.needToUpdatePassengerCoaches[locomotive] = true;
 
-                    station = stringIdentToStation(orderedSelectedStations[currentIndex - 1]);
+                    //Update telemetry
+                    updateLocoTelemEndOfLine(locomotive, true);
 
-                    return station != null ? station : selectedPassengerStops.First();
+                    //Bounds Checking
+                    if (currentIndex - 1 >= 0)
+                        station = stringIdentToStation(orderedSelectedStations[currentIndex - 1]);
+                    else
+                        station = stringIdentToStation(orderedSelectedStations[currentIndex]);
+
+                    return station != null ? station : selectedPassengerStops.Last();
                 }
                 //Keep going in the direction previously travelled...
                 else
@@ -210,13 +267,24 @@ namespace RouteManager.v2.core
                     if (LocoTelem.locoTravelingEastWard[locomotive])
                     {
                         Logger.LogToDebug(String.Format("Loco {0} next station is to the east", locomotive.DisplayName), Logger.logLevel.Debug);
-                        station = stringIdentToStation(orderedSelectedStations[currentIndex - 1]);
+                        //Bounds Checking
+                        if (currentIndex - 1 >= 0)
+                            station = stringIdentToStation(orderedSelectedStations[currentIndex - 1]);
+                        else
+                            station = stringIdentToStation(orderedSelectedStations[currentIndex]);
+
                         return station != null ? station : selectedPassengerStops.First();
                     }
                     else
                     {
                         Logger.LogToDebug(String.Format("Loco {0} next station is to the west", locomotive.DisplayName), Logger.logLevel.Debug);
-                        station = stringIdentToStation(orderedSelectedStations[currentIndex + 1]);
+
+                        //Bounds Checking
+                        if (currentIndex + 1 <= orderedSelectedStations.Count)
+                            station = stringIdentToStation(orderedSelectedStations[currentIndex + 1]);
+                        else
+                            station = stringIdentToStation(orderedSelectedStations[currentIndex]);
+
                         return station != null ? station : selectedPassengerStops.First();
                     }
                 }
@@ -225,6 +293,15 @@ namespace RouteManager.v2.core
             //Worst case, start from the beginning...
             Logger.LogToDebug(String.Format("Loco {0} faild to find next station ... Defaulting to first stop", locomotive.DisplayName), Logger.logLevel.Verbose);
             return selectedPassengerStops.First();
+        }
+
+        private static void updateLocoTelemEndOfLine(Car locomotive, bool direction)
+        {
+            LocoTelem.locoTravelingEastWard[locomotive] = direction;
+            LocoTelem.needToUpdatePassengerCoaches[locomotive] = true;
+            PassengerStop lastStop = LocoTelem.previousDestinations[locomotive].Last<PassengerStop>();
+            LocoTelem.previousDestinations[locomotive].Clear();
+            LocoTelem.previousDestinations[locomotive].Add(lastStop);
         }
 
         private static PassengerStop? stringIdentToStation(string stationIdentifier)
@@ -236,72 +313,6 @@ namespace RouteManager.v2.core
             }
             return null;
         }
-
-        private static PassengerStop calculateNextStation_OLD(List<string> orderedSelectedStations, List<PassengerStop> selectedPassengerStops, PassengerStop currentStation, Car locomotive)
-        {
-
-            Logger.LogToDebug(String.Format("Loco {0} calculating next station",locomotive.DisplayName), Logger.logLevel.Verbose);
-
-            //Make sure we have stations after all that parsing was done...
-            if (selectedPassengerStops != null && selectedPassengerStops.Count > 1)
-            {
-                //Current station index
-                int currentIndex = orderedSelectedStations.IndexOf(currentStation.identifier);
-
-                //Current station is is not a valid selected station...
-                if (currentIndex! < 0)
-                {
-                    Logger.LogToDebug(String.Format("Loco {0} Current station is not selected. Defaulting to First Selected station", locomotive.DisplayName), Logger.logLevel.Verbose);
-                    return selectedPassengerStops.First();
-                }
-
-                Logger.LogToDebug(String.Format("Loco {0} determining direction of travel for station selection", locomotive.DisplayName), Logger.logLevel.Verbose);
-
-                //If we are traveling torward Anderson from Silva
-                if (LocoTelem.locoTravelingEastWard[locomotive])
-                {
-                    Logger.LogToDebug(String.Format("Loco {0} Traveleing West", locomotive.DisplayName), Logger.logLevel.Debug);
-                    if (currentIndex == selectedPassengerStops.Count - 1) 
-                    {
-                        Logger.LogToDebug(String.Format("Loco {0} at end of line, returning east", locomotive.DisplayName), Logger.logLevel.Debug);
-                        LocoTelem.locoTravelingEastWard[locomotive] = !LocoTelem.locoTravelingEastWard[locomotive];
-                        LocoTelem.needToUpdatePassengerCoaches[locomotive] = true;
-
-                        return selectedPassengerStops[currentIndex - 1];
-                    }
-                    else
-                    {
-                        Logger.LogToDebug(String.Format("Loco {0} next station is to the west", locomotive.DisplayName), Logger.logLevel.Verbose);
-                        return selectedPassengerStops[currentIndex + 1];
-                    }
-                }
-                else
-                {
-                    Logger.LogToDebug(String.Format("Loco {0} Traveleing East", locomotive.DisplayName), Logger.logLevel.Debug);
-                    if (currentIndex == 0)
-                    {
-                        Logger.LogToDebug(String.Format("Loco {0} at end of line, returning west", locomotive.DisplayName), Logger.logLevel.Debug);
-                        LocoTelem.locoTravelingEastWard[locomotive] = !LocoTelem.locoTravelingEastWard[locomotive];
-                        LocoTelem.needToUpdatePassengerCoaches[locomotive] = true;
-
-                        return selectedPassengerStops[currentIndex + 1];
-                    }
-                    else
-                    {
-                        Logger.LogToDebug(String.Format("Loco {0} next station is to the east", locomotive.DisplayName), Logger.logLevel.Debug);
-                        return selectedPassengerStops[currentIndex - 1];
-                    }
-                }
-            }
-
-            Logger.LogToDebug(String.Format("Loco {0} faild to find next station ... Defaulting to first stop", locomotive.DisplayName), Logger.logLevel.Verbose);
-
-            //Worst case, start from the beginning...
-            return selectedPassengerStops.First();
-        }
-
-
-
 
         //Will need adjusting
         public static bool isTrainInStation(Car currentCar)
