@@ -299,9 +299,14 @@ namespace RouteManager.v2.core
         {
             LocoTelem.locoTravelingEastWard[locomotive] = direction;
             LocoTelem.needToUpdatePassengerCoaches[locomotive] = true;
-            PassengerStop lastStop = LocoTelem.previousDestinations[locomotive].Last<PassengerStop>();
-            LocoTelem.previousDestinations[locomotive].Clear();
-            LocoTelem.previousDestinations[locomotive].Add(lastStop);
+
+            //Reset previous destinations but preserve the last destination for tracking
+            if (LocoTelem.previousDestinations.ContainsKey(locomotive) && LocoTelem.previousDestinations[locomotive].Count>=1 )
+            {
+                PassengerStop lastStop = LocoTelem.previousDestinations[locomotive].Last<PassengerStop>();
+                LocoTelem.previousDestinations[locomotive].Clear();
+                LocoTelem.previousDestinations[locomotive].Add(lastStop);
+            }
         }
 
         private static PassengerStop? stringIdentToStation(string stationIdentifier)
