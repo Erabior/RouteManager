@@ -25,7 +25,7 @@ https://github.com/Erabior/RouteManager/releases/latest
 
 5. Finish installation of BepInEx by running the game once.
 
-6. Close the game and copy RouteManager.dll into the plugins folder that was generated after launching the game.(Railroader/BepInEx/plugins) 
+6. Close the game and copy RouteManager.dll into the plugins folder that was generated after launching the game.(Railroader/BepInEx/plugins)
 ![image](https://github.com/Erabior/RouteManager/assets/7718625/d8719272-514b-4b7d-96f4-f765bb751eca)
 
 7. Prosper
@@ -35,13 +35,13 @@ https://github.com/Erabior/RouteManager/releases/latest
 **Usage:**
 
 1. Select a locomotive (preferably with coaches coupled)
-    
+
 2. Go to the 'Orders' Panel
-    
+
 3. Select 'Road' mode
-    
+
 4. Select all of the stations you want your train to stop at. Note: Although you may only see a single station, it is indeed a scroll-able list. (Hopefully will be addressed i a future release.)
-    
+
 5. Click 'Enable Route Mode'
 
 ***
@@ -75,28 +75,14 @@ Basic alerting of low consumables has been implemented as of v1.0.2.0
 
 **Building From Source:**
 
-Note: This assumes you have some fundamental understanding of how Github & visual studio work and so is intended more as a quick start than a full guide. 
+Note: This assumes you have some fundamental understanding of how Github & visual studio work and so is intended more as a quick start than a full guide.
  1. Download and install Visual Studio community edition. Not visual Studio Code.
- 2. Clone / download this repository to your computer. 
+ 2. Clone / download this repository to your computer.
  3. Open the Project solution.
- 4. Add / update references to the following DLL's as necessary. If the references do not load correctly you will get build errors. 
- 
-| DLL | Source Location |
-|--|--|
-| 0Harmony.dll | (Railroader\BepInEx\core\) |
-| BepInEx.dll | (Railroader\BepInEx\core\) |
-| Assembly-CSharp.dll | (Railroader\Railroader_Data\Managed\) |
-| Core.dll | (Railroader\Railroader_Data\Managed\) |
-| Definition.dll | (Railroader\Railroader_Data\Managed\) |
-| KeyValue.Runtime.dll | (Railroader\Railroader_Data\Managed\) |
-| Serilog.dll | (Railroader\Railroader_Data\Managed\) |
-| Unity.InputSystem.dll | (Railroader\Railroader_Data\Managed\) |
-| Unity.InputSystem.ForUI.dll | (Railroader\Railroader_Data\Managed\) |
-| UnityEngine.dll | (Railroader\Railroader_Data\Managed\) |
-| UnityEngine.CoreModule.dll | (Railroader\Railroader_Data\Managed\) |
-| UnityEngine.InputModule.dll | (Railroader\Railroader_Data\Managed\) |
-| UnityEngine.UI.dll | (Railroader\Railroader_Data\Managed\) |
- 5. Build the solution 
+ 4. If your game install is not in the default location (`C:\Program Files (x86)\Steam\steamapps\common\Railroader`) follow these steps to add the correct references
+     1. Create a user solution file `RouteManager.csproj.user` in the root of the project. There is an example file you can copy
+     2. Update the `GamePath` property so it points to the base of your Railroader install
+ 5. Build the solution
  6. Copy the RouteManager.DLL to plugin folder in your RailRoader install directory (Railroader/BepInEx/plugins)
 
 ***
