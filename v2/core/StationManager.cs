@@ -106,7 +106,6 @@ namespace RouteManager.v2.core
             foreach ( PassengerStop station in UnityEngine.Object.FindObjectsOfType<PassengerStop>())
             {
                 Logger.LogToDebug($"Station center was: {station.CenterPoint}",Logger.logLevel.Verbose);
-                Logger.LogToDebug($"Car center was: {locoMotivePosition.Value}", Logger.logLevel.Verbose);
 
                 // Calculate the distance between the locomotive and the station's center point
                 float distance = Vector3.Distance(locoMotivePosition.Value, station.CenterPoint);
