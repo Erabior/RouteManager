@@ -225,12 +225,12 @@ namespace RouteManager.v2.core
 
             string currentStation = LocoTelem.currentDestination[locomotive].identifier;
             int currentStationIndex = DestinationManager.orderedStations.IndexOf(currentStation);
-            bool isEastWest = LocoTelem.locoTravelingEastWard[locomotive]; // true if traveling West
+            bool isTravelingEastWard = LocoTelem.locoTravelingEastWard[locomotive]; // true if traveling East
 
             // Determine the range of stations to include based on travel direction
-            IEnumerable<string> relevantStations = isEastWest ?
-                DestinationManager.orderedStations.Skip(currentStationIndex) :
-                DestinationManager.orderedStations.Take(currentStationIndex + 1).Reverse();
+            IEnumerable<string> relevantStations = isTravelingEastWard ?
+                DestinationManager.orderedStations.Take(currentStationIndex + 1).Reverse() :
+                DestinationManager.orderedStations.Skip(currentStationIndex);
 
             // Filter to include only selected stations
             HashSet<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
