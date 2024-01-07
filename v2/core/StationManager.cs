@@ -106,9 +106,20 @@ namespace RouteManager.v2.core
             foreach ( PassengerStop station in UnityEngine.Object.FindObjectsOfType<PassengerStop>())
             {
                 Logger.LogToDebug($"Station center was: {station.CenterPoint}",Logger.logLevel.Verbose);
+                float distance = 0;
 
-                // Calculate the distance between the locomotive and the station's center point
-                float distance = Vector3.Distance(locoMotivePosition.Value, station.CenterPoint);
+                //Internal railroader bug linked to progression causes the game to fail to calculate the station center point. 
+                //In the event that the game fails to calculate the station center point fall back to the predefined hardcoded values.
+                //Work Around for issue #50
+                try
+                {
+                    // Calculate the distance between the locomotive and the station's center point
+                    distance = Vector3.Distance(locoMotivePosition.Value, station.CenterPoint);
+                }
+                catch 
+                {
+                    distance = Vector3.Distance(locoMotivePosition.Value, StationInformation.Stations[station.identifier.ToLower()].Center);
+                }
 
                 // Keep track of the closest station
                 if (distance < closestDistance)

@@ -21,8 +21,6 @@ namespace RouteManager.v2.core
 {
     internal class TrainManager
     {
-
-
         //Get Fuel Load information for the Requested locomotive 
         public static float GetLoadInfoForLoco(Car car, String loadIdent)
         {
@@ -225,7 +223,7 @@ namespace RouteManager.v2.core
                 DestinationManager.orderedStations.Take(currentStationIndex + 1).Reverse() :
                 DestinationManager.orderedStations.Skip(currentStationIndex);
 
-            // Filter to include only selected stations
+            //Filter to include only selected stations
             HashSet<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
                 .Select(stop => stop.identifier)
                 .ToHashSet();
