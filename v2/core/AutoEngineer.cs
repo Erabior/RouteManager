@@ -579,18 +579,18 @@ namespace RouteManager.v2.core
             //Looks like those waiting passengers are going to have to find a train with room.
             if (!carsLoaded && trainFull)
             {
-                Logger.LogToConsole(String.Format("Locomotive {0} is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName));
+                Logger.LogToConsole(String.Format("Locomotive {0} consist is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName));
                 return true;
             }
 
             //If no pax are waiting and cars have loaded then proceed.
             if(!carsLoaded && !passWaiting)
             {
-                Logger.LogToDebug(String.Format("Locomotive {0} has finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), Logger.logLevel.Verbose);
+                Logger.LogToDebug(String.Format("Locomotive {0} consist has finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), Logger.logLevel.Verbose);
                 return true;
             }
 
-            Logger.LogToDebug(String.Format("Locomotive {0} has not finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), Logger.logLevel.Verbose);
+            Logger.LogToDebug(String.Format("Locomotive {0} consist has not finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), Logger.logLevel.Verbose);
 
             //Always assume stop has not been served unless determined otherwise. 
             return false;
@@ -628,6 +628,11 @@ namespace RouteManager.v2.core
                 }
             }
 
+            if (loadCheck)
+                Logger.LogToDebug(String.Format("Loco {0} consist contains passengers for current stop", locomotive.DisplayName), Logger.logLevel.Debug);
+            else
+                Logger.LogToDebug(String.Format("Loco {0} consist empty for current stop", locomotive.DisplayName), Logger.logLevel.Debug);
+
             return loadCheck;
         }
 
@@ -652,12 +657,15 @@ namespace RouteManager.v2.core
                             //If any destinations have a passsenger still in the platform bail out and return true. 
                             if (StationManager.getNumberPassengersWaitingForDestination(LocoTelem.closestStation[locomotive].Item1, selectedStop) > 0) 
                             {
+                                Logger.LogToDebug(String.Format("Loco {0} still boarding", locomotive.DisplayName), Logger.logLevel.Debug);
                                 return true;
                             }
                         }
                     }
                 }
             }
+
+            Logger.LogToDebug(String.Format("Loco {0} all passengers boarded", locomotive.DisplayName), Logger.logLevel.Debug);
 
             return false;
         }
