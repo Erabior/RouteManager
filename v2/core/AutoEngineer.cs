@@ -291,23 +291,6 @@ namespace RouteManager.v2.core
         {
             float currentTrainVelocity = 100f;
 
-            //Logger.LogToDebug(String.Format("Locomotive {0} Setting Previous Station", locomotive.DisplayName),Logger.logLevel.Verbose);
-            //// Store previous station
-            //if (LocoTelem.previousDestinations.ContainsKey(locomotive))
-            //{
-            //    Logger.LogToDebug(String.Format("Locomotive {0} Previous station set, checking if its current", locomotive.DisplayName), Logger.logLevel.Verbose);
-            //    if (!LocoTelem.previousDestinations[locomotive].Contains(LocoTelem.currentDestination[locomotive]))
-            //    {
-            //        Logger.LogToDebug(String.Format("Locomotive {0} Previous station did not match, updating", locomotive.DisplayName), Logger.logLevel.Verbose);
-            //        LocoTelem.previousDestinations[locomotive].Add(LocoTelem.currentDestination[locomotive]);
-            //    }
-            //}
-            //else
-            //{
-            //    Logger.LogToDebug(String.Format("Locomotive {0} Previous station not set. Setting to current", locomotive.DisplayName), Logger.logLevel.Verbose);
-            //    LocoTelem.previousDestinations[locomotive].Add(LocoTelem.currentDestination[locomotive]);
-            //}
-
             //Loop through station logic while loco is not in transit mode...
             while (!LocoTelem.TransitMode[locomotive])
             {
