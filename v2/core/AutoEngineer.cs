@@ -342,7 +342,6 @@ namespace RouteManager.v2.core
                     {
                         //Transition to transit mode
                         LocoTelem.TransitMode[locomotive] = true;
-                        LocoTelem.initialSpeedSliderSet[locomotive] = false;
                         LocoTelem.clearedForDeparture[locomotive] = false;
 
                         //Feature Enahncement: Issue #24
@@ -454,6 +453,10 @@ namespace RouteManager.v2.core
             //Gradually reduce maximum speed the closer to the platform we get. 
             float calculatedSpeed = distanceToStation / 8f;
 
+            //Prevent overspeed.
+            if(calculatedSpeed > LocoTelem.RMMaxSpeed[locomotive])
+                calculatedSpeed = LocoTelem.RMMaxSpeed[locomotive];
+
             //Minimum speed should not be less than 15Mph
             if (calculatedSpeed < 15f)
             {
@@ -481,6 +484,10 @@ namespace RouteManager.v2.core
 
             //Gradually reduce maximum speed the closer to the platform we get. 
             float calculatedSpeed = distanceToStation / 6f;
+
+            //Prevent overspeed.
+            if (calculatedSpeed > LocoTelem.RMMaxSpeed[locomotive])
+                calculatedSpeed = LocoTelem.RMMaxSpeed[locomotive];
 
             //Minimum speed should not be less than 5Mph
             if (calculatedSpeed < 5f)
