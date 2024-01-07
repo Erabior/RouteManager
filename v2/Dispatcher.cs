@@ -176,16 +176,23 @@ namespace RouteManager.v2
 
         private void clearDicts()
         {
-            LocoTelem.TransitMode.Clear();
-            LocoTelem.RMMaxSpeed.Clear();
-            LocoTelem.approachWhistleSounded.Clear();
             LocoTelem.locomotiveCoroutines.Clear();
-            LocoTelem.lowFuelQuantities.Clear();
+            LocoTelem.RouteMode.Clear();
+            LocoTelem.TransitMode.Clear();
+            LocoTelem.CenterCar.Clear();
+            LocoTelem.RMMaxSpeed.Clear();
+            LocoTelem.initialSpeedSliderSet.Clear();
+            LocoTelem.approachWhistleSounded.Clear();
+            LocoTelem.clearedForDeparture.Clear();
+            LocoTelem.locoTravelingEastWard.Clear();
+            LocoTelem.needToUpdatePassengerCoaches.Clear();
+            LocoTelem.closestStationNeedsUpdated.Clear();
             LocoTelem.closestStation.Clear();
             LocoTelem.currentDestination.Clear();
-            LocoTelem.clearedForDeparture.Clear();
-            LocoTelem.CenterCar.Clear();
-            LocoTelem.needToUpdatePassengerCoaches.Clear();
+            LocoTelem.previousDestinations.Clear();
+            LocoTelem.lowFuelQuantities.Clear();
+            LocoTelem.UIStationSelections.Clear();
+            LocoTelem.SelectedStations.Clear();
         }
 
 
