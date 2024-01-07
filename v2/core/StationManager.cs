@@ -227,6 +227,13 @@ namespace RouteManager.v2.core
 
                 Logger.LogToDebug(String.Format("Current Index was calculated as: {0}", currentIndex), Logger.logLevel.Debug);
 
+                // Current station is not a selected station
+                if (currentIndex == -1)
+                {
+                    Logger.LogToDebug(String.Format("Loco {0} current station is not in the selected stations ... Defaulting to first stop", locomotive.DisplayName), Logger.logLevel.Verbose);
+                    return selectedPassengerStops.First();
+                }
+
                 //At first station go West
                 if (currentIndex == 0)
                 {
