@@ -189,8 +189,7 @@ namespace RouteManager.v2.core
             }
 
             //Get Selected menu items
-            List<string> selectedStationIdentifiers = LocoTelem.SelectedStations
-                .SelectMany(pair => pair.Value)
+            List<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
                 .Select(passengerStop => passengerStop.identifier)
                 .Distinct()
                 .ToList();
