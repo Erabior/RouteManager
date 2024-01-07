@@ -134,6 +134,9 @@ namespace RouteManager.v2
             if (!LocoTelem.needToUpdatePassengerCoaches.ContainsKey(currentLoco))
                 LocoTelem.needToUpdatePassengerCoaches[currentLoco] = false;
 
+            if (!LocoTelem.previousDestinations.ContainsKey(currentLoco))
+                LocoTelem.previousDestinations[currentLoco] = new List<PassengerStop>();
+
         }
 
         private void cleanDataStructures(Car currentLoco)
@@ -146,9 +149,6 @@ namespace RouteManager.v2
 
             if (LocoTelem.approachWhistleSounded.ContainsKey(currentLoco))
                 LocoTelem.approachWhistleSounded.Remove(currentLoco);
-
-            if (LocoTelem.LocomotivePrevDestination.ContainsKey(currentLoco))
-                LocoTelem.LocomotivePrevDestination.Remove(currentLoco);
 
             if (LocoTelem.locomotiveCoroutines.ContainsKey(currentLoco))
                 LocoTelem.locomotiveCoroutines.Remove(currentLoco);
@@ -176,17 +176,23 @@ namespace RouteManager.v2
 
         private void clearDicts()
         {
-            LocoTelem.TransitMode.Clear();
-            LocoTelem.RMMaxSpeed.Clear();
-            LocoTelem.approachWhistleSounded.Clear();
-            LocoTelem.LocomotivePrevDestination.Clear();
             LocoTelem.locomotiveCoroutines.Clear();
-            LocoTelem.lowFuelQuantities.Clear();
+            LocoTelem.RouteMode.Clear();
+            LocoTelem.TransitMode.Clear();
+            LocoTelem.CenterCar.Clear();
+            LocoTelem.RMMaxSpeed.Clear();
+            LocoTelem.initialSpeedSliderSet.Clear();
+            LocoTelem.approachWhistleSounded.Clear();
+            LocoTelem.clearedForDeparture.Clear();
+            LocoTelem.locoTravelingEastWard.Clear();
+            LocoTelem.needToUpdatePassengerCoaches.Clear();
+            LocoTelem.closestStationNeedsUpdated.Clear();
             LocoTelem.closestStation.Clear();
             LocoTelem.currentDestination.Clear();
-            LocoTelem.clearedForDeparture.Clear();
-            LocoTelem.CenterCar.Clear();
-            LocoTelem.needToUpdatePassengerCoaches.Clear();
+            LocoTelem.previousDestinations.Clear();
+            LocoTelem.lowFuelQuantities.Clear();
+            LocoTelem.UIStationSelections.Clear();
+            LocoTelem.SelectedStations.Clear();
         }
 
 

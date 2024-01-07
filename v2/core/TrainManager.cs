@@ -15,13 +15,12 @@ using Logger = RouteManager.v2.Logging.Logger;
 using Track;
 using RouteManager.v2.dataStructures;
 using UnityEngine.InputSystem.EnhancedTouch;
+using Model.Definition.Data;
 
 namespace RouteManager.v2.core
 {
     internal class TrainManager
     {
-
-
         //Get Fuel Load information for the Requested locomotive 
         public static float GetLoadInfoForLoco(Car car, String loadIdent)
         {
@@ -179,44 +178,36 @@ namespace RouteManager.v2.core
             return bestCar;
         }
 
-        public static int GetNumPassInTrain(Car locomotive)
-        {
-            int numPass = 0;
-
-            var cars = locomotive.EnumerateCoupled().ToList();
-            var coaches = new List<Car>();
-
-            foreach (var car in cars)
-            {
-
-                if (car.Archetype == CarArchetype.Coach)
-                {
-                    coaches.Add(car);
-                }
-
-            }
-
-            foreach (Car coach in coaches)
-            {
-
-                try
-                {
-                    numPass += GetPassengerCount(coach);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogToDebug($"failed to get the number of passengers from GetPassengerCount(coach): {ex}");
-                }
-
-
-            }
-
-            return numPass;
-        }
-
         public static int GetPassengerCount(Car coach)
         {
             return coach.GetPassengerMarker()?.TotalPassengers ?? 0;
+        }
+
+        public static bool isTrainFull(Car locomotive)
+        {
+            int currentPaxCount = 0;
+
+            foreach (Car currentCar in locomotive.EnumerateCoupled().ToList())
+            {
+                if (currentCar.Archetype == CarArchetype.Coach)
+                {
+                    currentPaxCount = GetPassengerCount(currentCar);
+
+                    foreach(LoadSlot load in currentCar.Definition.LoadSlots) 
+                    {
+                        Logger.LogToDebug(load.RequiredLoadIdentifier + " maximum capacity is " + load.MaximumCapacity, Logger.logLevel.Verbose);
+                    }
+
+                    //If a single car is empty, then we have room and dont need to keep looking.
+                    if(currentPaxCount != currentCar.Definition.LoadSlots.First().MaximumCapacity)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            //Went through the entire train. Seems like no room.
+            return true;
         }
 
         public static void CopyStationsFromLocoToCoaches(Car locomotive)
@@ -232,7 +223,7 @@ namespace RouteManager.v2.core
                 DestinationManager.orderedStations.Take(currentStationIndex + 1).Reverse() :
                 DestinationManager.orderedStations.Skip(currentStationIndex);
 
-            // Filter to include only selected stations
+            //Filter to include only selected stations
             HashSet<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
                 .Select(stop => stop.identifier)
                 .ToHashSet();
@@ -242,6 +233,7 @@ namespace RouteManager.v2.core
                 .ToHashSet();
 
             Logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), Logger.logLevel.Debug);
+
             // Apply the filtered stations to each coach
             foreach (Car coach in locomotive.EnumerateCoupled().Where(car => car.Archetype == CarArchetype.Coach))
             {
