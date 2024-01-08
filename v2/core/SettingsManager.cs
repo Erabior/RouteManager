@@ -65,18 +65,34 @@ namespace RouteManager.v2.core
 
             //Set Min Water Level
             if (float.TryParse(IniFile.Read("WaterLevel", "Alerts"), out outValueFloat))
-                SettingsData.minWaterQuantity = outValueFloat >= 0 ? 500f : outValueFloat;
+            {
+                Logger.LogToDebug("WaterLevel is read as: " + outValueFloat, Logger.logLevel.Debug);
+                SettingsData.minWaterQuantity = outValueFloat >= 0 ? outValueFloat : 500f;
+                Logger.LogToDebug("WaterLevel is now: " + SettingsData.minWaterQuantity);
+            }
 
             //Set Min Coal Level
             if (float.TryParse(IniFile.Read("CoalLevel", "Alerts"), out outValueFloat))
-                SettingsData.minCoalQuantity = outValueFloat >= 0 ? 0.5f : outValueFloat;
+            {
+                Logger.LogToDebug("CoalLevel is read as: " + outValueFloat, Logger.logLevel.Debug);
+                SettingsData.minCoalQuantity = outValueFloat >= 0 ? outValueFloat : 0.5f;
+                Logger.LogToDebug("CoalLevel is now: " + SettingsData.minCoalQuantity);
+            }
 
             //Set Min Diesel Level
             if (float.TryParse(IniFile.Read("DieselLevel", "Alerts"), out outValueFloat))
-                SettingsData.minCoalQuantity = outValueFloat >= 0 ? 100f : outValueFloat;
+            {
+                Logger.LogToDebug("DieselLevel is read as: " + outValueFloat, Logger.logLevel.Debug);
+                SettingsData.minDieselQuantity = outValueFloat >= 0 ? outValueFloat : 100f;
+                Logger.LogToDebug("DieselLevel is now: " + SettingsData.minDieselQuantity);
+            }
 
             if(bool.TryParse(IniFile.Read("NewInterface", "Dev"), out outValueBool))
+            {
+                Logger.LogToDebug("NewInterface is read as: " + outValueBool, Logger.logLevel.Debug);
                 SettingsData.experimentalUI = outValueBool;
+                Logger.LogToDebug("NewInterface is now: " + SettingsData.experimentalUI);
+            }
 
             //Trace Logging
             Logger.LogToDebug("EXITING FUNCTION: LoadRouteManagerSettings", Logger.logLevel.Trace);
