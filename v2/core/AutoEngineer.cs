@@ -355,11 +355,7 @@ namespace RouteManager.v2.core
                 {
                     if (LocoTelem.lowFuelQuantities[locomotive].Count != 0)
                     {
-                        //Handle if started without enough fuel, use currentDestination instead
                         string holdLocationName = LocoTelem.currentDestination[locomotive].DisplayName;
-
-                        if (LocoTelem.previousDestinations[locomotive].Count > 0)
-                            holdLocationName = LocoTelem.previousDestinations[locomotive].Last().DisplayName;
 
                         //Generate warning for each type of low fuel.
                         foreach (KeyValuePair<string, float> type in LocoTelem.lowFuelQuantities[locomotive])
