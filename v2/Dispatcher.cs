@@ -1,4 +1,4 @@
-using BepInEx.Logging;
+﻿using BepInEx.Logging;
 using GalaSoft.MvvmLight.Messaging;
 using Game.Events;
 using Game.Messages;
@@ -222,7 +222,7 @@ namespace RouteManager.v2
                     //Attempt to prevent trains from taking off before route manager can be re-configured
                     try
                     {
-                        StateManager.ApplyLocal(new AutoEngineerCommand(keys[i].id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[keys[i]], 0, null));
+                        StateManager.ApplyLocal(new AutoEngineerCommand(keys[i].id, AutoEngineerMode.Road, LocoTelem.locoTravelingForward[keys[i]], 0, null));
                     }
                     catch { }
 
