@@ -1,4 +1,4 @@
-﻿using BepInEx.Logging;
+using BepInEx.Logging;
 using GalaSoft.MvvmLight.Messaging;
 using Game.Events;
 using Game.Messages;
@@ -131,6 +131,9 @@ namespace RouteManager.v2
             if (!LocoTelem.locoTravelingEastWard.ContainsKey(currentLoco))
                 LocoTelem.locoTravelingEastWard[currentLoco] = true;
 
+            if (!LocoTelem.locoTravelingForward.ContainsKey(currentLoco))
+                LocoTelem.locoTravelingForward[currentLoco] = true;
+
             if (!LocoTelem.needToUpdatePassengerCoaches.ContainsKey(currentLoco))
                 LocoTelem.needToUpdatePassengerCoaches[currentLoco] = false;
 
@@ -185,6 +188,7 @@ namespace RouteManager.v2
             LocoTelem.approachWhistleSounded.Clear();
             LocoTelem.clearedForDeparture.Clear();
             LocoTelem.locoTravelingEastWard.Clear();
+            LocoTelem.locoTravelingForward.Clear();
             LocoTelem.needToUpdatePassengerCoaches.Clear();
             LocoTelem.closestStationNeedsUpdated.Clear();
             LocoTelem.closestStation.Clear();

@@ -40,6 +40,7 @@ namespace RouteManager.v2.core
 
             Logger.LogToDebug(String.Format("Loco: {0} \t has ID: {1}", locomotive.DisplayName, locomotive.id), Logger.logLevel.Debug);
             LocoTelem.locoTravelingEastWard[locomotive] = true;
+            LocoTelem.locoTravelingForward[locomotive] = true;
 
             //Set some initial values
             LocoTelem.closestStation[locomotive]                = StationManager.GetClosestStation(locomotive);
