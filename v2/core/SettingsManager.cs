@@ -87,25 +87,25 @@ namespace RouteManager.v2.core
                 Logger.LogToDebug("DieselLevel is now: " + SettingsData.minDieselQuantity);
             }
 
-            if(bool.TryParse(IniFile.Read("NewInterface", "Dev"), out outValueBool))
-            {
-                Logger.LogToDebug("NewInterface is read as: " + outValueBool, Logger.logLevel.Debug);
-                SettingsData.experimentalUI = outValueBool;
-                Logger.LogToDebug("NewInterface is now: " + SettingsData.experimentalUI);
-            }
-
-            if (bool.TryParse(IniFile.Read("ShowTimestamp", "Core"), out outValueBool))
+            if (bool.TryParse(IniFile.Read("ShowTimestamp", "Alerts"), out outValueBool))
             {
                 Logger.LogToDebug("ShowTimestamp is read as: " + outValueBool, Logger.logLevel.Debug);
                 SettingsData.showTimestamp = outValueBool;
                 Logger.LogToDebug("ShowTimestamp is now: " + SettingsData.showTimestamp);
             }
 
-            if (bool.TryParse(IniFile.Read("ShowDaystamp", "Core"), out outValueBool))
+            if (bool.TryParse(IniFile.Read("ShowDaystamp", "Alerts"), out outValueBool))
             {
                 Logger.LogToDebug("ShowDaystamp is read as: " + outValueBool, Logger.logLevel.Debug);
                 SettingsData.showDaystamp = outValueBool;
                 Logger.LogToDebug("ShowDaystamp is now: " + SettingsData.showDaystamp);
+            }
+
+            if (bool.TryParse(IniFile.Read("NewInterface", "Dev"), out outValueBool))
+            {
+                Logger.LogToDebug("NewInterface is read as: " + outValueBool, Logger.logLevel.Debug);
+                SettingsData.experimentalUI = outValueBool;
+                Logger.LogToDebug("NewInterface is now: " + SettingsData.experimentalUI);
             }
 
             //Trace Logging
