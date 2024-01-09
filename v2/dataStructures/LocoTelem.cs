@@ -1,4 +1,4 @@
-﻿using Model;
+using Model;
 using RollingStock;
 using System.Collections.Generic;
 
@@ -21,6 +21,7 @@ namespace RouteManager.v2.dataStructures
         public static Dictionary<Car, bool>     locoTravelingEastWard           { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, bool>     needToUpdatePassengerCoaches    { get; private set; } = new Dictionary<Car, bool>();
         public static Dictionary<Car, bool>     closestStationNeedsUpdated      { get; private set; } = new Dictionary<Car, bool>();
+        public static Dictionary<Car, bool>     locoTravelingForward            { get; private set; } = new Dictionary<Car, bool>();
 
 
         public static Dictionary<Car, (PassengerStop, float)>    closestStation          { get; private set; } = new Dictionary<Car, (PassengerStop, float)>();

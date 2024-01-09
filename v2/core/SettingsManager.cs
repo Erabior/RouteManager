@@ -63,6 +63,13 @@ namespace RouteManager.v2.core
             //Set Log Level
             SettingsData.currentLogLevel = Utilities.ParseEnum<Logger.logLevel>(IniFile.Read("LogLevel", "Core"));
 
+            if (bool.TryParse(IniFile.Read("WaitUntilFull", "Core"), out outValueBool))
+            {
+                Logger.LogToDebug("WaitUntilFull is read as: " + outValueBool, Logger.logLevel.Debug);
+                SettingsData.waitUntilFull = outValueBool;
+                Logger.LogToDebug("WaitUntilFull is now: " + SettingsData.waitUntilFull);
+            }
+
             //Set Min Water Level
             if (float.TryParse(IniFile.Read("WaterLevel", "Alerts"), out outValueFloat))
             {
@@ -87,7 +94,35 @@ namespace RouteManager.v2.core
                 Logger.LogToDebug("DieselLevel is now: " + SettingsData.minDieselQuantity);
             }
 
-            if(bool.TryParse(IniFile.Read("NewInterface", "Dev"), out outValueBool))
+            if (bool.TryParse(IniFile.Read("ShowTimestamp", "Alerts"), out outValueBool))
+            {
+                Logger.LogToDebug("ShowTimestamp is read as: " + outValueBool, Logger.logLevel.Debug);
+                SettingsData.showTimestamp = outValueBool;
+                Logger.LogToDebug("ShowTimestamp is now: " + SettingsData.showTimestamp);
+            }
+
+            if (bool.TryParse(IniFile.Read("ShowDaystamp", "Alerts"), out outValueBool))
+            {
+                Logger.LogToDebug("ShowDaystamp is read as: " + outValueBool, Logger.logLevel.Debug);
+                SettingsData.showDaystamp = outValueBool;
+                Logger.LogToDebug("ShowDaystamp is now: " + SettingsData.showDaystamp);
+            }
+
+            if (bool.TryParse(IniFile.Read("ShowArrivalMessage", "Alerts"), out outValueBool))
+            {
+                Logger.LogToDebug("ShowArrivalMessage is read as: " + outValueBool, Logger.logLevel.Debug);
+                SettingsData.showArrivalMessage = outValueBool;
+                Logger.LogToDebug("ShowArrivalMessage is now: " + SettingsData.showArrivalMessage);
+            }
+
+            if (bool.TryParse(IniFile.Read("ShowDepartureMessage", "Alerts"), out outValueBool))
+            {
+                Logger.LogToDebug("ShowDepartureMessage is read as: " + outValueBool, Logger.logLevel.Debug);
+                SettingsData.showDepartureMessage = outValueBool;
+                Logger.LogToDebug("ShowDepartureMessage is now: " + SettingsData.showDepartureMessage);
+            }
+
+            if (bool.TryParse(IniFile.Read("NewInterface", "Dev"), out outValueBool))
             {
                 Logger.LogToDebug("NewInterface is read as: " + outValueBool, Logger.logLevel.Debug);
                 SettingsData.experimentalUI = outValueBool;
