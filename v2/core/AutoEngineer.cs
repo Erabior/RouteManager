@@ -352,7 +352,8 @@ namespace RouteManager.v2.core
                         //Write to console the departure of the train consist at station X
                         //Bugfix: message would previously be generated even when departure was not cleared. 
 
-                        Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), LocoTelem.previousDestinations[locomotive].Last().DisplayName.ToUpper(), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
+                        if (SettingsData.showDepartureMessage)
+                            Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), LocoTelem.previousDestinations[locomotive].Last().DisplayName.ToUpper(), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
                     }
                 }
                 else
@@ -547,7 +548,8 @@ namespace RouteManager.v2.core
                 //Disable transit mode.
                 LocoTelem.TransitMode[locomotive] = false;
 
-                Logger.LogToConsole(String.Format("{0} has arrived at {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
+                if (SettingsData.showArrivalMessage)
+                    Logger.LogToConsole(String.Format("{0} has arrived at {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
             }
 
 

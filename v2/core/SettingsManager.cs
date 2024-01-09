@@ -101,6 +101,20 @@ namespace RouteManager.v2.core
                 Logger.LogToDebug("ShowDaystamp is now: " + SettingsData.showDaystamp);
             }
 
+            if (bool.TryParse(IniFile.Read("ShowArrivalMessage", "Alerts"), out outValueBool))
+            {
+                Logger.LogToDebug("ShowArrivalMessage is read as: " + outValueBool, Logger.logLevel.Debug);
+                SettingsData.showArrivalMessage = outValueBool;
+                Logger.LogToDebug("ShowArrivalMessage is now: " + SettingsData.showArrivalMessage);
+            }
+
+            if (bool.TryParse(IniFile.Read("ShowDepartureMessage", "Alerts"), out outValueBool))
+            {
+                Logger.LogToDebug("ShowDepartureMessage is read as: " + outValueBool, Logger.logLevel.Debug);
+                SettingsData.showDepartureMessage = outValueBool;
+                Logger.LogToDebug("ShowDepartureMessage is now: " + SettingsData.showDepartureMessage);
+            }
+
             if (bool.TryParse(IniFile.Read("NewInterface", "Dev"), out outValueBool))
             {
                 Logger.LogToDebug("NewInterface is read as: " + outValueBool, Logger.logLevel.Debug);
