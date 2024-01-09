@@ -546,6 +546,8 @@ namespace RouteManager.v2.core
 
                 //Disable transit mode.
                 LocoTelem.TransitMode[locomotive] = false;
+
+                Logger.LogToConsole(String.Format("{0} has arrived at {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
             }
 
 
