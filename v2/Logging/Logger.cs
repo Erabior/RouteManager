@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UI.Console;
 using System.ComponentModel;
+using RouteManager.v2.dataStructures;
+using Game;
 
 namespace RouteManager.v2.Logging
 {
@@ -27,7 +29,15 @@ namespace RouteManager.v2.Logging
 
         public static void LogToConsole(string message)
         {
-            Console.Log(String.Format("{0}: {1}",RouteManagerLoader.getModName(), message));
+            string messagePrefix = RouteManagerLoader.getModName();
+
+            if (SettingsData.showTimestamp)
+                messagePrefix = String.Format("{0} | {1}", TimeWeather.Now.TimeString(), messagePrefix);
+
+            if (SettingsData.showDaystamp)
+                messagePrefix = String.Format("{0} | {1}", TimeWeather.Now.DayString(), messagePrefix);
+
+            Console.Log(String.Format("{0}: {1}", messagePrefix, message));
             LogToDebug("[CONSOLE OUTPUT] " + message);
         }
 

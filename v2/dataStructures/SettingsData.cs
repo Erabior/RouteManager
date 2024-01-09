@@ -19,5 +19,13 @@ namespace RouteManager.v2.dataStructures
         public static float minCoalQuantity     = 0.5f;
 
         public static bool experimentalUI       = false;
+
+        public static bool showTimestamp        = false;
+
+        public static bool showDaystamp         = false;
+
+        public static bool showArrivalMessage   = true;
+
+        public static bool showDepartureMessage = true;
     }
 }
