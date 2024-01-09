@@ -94,6 +94,20 @@ namespace RouteManager.v2.core
                 Logger.LogToDebug("NewInterface is now: " + SettingsData.experimentalUI);
             }
 
+            if (bool.TryParse(IniFile.Read("ShowTimestamp", "Core"), out outValueBool))
+            {
+                Logger.LogToDebug("ShowTimestamp is read as: " + outValueBool, Logger.logLevel.Debug);
+                SettingsData.showTimestamp = outValueBool;
+                Logger.LogToDebug("ShowTimestamp is now: " + SettingsData.showTimestamp);
+            }
+
+            if (bool.TryParse(IniFile.Read("ShowDaystamp", "Core"), out outValueBool))
+            {
+                Logger.LogToDebug("ShowDaystamp is read as: " + outValueBool, Logger.logLevel.Debug);
+                SettingsData.showDaystamp = outValueBool;
+                Logger.LogToDebug("ShowDaystamp is now: " + SettingsData.showDaystamp);
+            }
+
             //Trace Logging
             Logger.LogToDebug("EXITING FUNCTION: LoadRouteManagerSettings", Logger.logLevel.Trace);
             return true;
