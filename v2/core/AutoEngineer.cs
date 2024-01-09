@@ -577,19 +577,26 @@ namespace RouteManager.v2.core
 
             trainFull   = TrainManager.isTrainFull(locomotive);
 
-            //No passengers to unload, however the train is full...
-            //Looks like those waiting passengers are going to have to find a train with room.
-            if (!carsLoaded && trainFull)
+            //Must unload all passengers for the current station
+            if (!carsLoaded)
             {
-                Logger.LogToConsole(String.Format("Locomotive {0} consist is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName));
-                return true;
-            }
+                //No passengers to unload, however the train is full...
+                //Looks like those waiting passengers are going to have to find a train with room.
+                if (trainFull)
+                {
+                    //Only notify if not configured to wait until full
+                    if (!SettingsData.waitUntilFull)
+                        Logger.LogToConsole(String.Format("Locomotive {0} consist is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName));
+                    
+                    return true;
+                }
 
-            //If no pax are waiting and cars have loaded then proceed.
-            if(!carsLoaded && !passWaiting)
-            {
-                Logger.LogToDebug(String.Format("Locomotive {0} consist has finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), Logger.logLevel.Verbose);
-                return true;
+                //Station has passengers destined for a scheduled station
+                if (!passWaiting && !SettingsData.waitUntilFull)
+                {
+                    Logger.LogToDebug(String.Format("Locomotive {0} consist has finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), Logger.logLevel.Verbose);
+                    return true;
+                }
             }
 
             Logger.LogToDebug(String.Format("Locomotive {0} consist has not finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), Logger.logLevel.Verbose);

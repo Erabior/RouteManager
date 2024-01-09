@@ -63,6 +63,13 @@ namespace RouteManager.v2.core
             //Set Log Level
             SettingsData.currentLogLevel = Utilities.ParseEnum<Logger.logLevel>(IniFile.Read("LogLevel", "Core"));
 
+            if (bool.TryParse(IniFile.Read("WaitUntilFull", "Core"), out outValueBool))
+            {
+                Logger.LogToDebug("WaitUntilFull is read as: " + outValueBool, Logger.logLevel.Debug);
+                SettingsData.waitUntilFull = outValueBool;
+                Logger.LogToDebug("WaitUntilFull is now: " + SettingsData.waitUntilFull);
+            }
+
             //Set Min Water Level
             if (float.TryParse(IniFile.Read("WaterLevel", "Alerts"), out outValueFloat))
             {

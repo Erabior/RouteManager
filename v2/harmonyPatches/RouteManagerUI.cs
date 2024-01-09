@@ -252,6 +252,12 @@ namespace RouteManager.v2.harmonyPatches
                     }
                 });
 
+                if (SettingsData.waitUntilFull && LocoTelem.RouteMode[car])
+                {
+                    builder.Spacer(4f);
+                    builder.AddButtonCompact("Force Departure", new Action(() => { LocoTelem.clearedForDeparture[car] = true; }));
+                }
+
                 bool anyStationSelected = DestinationManager.IsAnyStationSelectedForLocomotive(car);
 
                 //If any station is selected, add a button to the UI
@@ -333,7 +339,14 @@ namespace RouteManager.v2.harmonyPatches
                 builder.AddField("Car Lengths", control2);
             }
 
-            builder.AddExpandingVerticalSpacer();
+            if (mode2 == AutoEngineerMode.Road)
+            {
+                builder.Spacer(4f);
+            }
+            else
+            {
+                builder.AddExpandingVerticalSpacer();
+            }
             builder.AddField("Status", () => persistence.PlannerStatus, UIPanelBuilder.Frequency.Periodic);
             static int MaxSpeedMphForMode(AutoEngineerMode mode)
             {
