@@ -240,7 +240,8 @@ namespace RouteManager.v2.harmonyPatches
                                 builder.Rebuild();
 
                                 // Update when checkbox state changes
-                                UpdateManagedTrainsSelectedStations(car); 
+                                UpdateManagedTrainsSelectedStations(car);
+                                TrainManager.CopyStationsFromLocoToCoaches(car);
                             });
 
                             // Add a label next to the checkbox
