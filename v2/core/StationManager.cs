@@ -75,6 +75,24 @@ namespace RouteManager.v2.core
             return false;
         }
 
+        public static bool currentlyAtLastStation(Car locomotive)
+        {
+            //Get Selected menu items
+            List<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
+                .Select(passengerStop => passengerStop.identifier)
+                .Distinct()
+                .ToList();
+
+            List<string> orderedSelectedStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
+
+            int currentIndex = orderedSelectedStations.IndexOf(LocoTelem.currentDestination[locomotive].identifier);
+
+            if (currentIndex == orderedSelectedStations.Count - 1 || currentIndex == 0)
+                return true;
+
+            return false;
+        }
+
         public static (PassengerStop,float) GetClosestStation(Car currentCar)
         {
             //Trace Logging
@@ -239,7 +257,7 @@ namespace RouteManager.v2.core
                 Logger.LogToDebug(String.Format("Current Index was calculated as: {0}", currentIndex), Logger.logLevel.Debug);
 
                 // Current station is not a selected station
-                if (currentIndex <0)
+                if (currentIndex < 0)
                 {
                     Logger.LogToDebug(String.Format("Loco {0} current station is not in the selected stations. Defaulting to closest stop!", locomotive.DisplayName), Logger.logLevel.Verbose);
                     if (LocoTelem.locoTravelingEastWard[locomotive])

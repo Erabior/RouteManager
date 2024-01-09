@@ -315,6 +315,10 @@ namespace RouteManager.v2.core
                     }
                 }
 
+                //Prior to loading, if CURRENT DESTINATION is the end of the line, then lets reset the coaches
+                if(StationManager.currentlyAtLastStation(locomotive))
+                    TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+
                 //Now that train is stopped, perform station ops and check fuel quantities before departure.
                 if(wasCurrentStopServed(locomotive) && checkFuelQuantities(locomotive))
                     LocoTelem.clearedForDeparture[locomotive] = true;
@@ -650,7 +654,7 @@ namespace RouteManager.v2.core
                             //If any destinations have a passsenger still in the platform bail out and return true. 
                             if (StationManager.getNumberPassengersWaitingForDestination(LocoTelem.closestStation[locomotive].Item1, selectedStop) > 0) 
                             {
-                                Logger.LogToDebug(String.Format("Loco {0} still boarding", locomotive.DisplayName), Logger.logLevel.Debug);
+                                Logger.LogToDebug(String.Format("Loco {0} still boarding for destination: {1}", locomotive.DisplayName, selectedStop), Logger.logLevel.Debug);
                                 return true;
                             }
                         }
