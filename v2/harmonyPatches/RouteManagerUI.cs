@@ -241,7 +241,9 @@ namespace RouteManager.v2.harmonyPatches
 
                                 // Update when checkbox state changes
                                 UpdateManagedTrainsSelectedStations(car);
-                                TrainManager.CopyStationsFromLocoToCoaches(car);
+
+                                if (LocoTelem.RouteMode[car])
+                                    TrainManager.CopyStationsFromLocoToCoaches(car);
                             });
 
                             // Add a label next to the checkbox
