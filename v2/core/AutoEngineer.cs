@@ -355,21 +355,23 @@ namespace RouteManager.v2.core
                 {
                     if (LocoTelem.lowFuelQuantities[locomotive].Count != 0)
                     {
+                        string holdLocationName = LocoTelem.currentDestination[locomotive].DisplayName;
+
                         //Generate warning for each type of low fuel.
                         foreach (KeyValuePair<string, float> type in LocoTelem.lowFuelQuantities[locomotive])
                         {
                             if (type.Key == "coal")
                             {
-                                Logger.LogToConsole(String.Format("Locomotive {0} is low on coal and is holding at {1}", Hyperlink.To(locomotive), LocoTelem.previousDestinations[locomotive].LastOrDefault().DisplayName));
+                                Logger.LogToConsole(String.Format("Locomotive {0} is low on coal and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
                             }
                             if (type.Key == "water")
                             {
-                                Logger.LogToConsole(String.Format("Locomotive {0} is low on water and is holding at {1}", Hyperlink.To(locomotive), LocoTelem.previousDestinations[locomotive].LastOrDefault().DisplayName));
+                                Logger.LogToConsole(String.Format("Locomotive {0} is low on water and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
                             }
 
                             if (type.Key == "diesel-fuel")
                             {
-                                Logger.LogToConsole(String.Format("Locomotive {0} is low on diesel and is holding at {1}", Hyperlink.To(locomotive), LocoTelem.previousDestinations[locomotive].LastOrDefault().DisplayName));
+                                Logger.LogToConsole(String.Format("Locomotive {0} is low on diesel and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
                             }
                         }
                         yield return new WaitForSeconds(30);
