@@ -20,6 +20,6 @@ namespace RouteManager.v2.dataStructures
 
         public static bool experimentalUI       = false;
 
-        public static bool waitUntilFull        = true;
+        public static bool waitUntilFull        = false;
     }
 }
