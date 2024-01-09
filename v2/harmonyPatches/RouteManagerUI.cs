@@ -1,4 +1,4 @@
-﻿using Game.Messages;
+using Game.Messages;
 using Game.State;
 using HarmonyLib;
 using Model.AI;
@@ -148,7 +148,7 @@ namespace RouteManager.v2.harmonyPatches
                             bool? forward3 = false;
 
                             //IF STATEMENT wrapper for Station Management Logic
-                            if (!DestinationManager.IsAnyStationSelectedForLocomotive(car))
+                            if (!LocoTelem.RouteMode[car])
                             {
                                 //Original Code
                                 SetOrdersValue(null, forward3, null, null);
@@ -160,7 +160,7 @@ namespace RouteManager.v2.harmonyPatches
                             bool? forward2 = true;
 
                             //IF STATEMENT wrapper for Station Management Logic
-                            if (!DestinationManager.IsAnyStationSelectedForLocomotive(car))
+                            if (!LocoTelem.RouteMode[car])
                             {
                                 //Original Code
                                 SetOrdersValue(null, forward2, null, null);
