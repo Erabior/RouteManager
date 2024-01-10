@@ -12,9 +12,10 @@ https://github.com/Erabior/RouteManager/releases/latest
 ***
 
 **Installation:**
+
 There are two methods of installation, depending on the mod manager you use:
 
-*BepInEx Method*
+**BepInEx Method**
 1. Download the latest version of 'RouteManager.BepInEx.dll': https://github.com/Erabior/RouteManager/releases/latest
 
 2. Download the latest version of BepInEx: https://github.com/BepInEx/BepInEx/releases Make sure to grab the correct zip for your system (x64/x86). If you are unsure if you need x64 or x86 you can find that in ThisPC -> (Right Click) -> Properties
@@ -34,7 +35,8 @@ There are two methods of installation, depending on the mod manager you use:
 
 8. Prosper
 
-*Unity Mod Manager Method*
+
+**Unity Mod Manager Method**
 1. Download the latest version of 'RouteManager.UMM.zip' from https://github.com/Erabior/RouteManager/releases/latest
 
 2. Download the latest version of Unity Mod Manager: https://www.nexusmods.com/site/mods/21 and unzip to a folder e.g. your desktop
@@ -67,7 +69,8 @@ There are two methods of installation, depending on the mod manager you use:
 
 **Configuration:**
 
-*For BepInEx Users*
+**BepInEx Users**
+
 The mod contains a .ini file that allows for some customization of the mod's behavior. Currently there are the following options are supported:
 
 | Section| Option | Description | Type | Example Value | Accepted Values
@@ -78,7 +81,8 @@ The mod contains a .ini file that allows for some customization of the mod's beh
 | Alerts | DieselLevel|  Minimum Fuel Quantity (Gallons) to depart station / warn  en-route  | Float | 100 | value  >= 0
 | Dev | NewInterface  | Allows access do DEV features | Bool | False |
 
-*For Unity Mod Manager Users*
+**Unity Mod Manager Users**
+
 Configuration can be done via the in-game Unity Mod Manager interface.
 1. Open the in-game interface (default shortcut is Ctrl-F10 if you have closed the window)
 2. Click the options icon next to 'Dispatcher'
