@@ -306,6 +306,12 @@ namespace RouteManager.v2.core
                     yield break;
                 }
 
+                AutoEngineerPersistence persistence = new AutoEngineerPersistence(locomotive.KeyValueObject);
+                if (persistence.Orders.MaxSpeedMph > 0)
+                {
+                    LocoTelem.TransitMode[locomotive] = true;
+                    yield break;
+                }
 
                 //Ensure the train is at a complete stop. Else wait for it to stop...
                 while ((currentTrainVelocity = TrainManager.GetTrainVelocity(locomotive)) > .1f)
