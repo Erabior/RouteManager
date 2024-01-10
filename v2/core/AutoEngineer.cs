@@ -202,15 +202,21 @@ namespace RouteManager.v2.core
                 //We may be able to avoid this with better logic elsewhere...
                 Logger.LogToDebug(String.Format("Locomotive: {0} Distance to Station: {1} Prev Distance: {2}", locomotive.DisplayName, distanceToStation, olddist), Logger.logLevel.Verbose);
 
-                if (distanceToStation > olddist && (trainVelocity > 1f && trainVelocity < 10f))
+                if (distanceToStation > olddist)
                 {
-
                     LocoTelem.locoTravelingForward[locomotive] = !LocoTelem.locoTravelingForward[locomotive];
                     Logger.LogToDebug("Was driving in the wrong direction! Changing direction");
                     Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {(int)LocoTelem.RMMaxSpeed[locomotive]}", Logger.logLevel.Debug);
                     StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
 
-                    yield return new WaitForSeconds(10);
+                    //Wait until loco has started going in the correct direction
+                    while (distanceToStation > olddist)
+                    {
+                        yield return new WaitForSeconds(1);
+                        Logger.LogToDebug("Was driving in the wrong direction! Waiting until turned around.");
+                        olddist = distanceToStation;
+                        distanceToStation = DestinationManager.GetDistanceToDest(locomotive);
+                    }
                 }
 
                 /*****************************************************************
@@ -267,7 +273,7 @@ namespace RouteManager.v2.core
                     yield return new WaitForSeconds(1);
                 }
                 //Train in platform
-                else if (distanceToStation <= 10 && distanceToStation > 0)
+                else if (distanceToStation <= 10 && distanceToStation >= 0)
                 {
                     onArrival(locomotive);
                     yield return new WaitForSeconds(1);
