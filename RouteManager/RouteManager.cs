@@ -1,36 +1,37 @@
-﻿using BepInEx;
-using BepInEx.Logging;
-using HarmonyLib;
+﻿using HarmonyLib;
 using UnityEngine;
 using UI.Menu;
 using RouteManager.v2;
 using RouteManager.v2.UI;
 using RouteManager.v2.core;
-using RMLogger = RouteManager.v2.Logging.Logger;
 using RouteManager.v2.dataStructures;
-using UnityEngine.SceneManagement;
-using System;
-using UnityEngine.Device;
-
+using RouteManager.v2.Logging;
 
 namespace RouteManager
 {
-    [BepInPlugin(modGUID, modName, modVersion)]
-    public class RouteManagerLoader : BaseUnityPlugin
+    public class RouteManager
 
     {
-        private const string modGUID = "Erabior.Dispatcher";
-        private const string modName = "Dispatcher";
-        private const string modVersion = "2.0.0.3";
-        private readonly Harmony harmony = new Harmony(modGUID);
-        public static ManualLogSource mls;
+        public const string modGUID = "Erabior.Dispatcher";
+        public const string modName = "Dispatcher";
+        public const string modVersion = AppVersion.Version;
 
-        //Default unity hook.
-        void Awake()
+        public static IRMLogger logger;
+        public static IRMSettingsManager settingsManager;
+        public static SettingsData Settings = new SettingsData();
+
+        private readonly Harmony harmony = new Harmony(modGUID);
+
+        public void Start()
         {
             harmony.PatchAll();
-            mls = Logger;
         }
+        public RouteManager(IRMLogger loggerInterface, IRMSettingsManager settingsInterface)
+        {
+            logger = loggerInterface;
+            settingsManager = settingsInterface;
+        }
+
 
         //Accessor for getting current mod information
         public static string getModGuid()
@@ -58,6 +59,7 @@ namespace RouteManager
         {
             public static void Postfix(bool show)
             {
+
                 //Load Mod Settings
                 loadSettings();
 
@@ -68,11 +70,12 @@ namespace RouteManager
                     //Create Parent Game object to bind the instance of Route AI To.
                     GameObject erabiorDispatcher = new GameObject("Erabior.Dispatcher");
 
+                    RouteManager.logger.LogToDebug($"Adding Dispatcher", LogLevel.Info);
                     //Bind the Route AI component to the Game Object instance
                     erabiorDispatcher.AddComponent<Dispatcher>();
-
+                    RouteManager.logger.LogToDebug($"Dispatcher Added", LogLevel.Info);
                     //Enable Experimental UI
-                    if (SettingsData.experimentalUI)
+                    if (RouteManager.Settings.experimentalUI)
                         erabiorDispatcher.AddComponent<ModInterface>();
                 }
             }
@@ -80,18 +83,21 @@ namespace RouteManager
             private static void loadSettings()
             {
                 //Load Route Manager Configuration
-                if (!SettingsManager.Load())
-                    RMLogger.LogToError("FAILED TO LOAD SETTINGS!");
+                RouteManager.logger.LogToDebug($"Coal minQty: {RouteManager.Settings.minCoalQuantity}",LogLevel.Info);
+                if (!RouteManager.settingsManager.Load())
+                    RouteManager.logger.LogToError("FAILED TO LOAD SETTINGS!");
                 else
-                    RMLogger.LogToDebug("Loaded Settings.", RMLogger.logLevel.Debug);
+                    RouteManager.logger.LogToDebug("Loaded Settings.", LogLevel.Debug);
+
+                RouteManager.logger.LogToDebug($"Coal minQty: {RouteManager.Settings.minCoalQuantity}", LogLevel.Info);
 
                 //Attempt to apply settings
-                if (!SettingsManager.Apply())
-                    RMLogger.LogToError("FAILED TO APPLY SETTINGS!");
+                if (!RouteManager.settingsManager.Apply())
+                    RouteManager.logger.LogToError("FAILED TO APPLY SETTINGS!");
                 else
-                    RMLogger.LogToDebug("Applied Settings.", RMLogger.logLevel.Debug);
+                    RouteManager.logger.LogToDebug("Applied Settings.", LogLevel.Debug);
 
-                RMLogger.LogToDebug("Log Level is now: " + RMLogger.currentLogLevel.ToString());
+                RouteManager.logger.LogToDebug("Log Level is now: " + RouteManager.logger.currentLogLevel.ToString());
             }
         }
     }

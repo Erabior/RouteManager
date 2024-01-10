@@ -1,14 +1,12 @@
 ﻿using Model;
 using RollingStock;
 using RouteManager.v2.dataStructures;
+using RouteManager.v2.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Track;
 using UnityEngine;
-using Logger = RouteManager.v2.Logging.Logger;
 
 namespace RouteManager.v2.core
 {
@@ -24,7 +22,7 @@ namespace RouteManager.v2.core
         public static void SetSelectedStations(Car car, List<PassengerStop> selectedStops)
         {
             //Trace Logging
-            Logger.LogToDebug("ENTERED FUNCTION: SetSelectedStations", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: SetSelectedStations", LogLevel.Trace);
 
             //Something went wrong
             if (car == null)
@@ -36,24 +34,24 @@ namespace RouteManager.v2.core
             LocoTelem.SelectedStations[car] = selectedStops;
 
             //Trace Logging
-            Logger.LogToDebug("EXITING FUNCTION: SetSelectedStations", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: SetSelectedStations", LogLevel.Trace);
         }
 
         public static float GetDistanceToDest(Car locomotive)
         {
-            Logger.LogToDebug(String.Format("Loco: {0} getting distance to destination", locomotive.DisplayName));
+            RouteManager.logger.LogToDebug(String.Format("Loco: {0} getting distance to destination", locomotive.DisplayName));
 
             // Check if the locomotive is null
             if (locomotive == null)
             {
-                Logger.LogToError("Locomotive is null in GetDistanceToDest.");
+                RouteManager.logger.LogToError("Locomotive is null in GetDistanceToDest.");
                 return -6969; // Return a default value or handle this case as needed
             }
 
             // Check if the locomotive key exists in the LocomotiveDestination dictionary
             if (!LocoTelem.currentDestination.ContainsKey(locomotive))
             {
-                Logger.LogToError($"LocomotiveDestination does not contain key: {locomotive}");
+                RouteManager.logger.LogToError($"LocomotiveDestination does not contain key: {locomotive}");
                 LocoTelem.currentDestination[locomotive] = StationManager.GetClosestStation(locomotive).Item1;
 
                 if (!LocoTelem.currentDestination.ContainsKey(locomotive))
@@ -67,7 +65,7 @@ namespace RouteManager.v2.core
 
             if (destination == null)
             {
-                Logger.LogToError("Destination is null for locomotive.");
+                RouteManager.logger.LogToError("Destination is null for locomotive.");
                 return -6969f; // Handle null destination
             }
             var graph = Graph.Shared;
@@ -88,7 +86,7 @@ namespace RouteManager.v2.core
             }
             if (!StationInformation.Stations.ContainsKey(destination))
             {
-                Logger.LogToError($"Station not found for destination: {destination}");
+                RouteManager.logger.LogToError($"Station not found for destination: {destination}");
                 return -6969f; // Handle missing station
             }
 
@@ -97,15 +95,15 @@ namespace RouteManager.v2.core
 
             if (destination == "alarkajct")
             {
-                Logger.LogToDebug($"Going to AlarkaJct checking which platform is closest south dist: {Vector3.Distance(locomotivePosition, destCenter)} | north dist: {Vector3.Distance(locomotivePosition, destCentern)}");
+                RouteManager.logger.LogToDebug($"Going to AlarkaJct checking which platform is closest south dist: {Vector3.Distance(locomotivePosition, destCenter)} | north dist: {Vector3.Distance(locomotivePosition, destCentern)}");
                 if (Vector3.Distance(locomotivePosition, destCenter) > Vector3.Distance(locomotivePosition, destCentern))
                 {
-                    Logger.LogToDebug($"North is closest");
+                    RouteManager.logger.LogToDebug($"North is closest");
                     return Vector3.Distance(locomotivePosition, destCentern);
                 }
                 else
                 {
-                    Logger.LogToDebug($"South is closest");
+                    RouteManager.logger.LogToDebug($"South is closest");
                 }
             }
             return Vector3.Distance(locomotivePosition, destCenter);
@@ -143,12 +141,12 @@ namespace RouteManager.v2.core
         public static bool IsStationSelected(PassengerStop stop, Car locomotive)
         {
             //Trace Function
-            //Logger.LogToDebug("ENTERED FUNCTION: IsStationSelected", Logger.logLevel.Trace);
+            //RouteManager.logger.LogToDebug("ENTERED FUNCTION: IsStationSelected", LogLevel.Trace);
 
             bool result =  LocoTelem.UIStationSelections[locomotive].TryGetValue(stop.identifier, out bool isSelected) && isSelected;
 
             //Trace Function
-            //Logger.LogToDebug("EXITING FUNCTION: IsStationSelected", Logger.logLevel.Trace);
+            //RouteManager.logger.LogToDebug("EXITING FUNCTION: IsStationSelected", LogLevel.Trace);
             return result; 
         }
 
@@ -156,19 +154,19 @@ namespace RouteManager.v2.core
         public static void SetStationSelected(PassengerStop stop, Car locomotive, bool isSelected)
         {
             //Trace Function
-            Logger.LogToDebug("ENTERED FUNCTION: SetStationSelected", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: SetStationSelected", LogLevel.Trace);
 
             LocoTelem.UIStationSelections[locomotive][stop.identifier] = isSelected;
 
             //Trace Function
-            Logger.LogToDebug("EXITING FUNCTION: SetStationSelected", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: SetStationSelected", LogLevel.Trace);
         }
 
         //Check if Consist has any stations enabled
         public static bool IsAnyStationSelectedForLocomotive(Car locomotive)
         {
             //Trace Function
-            Logger.LogToDebug("ENTERED FUNCTION: IsAnyStationSelectedForLocomotive", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: IsAnyStationSelectedForLocomotive", LogLevel.Trace);
 
             // Check if the locomotive exists in the SelectedStations dictionary
             if (LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStations))
@@ -178,7 +176,7 @@ namespace RouteManager.v2.core
             }
 
             //Trace Function
-            Logger.LogToDebug("EXITING FUNCTION: IsAnyStationSelectedForLocomotive", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: IsAnyStationSelectedForLocomotive", LogLevel.Trace);
 
             // Return false if the locomotive is not found or no stations are selected
             return false;
@@ -188,7 +186,7 @@ namespace RouteManager.v2.core
         public static void InitializeStationSelectionForLocomotive(Car locomotive)
         {
             //Trace Function
-            Logger.LogToDebug("ENTERED FUNCTION: InitializeStationSelectionForLocomotive", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: InitializeStationSelectionForLocomotive", LogLevel.Trace);
 
             if (!LocoTelem.UIStationSelections.ContainsKey(locomotive))
             {
@@ -204,7 +202,7 @@ namespace RouteManager.v2.core
             }
 
             //Trace Function
-            Logger.LogToDebug("EXITING FUNCTION: InitializeStationSelectionForLocomotive", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: InitializeStationSelectionForLocomotive", LogLevel.Trace);
         }
     }
 }

@@ -2,16 +2,10 @@
 using Model.Definition;
 using Model.OpsNew;
 using RollingStock;
-using RouteManager.v2.core;
-using RouteManager.v2.dataStructures;
+using RouteManager.v2.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Track;
-using UnityEngine;
-using Logger = RouteManager.v2.Logging.Logger;
 
 namespace RouteManager.v2.helpers
 {
@@ -22,10 +16,10 @@ namespace RouteManager.v2.helpers
         {
             foreach (PassengerStop stop in PassengerStop.FindAll())
             {
-                Logger.LogToDebug(String.Format("Stop: {0} ", stop.DisplayName));
+                RouteManager.logger.LogToDebug(String.Format("Stop: {0} ", stop.DisplayName));
                 foreach (KeyValuePair<string, int> pair in stop.Waiting)
                 {
-                    Logger.LogToDebug(String.Format("\t Has {0} Passengers for {1}", pair.Value, pair.Key));
+                    RouteManager.logger.LogToDebug(String.Format("\t Has {0} Passengers for {1}", pair.Value, pair.Key));
                 }
             }
         }
@@ -34,7 +28,7 @@ namespace RouteManager.v2.helpers
         {
 
             //Trace Function
-            Logger.LogToDebug("ENTERED FUNCTION: TestLoadInfo", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: TestLoadInfo", LogLevel.Trace);
 
             int slotIndex;
             if (loadIdentifier == "diesel-fuel")
@@ -44,16 +38,16 @@ namespace RouteManager.v2.helpers
 
                 if (loadInfo.HasValue)
                 {
-                    Logger.LogToDebug($"Load Identifier: {loadIdentifier}",Logger.logLevel.Debug);
-                    Logger.LogToDebug($"Slot Index: {slotIndex}", Logger.logLevel.Debug);
-                    Logger.LogToDebug($"Value: {loadInfo.Value}", Logger.logLevel.Debug);
-                    Logger.LogToDebug($"Quantity: {loadInfo.Value.Quantity}", Logger.logLevel.Debug);
+                    RouteManager.logger.LogToDebug($"Load Identifier: {loadIdentifier}",LogLevel.Debug);
+                    RouteManager.logger.LogToDebug($"Slot Index: {slotIndex}", LogLevel.Debug);
+                    RouteManager.logger.LogToDebug($"Value: {loadInfo.Value}", LogLevel.Debug);
+                    RouteManager.logger.LogToDebug($"Quantity: {loadInfo.Value.Quantity}", LogLevel.Debug);
                     // Add more details you wish to log
                     return;
                 }
                 else
                 {
-                    Logger.LogToDebug($"No load information found for {loadIdentifier}.", Logger.logLevel.Debug);
+                    RouteManager.logger.LogToDebug($"No load information found for {loadIdentifier}.", LogLevel.Debug);
                     return;
                 }
 
@@ -69,25 +63,25 @@ namespace RouteManager.v2.helpers
 
                     if (loadInfo.HasValue)
                     {
-                        Logger.LogToDebug($"Load Identifier: {loadIdentifier}", Logger.logLevel.Debug);
-                        Logger.LogToDebug($"Slot Index: {slotIndex}", Logger.logLevel.Debug);
-                        Logger.LogToDebug($"Value: {loadInfo.Value}", Logger.logLevel.Debug);
-                        Logger.LogToDebug($"Quantity: {loadInfo.Value.Quantity}", Logger.logLevel.Debug);
+                        RouteManager.logger.LogToDebug($"Load Identifier: {loadIdentifier}", LogLevel.Debug);
+                        RouteManager.logger.LogToDebug($"Slot Index: {slotIndex}", LogLevel.Debug);
+                        RouteManager.logger.LogToDebug($"Value: {loadInfo.Value}", LogLevel.Debug);
+                        RouteManager.logger.LogToDebug($"Quantity: {loadInfo.Value.Quantity}", LogLevel.Debug);
                         // Add more details you wish to log
                     }
                     else
                     {
-                        Logger.LogToDebug($"No load information found for {loadIdentifier}.", Logger.logLevel.Debug);
+                        RouteManager.logger.LogToDebug($"No load information found for {loadIdentifier}.", LogLevel.Debug);
                     }
                 }
                 else
                 {
-                    Logger.LogToDebug($"No Tender found for {loadIdentifier}.", Logger.logLevel.Debug);
+                    RouteManager.logger.LogToDebug($"No Tender found for {loadIdentifier}.", LogLevel.Debug);
                 }
             }
 
             //Trace Function
-            Logger.LogToDebug("EXITING FUNCTION: TestLoadInfo", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: TestLoadInfo", LogLevel.Trace);
         }
     }
 }

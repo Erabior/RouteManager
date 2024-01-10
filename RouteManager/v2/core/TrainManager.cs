@@ -7,15 +7,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static Game.Messages.PropertyChange;
 using UnityEngine;
-using Logger = RouteManager.v2.Logging.Logger;
 using Track;
 using RouteManager.v2.dataStructures;
-using UnityEngine.InputSystem.EnhancedTouch;
 using Model.Definition.Data;
+using RouteManager.v2.Logging;
 
 namespace RouteManager.v2.core
 {
@@ -38,7 +35,7 @@ namespace RouteManager.v2.core
                 else
                 {
                     //Debugging
-                    Logger.LogToDebug($"{car.DisplayName} No Diesel load information found for {loadIdent}.");
+                    RouteManager.logger.LogToDebug($"{car.DisplayName} No Diesel load information found for {loadIdent}.");
                 }
             }
             //Only enumerate and iterate through the cars in the train if/when we need to. 
@@ -59,7 +56,7 @@ namespace RouteManager.v2.core
                         else
                         {
                             //Debugging
-                            Logger.LogToDebug($"{car.DisplayName} No Steam load information found for {loadIdent}.");
+                            RouteManager.logger.LogToDebug($"{car.DisplayName} No Steam load information found for {loadIdent}.");
                         }
                     }
                 }
@@ -81,9 +78,9 @@ namespace RouteManager.v2.core
         public static IEnumerator RMblow(Car locomotive, float intensity, float duration = 1f, float quillFinal = -1f)
         {
             //Trace Function
-            Logger.LogToDebug("ENTERED FUNCTION: RMblow", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: RMblow", LogLevel.Trace);
 
-            Logger.LogToDebug(String.Format("Locomotive {0} Whistling! Intensity: {1} Duration: {2} quillFinal: {3}", locomotive.DisplayName, intensity, duration, quillFinal), Logger.logLevel.Verbose);
+            RouteManager.logger.LogToDebug(String.Format("Locomotive {0} Whistling! Intensity: {1} Duration: {2} quillFinal: {3}", locomotive.DisplayName, intensity, duration, quillFinal), LogLevel.Verbose);
 
             duration = Mathf.Max(duration, 0.1f);
 
@@ -91,7 +88,7 @@ namespace RouteManager.v2.core
 
             if (intensity == 0 && quillFinal == -1f)
             {
-                Logger.LogToDebug(String.Format("Locomotive {0} Now Whistling at Intensity: {1} with finalquill -1f for", locomotive.DisplayName, intensity), Logger.logLevel.Verbose);
+                RouteManager.logger.LogToDebug(String.Format("Locomotive {0} Now Whistling at Intensity: {1} with finalquill -1f for", locomotive.DisplayName, intensity), LogLevel.Verbose);
                 StateManager.ApplyLocal(new PropertyChange(locomotive.id, Control.Horn, intensity));
                 yield break;
             }
@@ -105,12 +102,12 @@ namespace RouteManager.v2.core
             // Change in intensity per interval
             float intensityChangePerInterval = (finalIntensity - intensity) / intervals;
 
-            Logger.LogToDebug(String.Format("Locomotive {0} Whistl Calculated Values timeDelta: {1} intervals: {2} intensityChangePerInterval: {3}", locomotive.DisplayName, timeDelta, intervals, intensityChangePerInterval), Logger.logLevel.Verbose);
+            RouteManager.logger.LogToDebug(String.Format("Locomotive {0} Whistl Calculated Values timeDelta: {1} intervals: {2} intensityChangePerInterval: {3}", locomotive.DisplayName, timeDelta, intervals, intensityChangePerInterval), LogLevel.Verbose);
 
             //if final intensity is not specified then set a flat intensity with duration
             if (quillFinal == -1f) 
             {
-                Logger.LogToDebug(String.Format("Locomotive {0} Now Whistling at Intensity: {1} for {2} seconds", locomotive.DisplayName, intensity, duration), Logger.logLevel.Verbose);
+                RouteManager.logger.LogToDebug(String.Format("Locomotive {0} Now Whistling at Intensity: {1} for {2} seconds", locomotive.DisplayName, intensity, duration), LogLevel.Verbose);
                 StateManager.ApplyLocal(new PropertyChange(locomotive.id, Control.Horn, intensity));
                 yield return new WaitForSeconds(duration);
             }
@@ -119,14 +116,14 @@ namespace RouteManager.v2.core
                 for (int i = 0; i <= intervals; i++)
                 {
                     float currentIntensity = intensity + intensityChangePerInterval * i;
-                    Logger.LogToDebug(String.Format("Locomotive {0} Now Whistling at Intensity: {1} for {2} intervals over {3} seconds", locomotive.DisplayName, currentIntensity, intervals , timeDelta), Logger.logLevel.Verbose);
+                    RouteManager.logger.LogToDebug(String.Format("Locomotive {0} Now Whistling at Intensity: {1} for {2} intervals over {3} seconds", locomotive.DisplayName, currentIntensity, intervals , timeDelta), LogLevel.Verbose);
                     StateManager.ApplyLocal(new PropertyChange(locomotive.id, Control.Horn, currentIntensity));
                     yield return new WaitForSeconds(timeDelta);
                 }
             }
 
             //Trace Function
-            Logger.LogToDebug("EXITING FUNCTION: RMblow", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: RMblow", LogLevel.Trace);
         }
         public static void RMbell(Car locomotive, bool IsBell)
         {
@@ -195,7 +192,7 @@ namespace RouteManager.v2.core
 
                     foreach(LoadSlot load in currentCar.Definition.LoadSlots) 
                     {
-                        Logger.LogToDebug(load.RequiredLoadIdentifier + " maximum capacity is " + load.MaximumCapacity, Logger.logLevel.Verbose);
+                        RouteManager.logger.LogToDebug(load.RequiredLoadIdentifier + " maximum capacity is " + load.MaximumCapacity, LogLevel.Verbose);
                     }
 
                     //If a single car is empty, then we have room and dont need to keep looking.
@@ -212,7 +209,7 @@ namespace RouteManager.v2.core
 
         public static void CopyStationsFromLocoToCoaches(Car locomotive)
         {
-            Logger.LogToDebug(String.Format("Loco: {0} update coach station selection", locomotive.DisplayName),Logger.logLevel.Verbose);
+            RouteManager.logger.LogToDebug(String.Format("Loco: {0} update coach station selection", locomotive.DisplayName),LogLevel.Verbose);
 
             string currentStation = LocoTelem.currentDestination[locomotive].identifier;
             int currentStationIndex = DestinationManager.orderedStations.IndexOf(currentStation);
@@ -232,12 +229,12 @@ namespace RouteManager.v2.core
                 .Where(station => selectedStationIdentifiers.Contains(station))
                 .ToHashSet();
 
-            Logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), Logger.logLevel.Debug);
+            RouteManager.logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), LogLevel.Debug);
 
             // Apply the filtered stations to each coach
             foreach (Car coach in locomotive.EnumerateCoupled().Where(car => car.Archetype == CarArchetype.Coach))
             {
-                Logger.LogToDebug(String.Format("Applying station selection to car", coach.DisplayName), Logger.logLevel.Verbose);
+                RouteManager.logger.LogToDebug(String.Format("Applying station selection to car", coach.DisplayName), LogLevel.Verbose);
                 StateManager.ApplyLocal(new SetPassengerDestinations(coach.id, filteredStations.ToList()));
             }
 
@@ -254,7 +251,7 @@ namespace RouteManager.v2.core
             else
             {
                 // Handle the case where the key does not exist, for example, by logging an error or initializing the key
-                Logger.LogToError($"TransitMode dictionary does not contain key: {locomotive}");
+                RouteManager.logger.LogToError($"TransitMode dictionary does not contain key: {locomotive}");
                 // Optionally initialize the key with a default value
                 LocoTelem.RouteMode[locomotive] = false; // Default value
                 return false;
@@ -268,22 +265,22 @@ namespace RouteManager.v2.core
             {
                 if (!LocoTelem.RouteMode.ContainsKey(locomotive))
                 {
-                    Logger.LogToDebug($" LocoTelem.RouteMode does not contain {locomotive.id} creating bool for {locomotive.id}");
+                    RouteManager.logger.LogToDebug($" LocoTelem.RouteMode does not contain {locomotive.id} creating bool for {locomotive.id}");
                     LocoTelem.RouteMode[locomotive] = false;
                 }
-                Logger.LogToDebug($"changing LocoTelem.Route Mode from {!IsOn} to {IsOn}");
+                RouteManager.logger.LogToDebug($"changing LocoTelem.Route Mode from {!IsOn} to {IsOn}");
                 LocoTelem.RouteMode[locomotive] = IsOn;
                 OnRouteModeChanged?.Invoke(locomotive);
 
                 if (!LocoTelem.locomotiveCoroutines.ContainsKey(locomotive))
                 {
-                    Logger.LogToDebug($" LocoTelem.locomotiveCoroutines does not contain {locomotive.id} creating bool for {locomotive.DisplayName}");
+                    RouteManager.logger.LogToDebug($" LocoTelem.locomotiveCoroutines does not contain {locomotive.id} creating bool for {locomotive.DisplayName}");
                     LocoTelem.locomotiveCoroutines[locomotive] = false;
                 }
             }
             else if (!DestinationManager.IsAnyStationSelectedForLocomotive(locomotive) && IsOn)
             {
-                Logger.LogToConsole($"There are no stations selected for {locomotive.DisplayName}. Please select at least 1 station before enabling Route Mode");
+                RouteManager.logger.LogToConsole($"There are no stations selected for {locomotive.DisplayName}. Please select at least 1 station before enabling Route Mode");
             }
             else if (DestinationManager.IsAnyStationSelectedForLocomotive(locomotive) && !IsOn)
             {
@@ -297,7 +294,7 @@ namespace RouteManager.v2.core
             }
             else
             {
-                Logger.LogToDebug($"Route Mode ({LocoTelem.RouteMode[locomotive]}) and IsAnyStationSelectedForLocomotive ({DestinationManager.IsAnyStationSelectedForLocomotive(locomotive)}) are no combination of false or true ");
+                RouteManager.logger.LogToDebug($"Route Mode ({LocoTelem.RouteMode[locomotive]}) and IsAnyStationSelectedForLocomotive ({DestinationManager.IsAnyStationSelectedForLocomotive(locomotive)}) are no combination of false or true ");
             }
             return;
         }
@@ -313,7 +310,7 @@ namespace RouteManager.v2.core
         public static void locoLowFuelCheck(Car locomotive)
         {
             //Trace Function
-            Logger.LogToDebug("ENTERED FUNCTION: locoLowFuelCheck", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: locoLowFuelCheck", LogLevel.Trace);
 
             Dictionary <string, float> fuelCheckResults = new Dictionary<string, float>();
 
@@ -322,13 +319,13 @@ namespace RouteManager.v2.core
             {
 
                 //If coal is below minimums
-                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "coal") / 2000, SettingsData.minCoalQuantity))
+                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "coal") / 2000, RouteManager.Settings.minCoalQuantity))
                 {
                     fuelCheckResults.Add("coal", GetLoadInfoForLoco(locomotive, "coal") / 2000);
                 }
 
                 //If water is below minimums
-                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "water"), SettingsData.minWaterQuantity))
+                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "water"), RouteManager.Settings.minWaterQuantity))
                 {
                     fuelCheckResults.Add("water", GetLoadInfoForLoco(locomotive, "water"));
                 }
@@ -338,7 +335,7 @@ namespace RouteManager.v2.core
             else if (locomotive.Archetype == Model.Definition.CarArchetype.LocomotiveDiesel)
             {
                 //If diesel level is below defined minimums
-                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "diesel-fuel"), SettingsData.minDieselQuantity))
+                if (compareAgainstMinVal(TrainManager.GetLoadInfoForLoco(locomotive, "diesel-fuel"), RouteManager.Settings.minDieselQuantity))
                 {
                     fuelCheckResults.Add("diesel-fuel", GetLoadInfoForLoco(locomotive, "diesel-fuel"));
                 }
@@ -347,7 +344,7 @@ namespace RouteManager.v2.core
             LocoTelem.lowFuelQuantities[locomotive] = fuelCheckResults;
 
             //Trace Method
-            Logger.LogToDebug("EXITING FUNCTION: locoLowFuelCheck", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: locoLowFuelCheck", LogLevel.Trace);
         }
 
         //Methodize repeated code of fuel check. 
@@ -355,14 +352,14 @@ namespace RouteManager.v2.core
         private static bool compareAgainstMinVal(float inputValue, float minimumValue)
         {
             //Trace Function
-            Logger.LogToDebug("ENTERED FUNCTION: compareAgainstMinVal", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: compareAgainstMinVal", LogLevel.Trace);
 
             //Compare to minimums
             if (inputValue < minimumValue)
                 return true;
 
             //Trace Method
-            Logger.LogToDebug("EXITING FUNCTION: compareAgainstMinVal", Logger.logLevel.Trace);
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: compareAgainstMinVal", LogLevel.Trace);
 
             //Something unexpected happened or fuel is above minimums.
             //Either way return false here as there is nothing further we can do. 

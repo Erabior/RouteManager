@@ -9,12 +9,11 @@ using System.Reflection;
 using UI.Builder;
 using UI.CarInspector;
 using UnityEngine;
-using RouteManager;
 using Model;
 using RouteManager.v2.core;
 using RouteManager.v2.dataStructures;
-using UI.Common;
-using Logger = RouteManager.v2.Logging.Logger;
+using RouteManager.v2.Logging;
+
 
 namespace RouteManager.v2.harmonyPatches
 {
@@ -34,7 +33,7 @@ namespace RouteManager.v2.harmonyPatches
             **********************************************************************************/
 
             RectTransform uiPanel = UnityEngine.Object.FindFirstObjectByType<CarInspector>().GetComponent<RectTransform>();
-            Logger.LogToDebug("Ui Panel Size was:" + uiPanel.sizeDelta.ToString(), Logger.logLevel.Verbose);
+            RouteManager.logger.LogToDebug("Ui Panel Size was:" + uiPanel.sizeDelta.ToString(), LogLevel.Verbose);
             uiPanel.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 500);
 
             /**********************************************************************************

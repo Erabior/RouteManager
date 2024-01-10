@@ -1,5 +1,4 @@
-﻿using BepInEx.Logging;
-using GalaSoft.MvvmLight.Messaging;
+﻿using GalaSoft.MvvmLight.Messaging;
 using Game.Events;
 using Game.Messages;
 using Game.State;
@@ -7,15 +6,9 @@ using Model;
 using RollingStock;
 using RouteManager.v2.core;
 using RouteManager.v2.dataStructures;
-using RouteManager.v2.helpers;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using Track;
 using UnityEngine;
-using Logger = RouteManager.v2.Logging.Logger;
 
 namespace RouteManager.v2
 {
@@ -30,9 +23,9 @@ namespace RouteManager.v2
         {
 
             //Log status
-            Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
-            Logger.LogToDebug("Dispatcher Initializing");
-            Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+            RouteManager.logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+            RouteManager.logger.LogToDebug("Dispatcher Initializing");
+            RouteManager.logger.LogToDebug("--------------------------------------------------------------------------------------------------");
 
             //Hook the map unload event to gracefully stop all instances prior to map unload. 
             Messenger.Default.Register<MapDidUnloadEvent>(this, GameMapUnloaded);
@@ -40,9 +33,9 @@ namespace RouteManager.v2
             Engineer = new AutoEngineer();
 
             //Log status
-            Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
-            Logger.LogToDebug("Dispatcher Ready!");
-            Logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+            RouteManager.logger.LogToDebug("--------------------------------------------------------------------------------------------------");
+            RouteManager.logger.LogToDebug("Dispatcher Ready!");
+            RouteManager.logger.LogToDebug("--------------------------------------------------------------------------------------------------");
         }
 
 
@@ -52,7 +45,7 @@ namespace RouteManager.v2
         {
             //Trace Logging
             //Disable LogMessage for Update Thread unless REALLY NEEDED. 
-            //Logger.LogToDebug("ENTERED FUNCTION: Update", Logger.logLevel.Trace);
+            //RouteManager.logger.LogToDebug("ENTERED FUNCTION: Update", LogLevel.Trace);
 
             //Only do stuff if we have an actively controlled consist
             if (LocoTelem.locomotiveCoroutines.Count >= 1)
@@ -63,14 +56,14 @@ namespace RouteManager.v2
                 foreach (Car currentLoco in keys) 
                 {
                     //Disable LogMessage for Update Thread unless REALLY NEEDED. 
-                    //Logger.LogToDebug(String.Format("Loco {0} has not called coroutine. Calling Coroutine for {1}",currentLoco,currentLoco.DisplayName),Logger.logLevel.Verbose);
+                    //RouteManager.logger.LogToDebug(String.Format("Loco {0} has not called coroutine. Calling Coroutine for {1}",currentLoco,currentLoco.DisplayName),LogLevel.Verbose);
 
-                    //Logger.LogToDebug($"Coroutine LocoTelem.locomotiveCoroutines[currentLoco] value was {LocoTelem.locomotiveCoroutines[currentLoco]}");
-                    //Logger.LogToDebug($"Coroutine LocoTelem.RouteMode[currentLoco] value was {LocoTelem.RouteMode[currentLoco]}");
+                    //RouteManager.logger.LogToDebug($"Coroutine LocoTelem.locomotiveCoroutines[currentLoco] value was {LocoTelem.locomotiveCoroutines[currentLoco]}");
+                    //RouteManager.logger.LogToDebug($"Coroutine LocoTelem.RouteMode[currentLoco] value was {LocoTelem.RouteMode[currentLoco]}");
 
                     if (!LocoTelem.locomotiveCoroutines[currentLoco] && LocoTelem.RouteMode[currentLoco])
                     {
-                        Logger.LogToDebug($"loco {currentLoco.DisplayName} currently has not called a coroutine - Calling the Coroutine with {currentLoco.DisplayName} as an arguement");
+                        RouteManager.logger.LogToDebug($"loco {currentLoco.DisplayName} currently has not called a coroutine - Calling the Coroutine with {currentLoco.DisplayName} as an arguement");
 
                         LocoTelem.locomotiveCoroutines[currentLoco] = true;
 
@@ -83,13 +76,13 @@ namespace RouteManager.v2
                     {
                         if (LocoTelem.locomotiveCoroutines[currentLoco] && !LocoTelem.RouteMode[currentLoco])
                         {
-                            Logger.LogToDebug($"loco {currentLoco.DisplayName} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {currentLoco.DisplayName}");
+                            RouteManager.logger.LogToDebug($"loco {currentLoco.DisplayName} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {currentLoco.DisplayName}");
 
                             StopCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
 
                             LocoTelem.locomotiveCoroutines[currentLoco] = false;
 
-                            Logger.LogToDebug($"Stopped Coroutine for {currentLoco.DisplayName}");
+                            RouteManager.logger.LogToDebug($"Stopped Coroutine for {currentLoco.DisplayName}");
                             //cleanDataStructures(currentLoco);
                         }
                     }
@@ -98,7 +91,7 @@ namespace RouteManager.v2
 
             //Trace Logging
             //Disable LogMessage for Update Thread unless REALLY NEEDED. 
-            //Logger.LogToDebug("EXITING FUNCTION: Update", Logger.logLevel.Trace);
+            //RouteManager.logger.LogToDebug("EXITING FUNCTION: Update", LogLevel.Trace);
         }
 
 
@@ -203,11 +196,11 @@ namespace RouteManager.v2
         //Needed to Prevent crash on exit. 
         private void GameMapUnloaded(MapDidUnloadEvent mapDidUnloadEvent)
         {
-            Logger.LogToDebug("GAME MAP UNLOAD TRIGGERED");
+            RouteManager.logger.LogToDebug("GAME MAP UNLOAD TRIGGERED");
 
             if (LocoTelem.locomotiveCoroutines.Count >= 1)
             {
-                Logger.LogToDebug("Stopping all Dispatcher AI Instances");
+                RouteManager.logger.LogToDebug("Stopping all Dispatcher AI Instances");
 
                 var keys = LocoTelem.locomotiveCoroutines.Keys.ToArray();
 

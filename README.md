@@ -12,21 +12,40 @@ https://github.com/Erabior/RouteManager/releases/latest
 ***
 
 **Installation:**
+There are two methods of installation, depending on the mod manager you use:
 
-1. Download the latest version of BepInEx: https://github.com/BepInEx/BepInEx/releases Make sure to grab the correct zip for your system (x64/x86). If you are unsure if you need x64 or x86 you can find that in ThisPC -> (Right Click) -> Properties
+*BepInEx Method*
+1. Download the latest version of 'RouteManager.BepInEx.dll': https://github.com/Erabior/RouteManager/releases/latest
 
-2. Open your game directory (Steam Library right-click on Railroader -> properties -> installed files -> Browse)
+2. Download the latest version of BepInEx: https://github.com/BepInEx/BepInEx/releases Make sure to grab the correct zip for your system (x64/x86). If you are unsure if you need x64 or x86 you can find that in ThisPC -> (Right Click) -> Properties
+
+3. Open your game directory (Steam Library right-click on Railroader -> properties -> installed files -> Browse)
 ![image](https://github.com/Erabior/RouteManager/assets/7718625/0b75293a-9092-4cb1-a7cc-7125cf09f799)
 
-3. OPEN (DO NOT unzip) the BepInEx zip file
+4. OPEN (DO NOT unzip) the BepInEx zip file
 
-4. Drag all files in the BepInEx .zip into your install directory
+5. Drag all files in the BepInEx .zip into your install directory
 ![image](https://github.com/Erabior/RouteManager/assets/7718625/4eec8c87-4a12-4d99-9cc5-a255ebdd16d5)
 
-5. Finish installation of BepInEx by running the game once.
+6. Finish installation of BepInEx by running the game once.
 
-6. Close the game and copy RouteManager.dll into the plugins folder that was generated after launching the game.(Railroader/BepInEx/plugins)
+7. Close the game and copy 'RouteManager.BepInEx.dll' into the plugins folder that was generated after launching the game.(Railroader/BepInEx/plugins)
 ![image](https://github.com/Erabior/RouteManager/assets/7718625/d8719272-514b-4b7d-96f4-f765bb751eca)
+
+8. Prosper
+
+*Unity Mod Manager Method*
+1. Download the latest version of 'RouteManager.UMM.zip' from https://github.com/Erabior/RouteManager/releases/latest
+
+2. Download the latest version of Unity Mod Manager: https://www.nexusmods.com/site/mods/21 and unzip to a folder e.g. your desktop
+
+3. Run 'UnityModManager.exe'
+
+4. Select 'Railroader' from the dropdown list and click 'Install'
+
+5. Click on the 'Mods' tab
+
+6. Either drag 'RouteManager.UMM.zip' into the UMM Installer window OR click 'Install Mod' and select 'RouteManager.UMM.zip'
 
 7. Prosper
 
@@ -48,6 +67,7 @@ https://github.com/Erabior/RouteManager/releases/latest
 
 **Configuration:**
 
+*For BepInEx Users*
 The mod contains a .ini file that allows for some customization of the mod's behavior. Currently there are the following options are supported:
 
 | Section| Option | Description | Type | Example Value | Accepted Values
@@ -57,6 +77,14 @@ The mod contains a .ini file that allows for some customization of the mod's beh
 | Alerts | CoalLevel|  Minimum Fuel Quantity (Tons) to depart station / warn  en-route  | Float | 0.5 | value  >= 0
 | Alerts | DieselLevel|  Minimum Fuel Quantity (Gallons) to depart station / warn  en-route  | Float | 100 | value  >= 0
 | Dev | NewInterface  | Allows access do DEV features | Bool | False |
+
+*For Unity Mod Manager Users*
+Configuration can be done via the in-game Unity Mod Manager interface.
+1. Open the in-game interface (default shortcut is Ctrl-F10 if you have closed the window)
+2. Click the options icon next to 'Dispatcher'
+![image](https://i.imgur.com/hWr019p.png)
+
+Settings changes take effect immediately, but will only save for next time if the 'Save' button at the bottom of the window is clicked.
 
 **Notes:**
 
@@ -80,10 +108,14 @@ Note: This assumes you have some fundamental understanding of how Github & visua
  2. Clone / download this repository to your computer.
  3. Open the Project solution.
  4. If your game install is not in the default location (`C:\Program Files (x86)\Steam\steamapps\common\Railroader`) follow these steps to add the correct references
-     1. Create a user solution file `RouteManager.csproj.user` in the root of the project. There is an example file you can copy
+     1. Create a user solution file `Directory.Build.targets` in the root of the project (where 'RouteManager.sln' is). There is an example file you can copy
      2. Update the `GamePath` property so it points to the base of your Railroader install
  5. Build the solution
- 6. Copy the RouteManager.DLL to plugin folder in your RailRoader install directory (Railroader/BepInEx/plugins)
+	* If you are using BepInEx, 'RouteManager.BepInEx.dll' and 'config.ini' will be copied to the 'BepInEx\plugins' folder
+	* If you are using Unity Mod Manager, 'RouteManager.UMM.dll' and 'info.json' will be copied to the 'Mods\RouteManager' folder
+	
+Note: If the build config is set to 'Release' zip archives containing the necessary files will be created for both mod loader types in the solution's 'Release' folder
+
 
 ***
 
