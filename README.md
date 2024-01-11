@@ -56,6 +56,10 @@ The mod contains a .ini file that allows for some customization of the mod's beh
 | Alerts | WaterLevel| Minimum Fuel Quantity (Gallons) to depart station / warn en-route | Float | 500 | value >= 0
 | Alerts | CoalLevel|  Minimum Fuel Quantity (Tons) to depart station / warn  en-route  | Float | 0.5 | value  >= 0
 | Alerts | DieselLevel|  Minimum Fuel Quantity (Gallons) to depart station / warn  en-route  | Float | 100 | value  >= 0
+| Alerts | ShowTimestamp| Console Messages show timestamp | Bool | False | True / False
+| Alerts | ShowDaystamp|  Console Messages show daystamp  | Bool | False | True / False
+| Alerts | ShowArrivalMessage|  Console alerts on train arival at station  | Bool | False | True / False
+| Alerts | ShowDepartureMessage|  Console alerts on train departure from station  | Bool | False | True / False
 | Dev | NewInterface  | Allows access do DEV features | Bool | False |
 
 **Notes:**
