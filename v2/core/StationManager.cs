@@ -85,7 +85,7 @@ namespace RouteManager.v2.core
 
             List<string> orderedSelectedStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
 
-            int currentIndex = orderedSelectedStations.IndexOf(LocoTelem.currentDestination[locomotive].identifier);
+            int currentIndex = orderedSelectedStations.IndexOf(LocoTelem.closestStation[locomotive].Item1.identifier);
 
             if (currentIndex == orderedSelectedStations.Count - 1 || currentIndex == 0)
                 return true;

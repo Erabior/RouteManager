@@ -224,7 +224,7 @@ namespace RouteManager.v2.core
 
             if (StationManager.currentlyAtLastStation(locomotive))
             {
-                relevantStations = DestinationManager.orderedStations.Except(new List<String>() { currentStation });
+                relevantStations = DestinationManager.orderedStations.Except(new List<String>() { LocoTelem.closestStation[locomotive].Item1.identifier });
             } 
             else if (isTravelingEastWard)
             {
