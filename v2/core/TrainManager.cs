@@ -235,14 +235,29 @@ namespace RouteManager.v2.core
                 relevantStations = DestinationManager.orderedStations.Skip(currentStationIndex);
             }
 
+            foreach (string identifier in relevantStations)
+            {
+                Logger.LogToDebug(String.Format("relevantStations contains {0}", identifier), Logger.logLevel.Verbose);
+            }
+
             //Filter to include only selected stations
             HashSet<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
                 .Select(stop => stop.identifier)
                 .ToHashSet();
 
+            foreach (string identifier in selectedStationIdentifiers)
+            {
+                Logger.LogToDebug(String.Format("selectedStationIdentifiers contains {0}", identifier), Logger.logLevel.Verbose);
+            }
+
             HashSet<string> filteredStations = relevantStations
                 .Where(station => selectedStationIdentifiers.Contains(station))
                 .ToHashSet();
+
+            foreach (string identifier in filteredStations)
+            {
+                Logger.LogToDebug(String.Format("filteredStations contains {0}", identifier), Logger.logLevel.Verbose);
+            }
 
             Logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), Logger.logLevel.Debug);
 
@@ -250,6 +265,12 @@ namespace RouteManager.v2.core
             foreach (Car coach in locomotive.EnumerateCoupled().Where(car => car.Archetype == CarArchetype.Coach))
             {
                 Logger.LogToDebug(String.Format("Applying station selection to car", coach.DisplayName), Logger.logLevel.Verbose);
+
+                foreach (string identifier in filteredStations)
+                {
+                    Logger.LogToDebug(String.Format("Applying {0} to car {1}", identifier, coach.DisplayName), Logger.logLevel.Verbose);
+                }
+
                 StateManager.ApplyLocal(new SetPassengerDestinations(coach.id, filteredStations.ToList()));
             }
 
