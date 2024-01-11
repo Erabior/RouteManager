@@ -65,69 +65,63 @@ namespace RouteManager.v2.core
 
             if (bool.TryParse(IniFile.Read("WaitUntilFull", "Core"), out outValueBool))
             {
-                Logger.LogToDebug("WaitUntilFull is read as: " + outValueBool, Logger.logLevel.Debug);
+                Logger.LogToDebug("WaitUntilFull parsed as: " + outValueBool, Logger.logLevel.Verbose);
                 SettingsData.waitUntilFull = outValueBool;
-                Logger.LogToDebug("WaitUntilFull is now: " + SettingsData.waitUntilFull);
             }
 
             //Set Min Water Level
             if (float.TryParse(IniFile.Read("WaterLevel", "Alerts"), out outValueFloat))
             {
-                Logger.LogToDebug("WaterLevel is read as: " + outValueFloat, Logger.logLevel.Debug);
+                Logger.LogToDebug("WaterLevel parsed as: " + outValueFloat, Logger.logLevel.Verbose);
                 SettingsData.minWaterQuantity = outValueFloat >= 0 ? outValueFloat : 500f;
-                Logger.LogToDebug("WaterLevel is now: " + SettingsData.minWaterQuantity);
             }
 
             //Set Min Coal Level
             if (float.TryParse(IniFile.Read("CoalLevel", "Alerts"), out outValueFloat))
             {
-                Logger.LogToDebug("CoalLevel is read as: " + outValueFloat, Logger.logLevel.Debug);
+                Logger.LogToDebug("CoalLevel parsed as: " + outValueFloat, Logger.logLevel.Verbose);
                 SettingsData.minCoalQuantity = outValueFloat >= 0 ? outValueFloat : 0.5f;
-                Logger.LogToDebug("CoalLevel is now: " + SettingsData.minCoalQuantity);
             }
 
             //Set Min Diesel Level
             if (float.TryParse(IniFile.Read("DieselLevel", "Alerts"), out outValueFloat))
             {
-                Logger.LogToDebug("DieselLevel is read as: " + outValueFloat, Logger.logLevel.Debug);
+                Logger.LogToDebug("DieselLevel parsed as: " + outValueFloat, Logger.logLevel.Verbose);
                 SettingsData.minDieselQuantity = outValueFloat >= 0 ? outValueFloat : 100f;
-                Logger.LogToDebug("DieselLevel is now: " + SettingsData.minDieselQuantity);
             }
 
             if (bool.TryParse(IniFile.Read("ShowTimestamp", "Alerts"), out outValueBool))
             {
-                Logger.LogToDebug("ShowTimestamp is read as: " + outValueBool, Logger.logLevel.Debug);
+                Logger.LogToDebug("ShowTimestamp parsed as: " + outValueBool, Logger.logLevel.Verbose);
                 SettingsData.showTimestamp = outValueBool;
-                Logger.LogToDebug("ShowTimestamp is now: " + SettingsData.showTimestamp);
             }
 
             if (bool.TryParse(IniFile.Read("ShowDaystamp", "Alerts"), out outValueBool))
             {
-                Logger.LogToDebug("ShowDaystamp is read as: " + outValueBool, Logger.logLevel.Debug);
+                Logger.LogToDebug("ShowDaystamp parsed as: " + outValueBool, Logger.logLevel.Verbose);
                 SettingsData.showDaystamp = outValueBool;
-                Logger.LogToDebug("ShowDaystamp is now: " + SettingsData.showDaystamp);
             }
 
             if (bool.TryParse(IniFile.Read("ShowArrivalMessage", "Alerts"), out outValueBool))
             {
-                Logger.LogToDebug("ShowArrivalMessage is read as: " + outValueBool, Logger.logLevel.Debug);
+                Logger.LogToDebug("ShowArrivalMessage parsed as: " + outValueBool, Logger.logLevel.Verbose);
                 SettingsData.showArrivalMessage = outValueBool;
-                Logger.LogToDebug("ShowArrivalMessage is now: " + SettingsData.showArrivalMessage);
             }
 
             if (bool.TryParse(IniFile.Read("ShowDepartureMessage", "Alerts"), out outValueBool))
             {
-                Logger.LogToDebug("ShowDepartureMessage is read as: " + outValueBool, Logger.logLevel.Debug);
+                Logger.LogToDebug("ShowDepartureMessage parsed as: " + outValueBool, Logger.logLevel.Verbose);
                 SettingsData.showDepartureMessage = outValueBool;
-                Logger.LogToDebug("ShowDepartureMessage is now: " + SettingsData.showDepartureMessage);
             }
 
             if (bool.TryParse(IniFile.Read("NewInterface", "Dev"), out outValueBool))
             {
-                Logger.LogToDebug("NewInterface is read as: " + outValueBool, Logger.logLevel.Debug);
+                Logger.LogToDebug("NewInterface parsed as: " + outValueBool, Logger.logLevel.Verbose);
                 SettingsData.experimentalUI = outValueBool;
-                Logger.LogToDebug("NewInterface is now: " + SettingsData.experimentalUI);
             }
+
+            //Log the loaded parameters to the log file.
+            logLoadedValues();
 
             //Trace Logging
             Logger.LogToDebug("EXITING FUNCTION: LoadRouteManagerSettings", Logger.logLevel.Trace);
@@ -148,6 +142,24 @@ namespace RouteManager.v2.core
             //Trace Logging
             Logger.LogToDebug("EXITING FUNCTION: ApplyRouteManagerSettings", Logger.logLevel.Trace);
             return true;
+        }
+
+        private static void logLoadedValues()
+        {
+            int defPadding = 30;
+            Logger.LogToDebug("--------------------------------------------------------------------------");
+            Logger.LogToDebug("Current Configured Settings:");
+            Logger.LogToDebug("    LogLevel".PadRight(defPadding)             + Logger.currentLogLevel);
+            Logger.LogToDebug("    WaitUntilFull".PadRight(defPadding)        + SettingsData.waitUntilFull);
+            Logger.LogToDebug("    WaterLevel".PadRight(defPadding)           + SettingsData.minWaterQuantity);
+            Logger.LogToDebug("    CoalLevel".PadRight(defPadding)            + SettingsData.minCoalQuantity);
+            Logger.LogToDebug("    DieselLevel".PadRight(defPadding)          + SettingsData.minDieselQuantity);
+            Logger.LogToDebug("    ShowTimestamp".PadRight(defPadding)        + SettingsData.showTimestamp);
+            Logger.LogToDebug("    ShowDaystamp".PadRight(defPadding)         + SettingsData.showDaystamp);
+            Logger.LogToDebug("    ShowArrivalMessage".PadRight(defPadding)   + SettingsData.showArrivalMessage);
+            Logger.LogToDebug("    ShowDepartureMessage".PadRight(defPadding) + SettingsData.showDepartureMessage);
+            Logger.LogToDebug("    NewInterface".PadRight(defPadding)         + SettingsData.experimentalUI);
+            Logger.LogToDebug("--------------------------------------------------------------------------");
         }
     }
 }
