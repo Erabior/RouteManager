@@ -264,11 +264,9 @@ namespace RouteManager.v2.core
             // Apply the filtered stations to each coach
             foreach (Car coach in locomotive.EnumerateCoupled().Where(car => car.Archetype == CarArchetype.Coach))
             {
-                Logger.LogToDebug(String.Format("Applying station selection to car", coach.DisplayName), Logger.logLevel.Verbose);
-
                 foreach (string identifier in filteredStations)
                 {
-                    Logger.LogToDebug(String.Format("Applying {0} to car {1}", identifier, coach.DisplayName), Logger.logLevel.Verbose);
+                    Logger.LogToDebug(String.Format("    Applying {0} to car {1}", identifier, coach.DisplayName), Logger.logLevel.Verbose);
                 }
 
                 StateManager.ApplyLocal(new SetPassengerDestinations(coach.id, filteredStations.ToList()));
