@@ -114,6 +114,7 @@ namespace RouteManager.v2.core
             bool  delayExecution        = false;
             float olddist               = float.MaxValue;
             float trainVelocity         = 0;
+            int stationPadding          = 10;
 
             //Loop through transit logic
             while (LocoTelem.TransitMode[locomotive])
@@ -202,20 +203,26 @@ namespace RouteManager.v2.core
                 //We may be able to avoid this with better logic elsewhere...
                 Logger.LogToDebug(String.Format("Locomotive: {0} Distance to Station: {1} Prev Distance: {2}", locomotive.DisplayName, distanceToStation, olddist), Logger.logLevel.Verbose);
 
-                if (distanceToStation > olddist)
+                //Brute force Bug Fix
+                //In certain instances timing can cause some stops such as Alarka -> Hemmingway to have moments where the delta is less than 1 or 2 and 
+                //the value momentarily goes negative. So lets only run this if the delta is greater than 5
+                if (Math.Abs(olddist - distanceToStation) > 5)
                 {
-                    LocoTelem.locoTravelingForward[locomotive] = !LocoTelem.locoTravelingForward[locomotive];
-                    Logger.LogToDebug("Was driving in the wrong direction! Changing direction");
-                    Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {(int)LocoTelem.RMMaxSpeed[locomotive]}", Logger.logLevel.Debug);
-                    StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
-
-                    //Wait until loco has started going in the correct direction
-                    while (distanceToStation > olddist)
+                    if (distanceToStation > olddist)
                     {
-                        yield return new WaitForSeconds(1);
-                        Logger.LogToDebug("Was driving in the wrong direction! Waiting until turned around.");
-                        olddist = distanceToStation;
-                        distanceToStation = DestinationManager.GetDistanceToDest(locomotive);
+                        LocoTelem.locoTravelingForward[locomotive] = !LocoTelem.locoTravelingForward[locomotive];
+                        Logger.LogToDebug("Was driving in the wrong direction! Changing direction");
+                        Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {(int)LocoTelem.RMMaxSpeed[locomotive]}", Logger.logLevel.Debug);
+                        StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+
+                        //Wait until loco has started going in the correct direction
+                        while (distanceToStation > olddist)
+                        {
+                            yield return new WaitForSeconds(1);
+                            Logger.LogToDebug("Was driving in the wrong direction! Waiting until turned around.");
+                            olddist = distanceToStation;
+                            distanceToStation = DestinationManager.GetDistanceToDest(locomotive);
+                        }
                     }
                 }
 
@@ -247,7 +254,11 @@ namespace RouteManager.v2.core
                 {
                     onApproachLongDist(locomotive);
 
-                    if (!LocoTelem.approachWhistleSounded[locomotive])
+                    //Hack to work around the new auto engineer crossing detection to prevent double blow / werid horn blow behavior. 
+                    //This can be done better but further research is required. In the mean time this crude hack hopefully will reduce the occurances. 
+                    if (!LocoTelem.approachWhistleSounded[locomotive] && 
+                        ((locomotive.KeyValueObject[PropertyChange.KeyForControl(PropertyChange.Control.Horn)].FloatValue) <= 0f &&
+                        (locomotive.KeyValueObject[PropertyChange.KeyForControl(PropertyChange.Control.Bell)].BoolValue) != true))
                     {
                         Logger.LogToDebug(String.Format("Locomotive {0} activating Appproach Whistle", locomotive.DisplayName), Logger.logLevel.Verbose);
                         yield return TrainManager.RMblow(locomotive, 0.25f, 1.5f);
@@ -267,13 +278,13 @@ namespace RouteManager.v2.core
                     yield return new WaitForSeconds(1);
                 }
                 //Entering Platform
-                else if (distanceToStation <= 100 && distanceToStation > 10)
+                else if (distanceToStation <= 100 && distanceToStation > stationPadding)
                 {
                     onApproachShortDist(locomotive, distanceToStation);
                     yield return new WaitForSeconds(1);
                 }
                 //Train in platform
-                else if (distanceToStation <= 10 && distanceToStation >= 0)
+                else if (distanceToStation <= stationPadding && distanceToStation >= 0)
                 {
                     onArrival(locomotive);
                     yield return new WaitForSeconds(1);

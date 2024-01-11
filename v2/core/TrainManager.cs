@@ -84,7 +84,7 @@ namespace RouteManager.v2.core
             Logger.LogToDebug("ENTERED FUNCTION: RMblow", Logger.logLevel.Trace);
 
             Logger.LogToDebug(String.Format("Locomotive {0} Whistling! Intensity: {1} Duration: {2} quillFinal: {3}", locomotive.DisplayName, intensity, duration, quillFinal), Logger.logLevel.Verbose);
-
+            
             duration = Mathf.Max(duration, 0.1f);
 
             float finalIntensity = quillFinal < 0 ? intensity : quillFinal;
