@@ -1,12 +1,12 @@
 ﻿using Model;
 using RollingStock;
 using RouteManager.v2.dataStructures;
-using RouteManager.v2.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Track;
 using UnityEngine;
+using RouteManager.v2.Logging;
 
 namespace RouteManager.v2.core
 {
@@ -41,72 +41,42 @@ namespace RouteManager.v2.core
         {
             RouteManager.logger.LogToDebug(String.Format("Loco: {0} getting distance to destination", locomotive.DisplayName));
 
-            // Check if the locomotive is null
-            if (locomotive == null)
-            {
-                RouteManager.logger.LogToError("Locomotive is null in GetDistanceToDest.");
-                return -6969; // Return a default value or handle this case as needed
-            }
+            Graph trackGraph = Graph.Shared;
+            float shortestDistance = float.MaxValue;
+            Car centerCar = LocoTelem.CenterCar[locomotive];
+            centerCar.GetCenterPosition(trackGraph);
 
-            // Check if the locomotive key exists in the LocomotiveDestination dictionary
-            if (!LocoTelem.currentDestination.ContainsKey(locomotive))
+            //Check all tracks associated with a station
+            foreach (TrackSpan trackSpan in LocoTelem.currentDestination[locomotive].TrackSpans)
             {
-                RouteManager.logger.LogToError($"LocomotiveDestination does not contain key: {locomotive}");
-                LocoTelem.currentDestination[locomotive] = StationManager.GetClosestStation(locomotive).Item1;
-
-                if (!LocoTelem.currentDestination.ContainsKey(locomotive))
+                if (trackSpan.lower.HasValue)
                 {
-                    return -6969f; // Or handle this scenario appropriately
-                }
+                    Location trackSpanLocation = (Location)trackSpan.lower;
+                    float trackHalfLength = trackSpan.Length / 2;
 
-            }
-            Vector3 locomotivePosition = new Vector3();
-            string destination = LocoTelem.currentDestination[locomotive].identifier;
+                    float distanceA = trackGraph.FindDistance(centerCar.LocationA, trackSpanLocation) + trackHalfLength;
+                    float distanceB = trackGraph.FindDistance(centerCar.LocationB, trackSpanLocation) + trackHalfLength;
 
-            if (destination == null)
-            {
-                RouteManager.logger.LogToError("Destination is null for locomotive.");
-                return -6969f; // Handle null destination
-            }
-            var graph = Graph.Shared;
-            if (LocoTelem.CenterCar.ContainsKey(locomotive))
-            {
-                if (LocoTelem.CenterCar[locomotive] is Car)
-                {
-                    locomotivePosition = LocoTelem.CenterCar[locomotive].GetCenterPosition(graph);
+                    float furthestCarEdgeDistance = Math.Max(distanceA, distanceB);
+                    float straightLineDistance = Vector3.Distance(centerCar.GetCenterPosition(trackGraph), trackSpan.GetCenterPoint());
+
+                    //Once close enough, swap to using straight line distance since TrackSpan distance only goes from the edge of the car to the edge of the span
+                    if (straightLineDistance < trackSpan.Length)
+                    {
+                        shortestDistance = Math.Min(shortestDistance, straightLineDistance);
+                    }
+                    else
+                    {
+                        shortestDistance = Math.Min(shortestDistance, furthestCarEdgeDistance);
+                    }
                 }
                 else
                 {
-                    locomotivePosition = locomotive.GetCenterPosition(graph);
+                    throw new ArgumentNullException($"Unable to calculate distance to {LocoTelem.currentDestination[locomotive]} due to a null track span");
                 }
-            }
-            else
-            {
-                locomotivePosition = locomotive.GetCenterPosition(graph);
-            }
-            if (!StationInformation.Stations.ContainsKey(destination))
-            {
-                RouteManager.logger.LogToError($"Station not found for destination: {destination}");
-                return -6969f; // Handle missing station
             }
 
-            Vector3 destCenter = StationInformation.Stations[destination].Center;
-            Vector3 destCentern = StationInformation.Stations["alarkajctn"].Center;
-
-            if (destination == "alarkajct")
-            {
-                RouteManager.logger.LogToDebug($"Going to AlarkaJct checking which platform is closest south dist: {Vector3.Distance(locomotivePosition, destCenter)} | north dist: {Vector3.Distance(locomotivePosition, destCentern)}");
-                if (Vector3.Distance(locomotivePosition, destCenter) > Vector3.Distance(locomotivePosition, destCentern))
-                {
-                    RouteManager.logger.LogToDebug($"North is closest");
-                    return Vector3.Distance(locomotivePosition, destCentern);
-                }
-                else
-                {
-                    RouteManager.logger.LogToDebug($"South is closest");
-                }
-            }
-            return Vector3.Distance(locomotivePosition, destCenter);
+            return shortestDistance;
         }
 
 
@@ -143,11 +113,11 @@ namespace RouteManager.v2.core
             //Trace Function
             //RouteManager.logger.LogToDebug("ENTERED FUNCTION: IsStationSelected", LogLevel.Trace);
 
-            bool result =  LocoTelem.UIStationSelections[locomotive].TryGetValue(stop.identifier, out bool isSelected) && isSelected;
+            bool result = LocoTelem.UIStationSelections[locomotive].TryGetValue(stop.identifier, out bool isSelected) && isSelected;
 
             //Trace Function
             //RouteManager.logger.LogToDebug("EXITING FUNCTION: IsStationSelected", LogLevel.Trace);
-            return result; 
+            return result;
         }
 
         //Update station selection

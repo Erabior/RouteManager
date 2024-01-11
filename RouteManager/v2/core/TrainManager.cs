@@ -216,9 +216,21 @@ namespace RouteManager.v2.core
             bool isTravelingEastWard = LocoTelem.locoTravelingEastWard[locomotive]; // true if traveling East
 
             // Determine the range of stations to include based on travel direction
-            IEnumerable<string> relevantStations = isTravelingEastWard ?
-                DestinationManager.orderedStations.Take(currentStationIndex + 1).Reverse() :
-                DestinationManager.orderedStations.Skip(currentStationIndex);
+            IEnumerable<string> relevantStations;
+
+
+            if (StationManager.currentlyAtLastStation(locomotive))
+            {
+                relevantStations = DestinationManager.orderedStations.Except(new List<String>() { currentStation });
+            }
+            else if (isTravelingEastWard)
+            {
+                relevantStations = DestinationManager.orderedStations.Take(currentStationIndex + 1).Reverse();
+            }
+            else
+            {
+                relevantStations = DestinationManager.orderedStations.Skip(currentStationIndex);
+            }
 
             //Filter to include only selected stations
             HashSet<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]

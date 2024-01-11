@@ -1,6 +1,8 @@
 ﻿using System;
 using UnityEngine;
 using RouteManager.v2.Logging;
+using Game;
+using RouteManager.v2.dataStructures;
 
 namespace RouteManager.BepInEx.Util
 {
@@ -25,7 +27,15 @@ namespace RouteManager.BepInEx.Util
 
         public void LogToConsole(string message)
         {
-            Console.Log(String.Format("{0}: {1}",RouteManager.getModName(), message));
+            string messagePrefix = RouteManager.getModName();
+
+            if (RMBepInEx.settingsData.showTimestamp)
+                messagePrefix = String.Format("{0} | {1}", TimeWeather.Now.TimeString(), messagePrefix);
+
+            if (RMBepInEx.settingsData.showDaystamp)
+                messagePrefix = String.Format("{0} | {1}", TimeWeather.Now.DayString(), messagePrefix);
+
+            Console.Log(String.Format("{0}: {1}", messagePrefix, message));
             LogToDebug("[CONSOLE OUTPUT] " + message);
         }
 

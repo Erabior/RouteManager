@@ -331,6 +331,7 @@ namespace RouteManager.v2.core
         private static void updateLocoTelemEndOfLine(Car locomotive, bool direction)
         {
             LocoTelem.locoTravelingEastWard[locomotive] = direction;
+            LocoTelem.locoTravelingForward[locomotive] = !LocoTelem.locoTravelingForward[locomotive];
             LocoTelem.needToUpdatePassengerCoaches[locomotive] = true;
 
             //Reset previous destinations but preserve the last destination for tracking

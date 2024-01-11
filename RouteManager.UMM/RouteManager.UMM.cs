@@ -7,7 +7,7 @@ using RouteManager.v2.core;
 
 namespace RouteManager.UMM
 {
-    public class RouteManagerUMM
+    public class RMUMM
     {
         public static UnityModManager.ModEntry ModEntry;
         public static RouteManager RMInstance { get; private set; }

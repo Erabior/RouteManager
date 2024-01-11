@@ -3,6 +3,7 @@ using UnityEngine;
 using RouteManager.v2.Logging;
 using static UnityModManagerNet.UnityModManager;
 using dnlib.DotNet;
+using Game;
 
 
 namespace RouteManager.UMM.Util
@@ -19,7 +20,15 @@ namespace RouteManager.UMM.Util
 
         public void LogToConsole(string message)
         {
-            Console.Log(String.Format("{0}: {1}", RouteManager.getModName(), message));
+            string messagePrefix = RouteManager.getModName();
+
+            if (RMUMM.settingsData.showTimestamp)
+                messagePrefix = String.Format("{0} | {1}", TimeWeather.Now.TimeString(), messagePrefix);
+
+            if (RMUMM.settingsData.showDaystamp)
+                messagePrefix = String.Format("{0} | {1}", TimeWeather.Now.DayString(), messagePrefix);
+
+            Console.Log(String.Format("{0}: {1}", messagePrefix, message));
             LogToDebug("[CONSOLE OUTPUT] " + message);
         }
 
@@ -37,7 +46,7 @@ namespace RouteManager.UMM.Util
         private static void WriteLog(string msg)
         {
             string str = $"[{DateTime.Now:HH:mm:ss.fff}] {msg}";
-            RouteManagerUMM.ModEntry.Logger.Log(str);
+            RMUMM.ModEntry.Logger.Log(str);
         }
     }
 }

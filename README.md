@@ -16,7 +16,7 @@ https://github.com/Erabior/RouteManager/releases/latest
 There are two methods of installation, depending on the mod manager you use:
 
 **BepInEx Method**
-1. Download the latest version of 'RouteManager.BepInEx.dll': https://github.com/Erabior/RouteManager/releases/latest
+1. Download the latest version 'RouteManager.BepInEx': https://github.com/Erabior/RouteManager/releases/latest
 
 2. Download the latest version of BepInEx: https://github.com/BepInEx/BepInEx/releases Make sure to grab the correct zip for your system (x64/x86). If you are unsure if you need x64 or x86 you can find that in ThisPC -> (Right Click) -> Properties
 
@@ -37,9 +37,9 @@ There are two methods of installation, depending on the mod manager you use:
 
 
 **Unity Mod Manager Method**
-1. Download the latest version of 'RouteManager.UMM.zip' from https://github.com/Erabior/RouteManager/releases/latest
+1. Download the latest version 'RouteManager.UMM': https://github.com/Erabior/RouteManager/releases/latest
 
-2. Download the latest version of Unity Mod Manager: https://www.nexusmods.com/site/mods/21 and unzip to a folder e.g. your desktop
+2. Download the latest version of Unity Mod Manager: https://www.nexusmods.com/site/mods/21 and unzip to a folder (e.g. your desktop)
 
 3. Run 'UnityModManager.exe'
 
@@ -47,7 +47,7 @@ There are two methods of installation, depending on the mod manager you use:
 
 5. Click on the 'Mods' tab
 
-6. Either drag 'RouteManager.UMM.zip' into the UMM Installer window OR click 'Install Mod' and select 'RouteManager.UMM.zip'
+6. Either drag 'RouteManager.UMM' zip file into the UMM Installer window OR click 'Install Mod' and select the 'RouteManager.UMM' zip file
 
 7. Prosper
 
@@ -118,7 +118,7 @@ Note: This assumes you have some fundamental understanding of how Github & visua
 	* If you are using BepInEx, 'RouteManager.BepInEx.dll' and 'config.ini' will be copied to the 'BepInEx\plugins' folder
 	* If you are using Unity Mod Manager, 'RouteManager.UMM.dll' and 'info.json' will be copied to the 'Mods\RouteManager' folder
 	
-Note: If the build config is set to 'Release' zip archives containing the necessary files will be created for both mod loader types in the solution's 'Release' folder
+Note: If the build config is set to 'Release' zip archives containing the required files will be created for both mod loader types in the solution's 'Release' folder
 
 
 ***

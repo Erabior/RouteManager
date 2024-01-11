@@ -147,7 +147,7 @@ namespace RouteManager.v2.harmonyPatches
                             bool? forward3 = false;
 
                             //IF STATEMENT wrapper for Station Management Logic
-                            if (!DestinationManager.IsAnyStationSelectedForLocomotive(car))
+                            if (!LocoTelem.RouteMode[car])
                             {
                                 //Original Code
                                 SetOrdersValue(null, forward3, null, null);
@@ -159,7 +159,7 @@ namespace RouteManager.v2.harmonyPatches
                             bool? forward2 = true;
 
                             //IF STATEMENT wrapper for Station Management Logic
-                            if (!DestinationManager.IsAnyStationSelectedForLocomotive(car))
+                            if (!LocoTelem.RouteMode[car])
                             {
                                 //Original Code
                                 SetOrdersValue(null, forward2, null, null);
@@ -239,7 +239,10 @@ namespace RouteManager.v2.harmonyPatches
                                 builder.Rebuild();
 
                                 // Update when checkbox state changes
-                                UpdateManagedTrainsSelectedStations(car); 
+                                UpdateManagedTrainsSelectedStations(car);
+
+                                if (LocoTelem.RouteMode[car])
+                                    TrainManager.CopyStationsFromLocoToCoaches(car);
                             });
 
                             // Add a label next to the checkbox
@@ -247,6 +250,12 @@ namespace RouteManager.v2.harmonyPatches
                         });
                     }
                 });
+
+                if (RouteManager.Settings.waitUntilFull && LocoTelem.RouteMode[car])
+                {
+                    builder.Spacer(4f);
+                    builder.AddButtonCompact("Force Departure", new Action(() => { LocoTelem.clearedForDeparture[car] = true; }));
+                }
 
                 bool anyStationSelected = DestinationManager.IsAnyStationSelectedForLocomotive(car);
 
@@ -329,7 +338,15 @@ namespace RouteManager.v2.harmonyPatches
                 builder.AddField("Car Lengths", control2);
             }
 
-            builder.AddExpandingVerticalSpacer();
+            if (mode2 == AutoEngineerMode.Road)
+            {
+                builder.Spacer(4f);
+            }
+            else
+            {
+                builder.AddExpandingVerticalSpacer();
+            }
+
             builder.AddField("Status", () => persistence.PlannerStatus, UIPanelBuilder.Frequency.Periodic);
             static int MaxSpeedMphForMode(AutoEngineerMode mode)
             {
