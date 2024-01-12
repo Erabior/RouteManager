@@ -168,7 +168,7 @@ namespace RouteManager.v2.core
             //Make sure a previous destination is set
             if (LocoTelem.previousDestinations.ContainsKey(locomotive))
             {
-                Logger.LogToDebug(String.Format("Loco {0} has previous destinations", locomotive.DisplayName), Logger.logLevel.Verbose);
+                Logger.LogToDebug(String.Format("Loco {0} has previous destinations", locomotive.DisplayName), Logger.logLevel.Verbose);    
                 //Compare Previous Destination
                 //If we have not visited the closest station
                 if (!LocoTelem.previousDestinations[locomotive].Contains(LocoTelem.closestStation[locomotive].Item1))
@@ -189,6 +189,11 @@ namespace RouteManager.v2.core
                 {
                     Logger.LogToDebug(String.Format("Loco {0} Initial destintion is the closest: {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1));
                     return LocoTelem.closestStation[locomotive].Item1;
+                }
+                else if (LocoTelem.SelectedStations[locomotive].Contains(LocoTelem.currentDestination[locomotive]) && !LocoTelem.previousDestinations[locomotive].Contains(LocoTelem.currentDestination[locomotive]))
+                {
+                    Logger.LogToDebug(String.Format("Loco {0} Initial destintion is the current: {1}", locomotive.DisplayName, LocoTelem.currentDestination[locomotive].Item1));
+                    return LocoTelem.currentDestination[locomotive];
                 }
                 else
                 {
