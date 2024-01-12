@@ -157,7 +157,7 @@ namespace RouteManager.v2.core
 
                 try
                 {
-                    distanceToStation = DestinationManager.GetDistanceToDest(locomotive);
+                    distanceToStation = DestinationManager.GetDistanceToStation(locomotive, LocoTelem.currentDestination[locomotive]);
                     delayExecution = false;
                 }
                 catch (Exception e)
@@ -221,7 +221,7 @@ namespace RouteManager.v2.core
                             yield return new WaitForSeconds(1);
                             Logger.LogToDebug("Was driving in the wrong direction! Waiting until turned around.");
                             olddist = distanceToStation;
-                            distanceToStation = DestinationManager.GetDistanceToDest(locomotive);
+                            distanceToStation = DestinationManager.GetDistanceToStation(locomotive, LocoTelem.currentDestination[locomotive]);
                         }
                     }
                 }
