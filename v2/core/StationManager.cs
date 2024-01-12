@@ -260,10 +260,21 @@ namespace RouteManager.v2.core
                 if (currentIndex < 0)
                 {
                     Logger.LogToDebug(String.Format("Loco {0} current station is not in the selected stations. Defaulting to closest stop!", locomotive.DisplayName), Logger.logLevel.Verbose);
-                    if (LocoTelem.locoTravelingEastWard[locomotive])
-                        return selectedPassengerStops.Last();
-                    else
-                        return selectedPassengerStops.First();
+                    PassengerStop closestStation = null;
+                    float closestStationDistance = float.MaxValue;
+
+                    foreach (PassengerStop selectedPassengerStop in selectedPassengerStops)
+                    {
+                        float testDistance = DestinationManager.GetDistanceToStation(locomotive, selectedPassengerStop);
+
+                        if (testDistance < closestStationDistance)
+                        {
+                            closestStationDistance = testDistance;
+                            closestStation = selectedPassengerStop;
+                        }
+                    }
+
+                    return closestStation;
                 }
 
                 //At first station go West
