@@ -192,7 +192,7 @@ namespace RouteManager.v2.core
                 }
                 else if (LocoTelem.SelectedStations[locomotive].Contains(LocoTelem.currentDestination[locomotive]) && !LocoTelem.previousDestinations[locomotive].Contains(LocoTelem.currentDestination[locomotive]))
                 {
-                    Logger.LogToDebug(String.Format("Loco {0} Initial destintion is the current: {1}", locomotive.DisplayName, LocoTelem.currentDestination[locomotive].Item1));
+                    Logger.LogToDebug(String.Format("Loco {0} Initial destintion is the current: {1}", locomotive.DisplayName, LocoTelem.currentDestination[locomotive]));
                     return LocoTelem.currentDestination[locomotive];
                 }
                 else
