@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RouteManager", "RouteManager.csproj", "{65120CD8-2B84-4D1C-ABCE-BAC96AEC1180}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RouteManager", "RouteManager\RouteManager.csproj", "{65120CD8-2B84-4D1C-ABCE-BAC96AEC1180}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RouteManager.BepInEx", "RouteManager.BepInEx\RouteManager.BepInEx.csproj", "{C6B9A4E0-4823-4528-A5B5-550EEE0801C9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RouteManager.UMM", "RouteManager.UMM\RouteManager.UMM.csproj", "{BD33CA70-24B9-4E80-908F-3E3A3C264904}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,16 @@ Global
 		{65120CD8-2B84-4D1C-ABCE-BAC96AEC1180}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65120CD8-2B84-4D1C-ABCE-BAC96AEC1180}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65120CD8-2B84-4D1C-ABCE-BAC96AEC1180}.Release|Any CPU.Build.0 = Release|Any CPU
+		
+		{C6B9A4E0-4823-4528-A5B5-550EEE0801C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6B9A4E0-4823-4528-A5B5-550EEE0801C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6B9A4E0-4823-4528-A5B5-550EEE0801C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6B9A4E0-4823-4528-A5B5-550EEE0801C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		
+		{BD33CA70-24B9-4E80-908F-3E3A3C264904}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD33CA70-24B9-4E80-908F-3E3A3C264904}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD33CA70-24B9-4E80-908F-3E3A3C264904}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD33CA70-24B9-4E80-908F-3E3A3C264904}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

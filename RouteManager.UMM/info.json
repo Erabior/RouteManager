@@ -1,0 +1,10 @@
+{
+    "Id":  "RouteManager",
+    "Version":  "2.0.0.6",
+    "DisplayName":  "Dispatcher",
+    "Author":  "Erabior",
+    "AssemblyName":  "RouteManager.UMM.dll",
+    "EntryMethod":  "RouteManager.UMM.RMUMM.Load",
+    "ManagerVersion":  "0.27.8",
+    "HomePage":  "https://github.com/Erabior/RouteManager"
+}

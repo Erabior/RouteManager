@@ -1,0 +1,20 @@
+<Project>
+	<PropertyGroup>
+        <GamePath>D:\Games\Steam\steamapps\common\Railroader\</GamePath>
+		
+		<GameReferencePath>$(GamePath)\Railroader_Data\Managed\</GameReferencePath>
+		<BepInExReferencePath>$(GamePath)\BepInEx\core\</BepInExReferencePath>
+		<UMMReferencePath>$(GamePath)\Mods\RouteManager</UMMReferencePath>
+		
+		<ReferencePath>
+			$(GameReferencePath);
+			$(BepInExReferencePath);
+			$(UMMReferencePath);
+		</ReferencePath>
+		
+        <AssemblySearchPaths>
+			$(AssemblySearchPaths);
+			$(ReferencePath);
+		</AssemblySearchPaths>
+    </PropertyGroup>
+</Project>

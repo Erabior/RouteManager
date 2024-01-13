@@ -33,20 +33,11 @@
   <PropertyGroup>
     <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\Steam\steamapps\common\Railroader</GamePath>
     <GameReferencePath Condition="!Exists('$(GameReferencePath)')">$(GamePath)\Railroader_Data\Managed\</GameReferencePath>
-    <BepInExReferencePath Condition="!Exists('$(BepInExReferencePath)')">$(GamePath)\BepInEx\core\</BepInExReferencePath>
     <ReferencePath Condition="!Exists('$(ReferencePath)')">$(GameReferencePath);$(BepInExReferencePath)</ReferencePath>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\BepInEx\core\0Harmony.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>G:\SteamLibrary\steamapps\common\Railroader\Railroader_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="BepInEx">
-      <HintPath>G:\SteamLibrary\steamapps\common\Railroader\BepInEx\core\BepInEx.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Core">
@@ -119,10 +110,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="RouteManagerLoader.cs" />
+    <Compile Include="RouteManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="v2\core\AutoEngineer.cs" />
-    <Compile Include="v2\core\SettingsManager.cs" />
+    <Compile Include="v2\core\IRMSettingsManager.cs" />
     <Compile Include="v2\core\DestinationManager.cs" />
     <Compile Include="v2\core\StationManager.cs" />
     <Compile Include="v2\core\TrainManager.cs" />
@@ -135,7 +126,7 @@
     <Compile Include="v2\helpers\DebugFunctions.cs" />
     <Compile Include="v2\helpers\IniFile.cs" />
     <Compile Include="v2\helpers\Utilities.cs" />
-    <Compile Include="v2\Logging\Logger.cs" />
+    <Compile Include="v2\Logging\IRMLogger.cs" />
     <Compile Include="v2\ModInterface.cs" />
     <Compile Include="v2\UI\CoreInterface.cs" />
   </ItemGroup>
@@ -143,15 +134,18 @@
     <Folder Include="Patches\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="v2\configs\RouteManager.ini">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <PackageReference Include="Lib.Harmony">
+      <Version>2.2.2</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <LangVersion>8</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>copy /Y "$(TargetDir)$(ProjectName).dll" "$(GamePath)\BepInEx\plugins\$(ProjectName).dll"</PostBuildEvent>
+    <!-- This file is used as a base/core and is automerged into the mod loader assemblies
+			Do not copy to game folder!
+	-->
+    <!-- PostBuildEvent>copy /Y "$(TargetDir)$(ProjectName).dll" "$(GamePath)\BepInEx\plugins\$(ProjectName).dll"</PostBuildEvent -->
   </PropertyGroup>
 </Project>

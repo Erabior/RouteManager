@@ -9,12 +9,11 @@ using System.Reflection;
 using UI.Builder;
 using UI.CarInspector;
 using UnityEngine;
-using RouteManager;
 using Model;
 using RouteManager.v2.core;
 using RouteManager.v2.dataStructures;
-using UI.Common;
-using Logger = RouteManager.v2.Logging.Logger;
+using RouteManager.v2.Logging;
+
 
 namespace RouteManager.v2.harmonyPatches
 {
@@ -34,7 +33,7 @@ namespace RouteManager.v2.harmonyPatches
             **********************************************************************************/
 
             RectTransform uiPanel = UnityEngine.Object.FindFirstObjectByType<CarInspector>().GetComponent<RectTransform>();
-            Logger.LogToDebug("Ui Panel Size was:" + uiPanel.sizeDelta.ToString(), Logger.logLevel.Verbose);
+            RouteManager.logger.LogToDebug("Ui Panel Size was:" + uiPanel.sizeDelta.ToString(), LogLevel.Verbose);
             uiPanel.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 500);
 
             /**********************************************************************************
@@ -252,7 +251,11 @@ namespace RouteManager.v2.harmonyPatches
                     }
                 });
 
+<<<<<<< HEAD:v2/harmonyPatches/RouteManagerUI.cs
                 if (SettingsData.waitUntilFull && LocoTelem.RouteMode[car])
+=======
+                if (RouteManager.Settings.waitUntilFull && LocoTelem.RouteMode[car])
+>>>>>>> AMacro/v2-dev:RouteManager/v2/harmonyPatches/RouteManagerUI.cs
                 {
                     builder.Spacer(4f);
                     builder.AddButtonCompact("Force Departure", new Action(() => { LocoTelem.clearedForDeparture[car] = true; }));
@@ -347,6 +350,10 @@ namespace RouteManager.v2.harmonyPatches
             {
                 builder.AddExpandingVerticalSpacer();
             }
+<<<<<<< HEAD:v2/harmonyPatches/RouteManagerUI.cs
+=======
+
+>>>>>>> AMacro/v2-dev:RouteManager/v2/harmonyPatches/RouteManagerUI.cs
             builder.AddField("Status", () => persistence.PlannerStatus, UIPanelBuilder.Frequency.Periodic);
             static int MaxSpeedMphForMode(AutoEngineerMode mode)
             {
