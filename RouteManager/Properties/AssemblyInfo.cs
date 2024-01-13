@@ -32,10 +32,7 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-<<<<<<< HEAD:Properties/AssemblyInfo.cs
-[assembly: AssemblyVersion("2.0.0.5")]
-[assembly: AssemblyFileVersion("2.0.0.5")]
-=======
+
 [assembly: AssemblyVersion(AppVersion.Version)]
 [assembly: AssemblyFileVersion(AppVersion.Version)]
 
@@ -43,4 +40,4 @@ internal class AppVersion
 {
     public const string Version = "2.0.0.6";
 }
->>>>>>> AMacro/v2-dev:RouteManager/Properties/AssemblyInfo.cs
+
