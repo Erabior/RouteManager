@@ -99,19 +99,12 @@ namespace RouteManager.v2.core
             //Move in that direction
 
             //TEMP LOGIC
-<<<<<<< HEAD:v2/core/AutoEngineer.cs
             float distanceToStation     = float.MaxValue;
             bool  delayExecution        = false;
             float olddist               = float.MaxValue;
             float trainVelocity         = 0;
             int stationPadding          = 10;
-=======
-            float distanceToStation = float.MaxValue;
-            bool delayExecution = false;
-            float olddist = float.MaxValue;
-            float trainVelocity = 0;
-            int stationPadding = 10;
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/AutoEngineer.cs
+
 
             //Loop through transit logic
             while (LocoTelem.TransitMode[locomotive])
@@ -208,24 +201,19 @@ namespace RouteManager.v2.core
                     if (distanceToStation > olddist)
                     {
                         LocoTelem.locoTravelingForward[locomotive] = !LocoTelem.locoTravelingForward[locomotive];
-<<<<<<< HEAD:v2/core/AutoEngineer.cs
-                        Logger.LogToDebug("Was driving in the wrong direction! Changing direction");
-                        Logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {(int)LocoTelem.RMMaxSpeed[locomotive]}", Logger.logLevel.Debug);
-=======
+
                         RouteManager.logger.LogToDebug("Was driving in the wrong direction! Changing direction");
                         RouteManager.logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {(int)LocoTelem.RMMaxSpeed[locomotive]}", LogLevel.Debug);
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/AutoEngineer.cs
+
                         StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
 
                         //Wait until loco has started going in the correct direction
                         while (distanceToStation > olddist)
                         {
                             yield return new WaitForSeconds(1);
-<<<<<<< HEAD:v2/core/AutoEngineer.cs
-                            Logger.LogToDebug("Was driving in the wrong direction! Waiting until turned around.");
-=======
+
                             RouteManager.logger.LogToDebug("Was driving in the wrong direction! Waiting until turned around.");
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/AutoEngineer.cs
+
                             olddist = distanceToStation;
                             distanceToStation = DestinationManager.GetDistanceToDest(locomotive);
                         }
@@ -262,11 +250,8 @@ namespace RouteManager.v2.core
 
                     //Hack to work around the new auto engineer crossing detection to prevent double blow / werid horn blow behavior. 
                     //This can be done better but further research is required. In the mean time this crude hack hopefully will reduce the occurances. 
-<<<<<<< HEAD:v2/core/AutoEngineer.cs
-                    if (!LocoTelem.approachWhistleSounded[locomotive] && 
-=======
                     if (!LocoTelem.approachWhistleSounded[locomotive] &&
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/AutoEngineer.cs
+
                         ((locomotive.KeyValueObject[PropertyChange.KeyForControl(PropertyChange.Control.Horn)].FloatValue) <= 0f &&
                         (locomotive.KeyValueObject[PropertyChange.KeyForControl(PropertyChange.Control.Bell)].BoolValue) != true))
                     {
@@ -386,13 +371,9 @@ namespace RouteManager.v2.core
                         //Write to console the departure of the train consist at station X
                         //Bugfix: message would previously be generated even when departure was not cleared. 
 
-<<<<<<< HEAD:v2/core/AutoEngineer.cs
-                        if (SettingsData.showDepartureMessage)
-                            Logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), LocoTelem.previousDestinations[locomotive].Last().DisplayName.ToUpper(), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
-=======
+
                         if (RouteManager.Settings.showDepartureMessage)
                             RouteManager.logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), LocoTelem.previousDestinations[locomotive].Last().DisplayName.ToUpper(), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/AutoEngineer.cs
                     }
                 }
                 else
@@ -554,12 +535,7 @@ namespace RouteManager.v2.core
 
             RouteManager.logger.LogToDebug(String.Format("Locomotive {0} on Short Approach! Speed limited to {1}", locomotive.DisplayName, (int)calculatedSpeed), LogLevel.Debug);
 
-            //Appply updated maxSpeed
-<<<<<<< HEAD:v2/core/AutoEngineer.cs
             StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingForward[locomotive], (int) calculatedSpeed, null));
-=======
-            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingForward[locomotive], (int)calculatedSpeed, null));
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/AutoEngineer.cs
 
             //Trace Function
             RouteManager.logger.LogToDebug("EXITING FUNCTION: onApproachShortDist", LogLevel.Trace);
@@ -591,13 +567,9 @@ namespace RouteManager.v2.core
                 //Disable transit mode.
                 LocoTelem.TransitMode[locomotive] = false;
 
-<<<<<<< HEAD:v2/core/AutoEngineer.cs
-                if (SettingsData.showArrivalMessage)
-                    Logger.LogToConsole(String.Format("{0} has arrived at {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
-=======
                 if (RouteManager.Settings.showArrivalMessage)
                     RouteManager.logger.LogToConsole(String.Format("{0} has arrived at {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/AutoEngineer.cs
+
             }
 
 
@@ -632,23 +604,7 @@ namespace RouteManager.v2.core
                 if (trainFull)
                 {
                     //Only notify if not configured to wait until full
-<<<<<<< HEAD:v2/core/AutoEngineer.cs
-                    if (!SettingsData.waitUntilFull)
-                        Logger.LogToConsole(String.Format("Locomotive {0} consist is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName));
-                    
-                    return true;
-                }
 
-                //Station has passengers destined for a scheduled station
-                if (!passWaiting && !SettingsData.waitUntilFull)
-                {
-                    Logger.LogToDebug(String.Format("Locomotive {0} consist has finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), Logger.logLevel.Verbose);
-                    return true;
-                }
-            }
-
-            Logger.LogToDebug(String.Format("Locomotive {0} consist has not finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), Logger.logLevel.Verbose);
-=======
                     if (!RouteManager.Settings.waitUntilFull)
                         RouteManager.logger.LogToConsole(String.Format("Locomotive {0} consist is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName));
 
@@ -664,7 +620,6 @@ namespace RouteManager.v2.core
             }
 
             RouteManager.logger.LogToDebug(String.Format("Locomotive {0} consist has not finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), LogLevel.Verbose);
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/AutoEngineer.cs
 
             //Always assume stop has not been served unless determined otherwise. 
             return false;

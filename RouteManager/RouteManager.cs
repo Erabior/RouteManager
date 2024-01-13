@@ -12,17 +12,10 @@ namespace RouteManager
     public class RouteManager
 
     {
-<<<<<<< HEAD:RouteManagerLoader.cs
-        private const string modGUID = "Erabior.Dispatcher";
-        private const string modName = "Dispatcher";
-        private const string modVersion = "2.0.0.5";
-        private readonly Harmony harmony = new Harmony(modGUID);
-        public static ManualLogSource mls;
-=======
+
         public const string modGUID = "Erabior.Dispatcher";
         public const string modName = "Dispatcher";
         public const string modVersion = AppVersion.Version;
->>>>>>> AMacro/v2-dev:RouteManager/RouteManager.cs
 
         public static IRMLogger logger;
         public static IRMSettingsManager settingsManager;

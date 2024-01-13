@@ -251,11 +251,8 @@ namespace RouteManager.v2.harmonyPatches
                     }
                 });
 
-<<<<<<< HEAD:v2/harmonyPatches/RouteManagerUI.cs
-                if (SettingsData.waitUntilFull && LocoTelem.RouteMode[car])
-=======
+
                 if (RouteManager.Settings.waitUntilFull && LocoTelem.RouteMode[car])
->>>>>>> AMacro/v2-dev:RouteManager/v2/harmonyPatches/RouteManagerUI.cs
                 {
                     builder.Spacer(4f);
                     builder.AddButtonCompact("Force Departure", new Action(() => { LocoTelem.clearedForDeparture[car] = true; }));
@@ -350,10 +347,7 @@ namespace RouteManager.v2.harmonyPatches
             {
                 builder.AddExpandingVerticalSpacer();
             }
-<<<<<<< HEAD:v2/harmonyPatches/RouteManagerUI.cs
-=======
 
->>>>>>> AMacro/v2-dev:RouteManager/v2/harmonyPatches/RouteManagerUI.cs
             builder.AddField("Status", () => persistence.PlannerStatus, UIPanelBuilder.Frequency.Periodic);
             static int MaxSpeedMphForMode(AutoEngineerMode mode)
             {

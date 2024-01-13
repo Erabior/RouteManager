@@ -80,13 +80,8 @@ namespace RouteManager.v2.core
             //Trace Function
             RouteManager.logger.LogToDebug("ENTERED FUNCTION: RMblow", LogLevel.Trace);
 
-<<<<<<< HEAD:v2/core/TrainManager.cs
-            Logger.LogToDebug(String.Format("Locomotive {0} Whistling! Intensity: {1} Duration: {2} quillFinal: {3}", locomotive.DisplayName, intensity, duration, quillFinal), Logger.logLevel.Verbose);
-            
-=======
             RouteManager.logger.LogToDebug(String.Format("Locomotive {0} Whistling! Intensity: {1} Duration: {2} quillFinal: {3}", locomotive.DisplayName, intensity, duration, quillFinal), LogLevel.Verbose);
 
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/TrainManager.cs
             duration = Mathf.Max(duration, 0.1f);
 
             float finalIntensity = quillFinal < 0 ? intensity : quillFinal;
@@ -222,8 +217,6 @@ namespace RouteManager.v2.core
 
             // Determine the range of stations to include based on travel direction
             IEnumerable<string> relevantStations;
-<<<<<<< HEAD:v2/core/TrainManager.cs
-            
 
             if (StationManager.currentlyAtLastStation(locomotive))
             {
@@ -233,30 +226,15 @@ namespace RouteManager.v2.core
             {
                 relevantStations = DestinationManager.orderedStations.Take(currentStationIndex + 1).Reverse();
             } 
-=======
-
-
-            if (StationManager.currentlyAtLastStation(locomotive))
-            {
-                relevantStations = DestinationManager.orderedStations.Except(new List<String>() { currentStation });
-            }
-            else if (isTravelingEastWard)
-            {
-                relevantStations = DestinationManager.orderedStations.Take(currentStationIndex + 1).Reverse();
-            }
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/TrainManager.cs
             else
             {
                 relevantStations = DestinationManager.orderedStations.Skip(currentStationIndex);
             }
-<<<<<<< HEAD:v2/core/TrainManager.cs
 
             foreach (string identifier in relevantStations)
             {
-                Logger.LogToDebug(String.Format("relevantStations contains {0}", identifier), Logger.logLevel.Verbose);
+                RouteManager.logger.LogToDebug(String.Format("relevantStations contains {0}", identifier), Logger.logLevel.Verbose);
             }
-=======
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/TrainManager.cs
 
             //Filter to include only selected stations
             HashSet<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
@@ -265,36 +243,29 @@ namespace RouteManager.v2.core
 
             foreach (string identifier in selectedStationIdentifiers)
             {
-                Logger.LogToDebug(String.Format("selectedStationIdentifiers contains {0}", identifier), Logger.logLevel.Verbose);
+                RouteManager.logger.LogToDebug(String.Format("selectedStationIdentifiers contains {0}", identifier), Logger.logLevel.Verbose);
             }
 
             HashSet<string> filteredStations = relevantStations
                 .Where(station => selectedStationIdentifiers.Contains(station))
                 .ToHashSet();
 
-<<<<<<< HEAD:v2/core/TrainManager.cs
             foreach (string identifier in filteredStations)
             {
-                Logger.LogToDebug(String.Format("filteredStations contains {0}", identifier), Logger.logLevel.Verbose);
+                RouteManager.logger.LogToDebug(String.Format("filteredStations contains {0}", identifier), Logger.logLevel.Verbose);
             }
 
-            Logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), Logger.logLevel.Debug);
-=======
-            RouteManager.logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), LogLevel.Debug);
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/TrainManager.cs
+            RouteManager.logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), Logger.logLevel.Debug);
 
             // Apply the filtered stations to each coach
             foreach (Car coach in locomotive.EnumerateCoupled().Where(car => car.Archetype == CarArchetype.Coach))
             {
-<<<<<<< HEAD:v2/core/TrainManager.cs
+
                 foreach (string identifier in filteredStations)
                 {
-                    Logger.LogToDebug(String.Format("    Applying {0} to car {1}", identifier, coach.DisplayName), Logger.logLevel.Verbose);
+                    RouteManager.logger.LogToDebug(String.Format("    Applying {0} to car {1}", identifier, coach.DisplayName), Logger.logLevel.Verbose);
                 }
 
-=======
-                RouteManager.logger.LogToDebug(String.Format("Applying station selection to car", coach.DisplayName), LogLevel.Verbose);
->>>>>>> AMacro/v2-dev:RouteManager/v2/core/TrainManager.cs
                 StateManager.ApplyLocal(new SetPassengerDestinations(coach.id, filteredStations.ToList()));
             }
 
