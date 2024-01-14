@@ -229,10 +229,6 @@ namespace RouteManager.v2.core
 
             PassengerStop nextStop = calculateNextStation(orderedSelectedStations, LocoTelem.SelectedStations[locomotive], currentStation, locomotive);
 
-            //Workaround for Cochran 
-            if(nextStop.identifier == "alarka")
-                nextStop = alarkaJunctionWorkAround(locomotive, nextStop);
-
             RouteManager.logger.LogToDebug(String.Format("Loco {0} next stop determined to be: {1}", locomotive.DisplayName , nextStop.identifier), LogLevel.Debug);
 
             return nextStop;
@@ -295,6 +291,13 @@ namespace RouteManager.v2.core
                     else
                         station = stringIdentToStation(orderedSelectedStations[currentIndex]);
 
+                    //Workaround for Cochran 
+                    if (station != null)
+                    {
+                        if (station.identifier == "alarka")
+                            station = alarkaJunctionWorkAround(locomotive, station);
+                    }
+
                     return station != null ? station : selectedPassengerStops.Last();
                 }
                 //At last station go East
@@ -311,6 +314,13 @@ namespace RouteManager.v2.core
                     else
                         station = stringIdentToStation(orderedSelectedStations[currentIndex]);
 
+                    //Workaround for Cochran 
+                    if (station != null)
+                    {
+                        if (station.identifier == "alarka")
+                            station = alarkaJunctionWorkAround(locomotive, station);
+                    }
+
                     return station != null ? station : selectedPassengerStops.Last();
                 }
                 //Keep going in the direction previously travelled...
@@ -326,6 +336,13 @@ namespace RouteManager.v2.core
                         else
                             station = stringIdentToStation(orderedSelectedStations[currentIndex]);
 
+                        //Workaround for Cochran 
+                        if (station != null)
+                        {
+                            if (station.identifier == "alarka")
+                                station = alarkaJunctionWorkAround(locomotive, station);
+                        }
+
                         return station != null ? station : selectedPassengerStops.First();
                     }
                     else
@@ -337,6 +354,13 @@ namespace RouteManager.v2.core
                             station = stringIdentToStation(orderedSelectedStations[currentIndex + 1]);
                         else
                             station = stringIdentToStation(orderedSelectedStations[currentIndex]);
+
+                        //Workaround for Cochran 
+                        if (station != null)
+                        {
+                            if (station.identifier == "alarka")
+                                station = alarkaJunctionWorkAround(locomotive, station);
+                        }
 
                         return station != null ? station : selectedPassengerStops.First();
                     }
