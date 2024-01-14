@@ -37,7 +37,7 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug("EXITING FUNCTION: SetSelectedStations", LogLevel.Trace);
         }
 
-        public static float GetDistanceToDest(Car locomotive)
+        public static float GetDistanceToStation(Car locomotive, PassengerStop station)
         {
             RouteManager.logger.LogToDebug(String.Format("Loco: {0} getting distance to destination", locomotive.DisplayName));
 
@@ -47,7 +47,7 @@ namespace RouteManager.v2.core
             centerCar.GetCenterPosition(trackGraph);
 
             //Check all tracks associated with a station
-            foreach (TrackSpan trackSpan in LocoTelem.currentDestination[locomotive].TrackSpans)
+            foreach (TrackSpan trackSpan in station.TrackSpans)
             {
                 if (trackSpan.lower.HasValue)
                 {
@@ -72,7 +72,7 @@ namespace RouteManager.v2.core
                 }
                 else
                 {
-                    throw new ArgumentNullException($"Unable to calculate distance to {LocoTelem.currentDestination[locomotive]} due to a null track span");
+                    throw new ArgumentNullException($"Unable to calculate distance to {station.identifier} due to a null track span");
                 }
             }
 

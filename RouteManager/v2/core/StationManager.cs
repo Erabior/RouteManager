@@ -185,6 +185,11 @@ namespace RouteManager.v2.core
                     RouteManager.logger.LogToDebug(String.Format("Loco {0} Initial destintion is the closest: {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1));
                     return LocoTelem.closestStation[locomotive].Item1;
                 }
+                else if (LocoTelem.SelectedStations[locomotive].Contains(LocoTelem.currentDestination[locomotive]) && !LocoTelem.previousDestinations[locomotive].Contains(LocoTelem.currentDestination[locomotive]))
+                {
+                    RouteManager.logger.LogToDebug(String.Format("Loco {0} Initial destintion is the current: {1}", locomotive.DisplayName, LocoTelem.currentDestination[locomotive]));
+                    return LocoTelem.currentDestination[locomotive];
+                }
                 else
                 {
                     RouteManager.logger.LogToDebug(String.Format("Loco {0} Initial destintion is not the closest: {1}", locomotive.DisplayName, nextStation));
@@ -255,10 +260,21 @@ namespace RouteManager.v2.core
                 if (currentIndex < 0)
                 {
                     RouteManager.logger.LogToDebug(String.Format("Loco {0} current station is not in the selected stations. Defaulting to closest stop!", locomotive.DisplayName), LogLevel.Verbose);
-                    if (LocoTelem.locoTravelingEastWard[locomotive])
-                        return selectedPassengerStops.Last();
-                    else
-                        return selectedPassengerStops.First();
+                    PassengerStop closestStation = null;
+                    float closestStationDistance = float.MaxValue;
+
+                    foreach (PassengerStop selectedPassengerStop in selectedPassengerStops)
+                    {
+                        float testDistance = DestinationManager.GetDistanceToStation(locomotive, selectedPassengerStop);
+
+                        if (testDistance < closestStationDistance)
+                        {
+                            closestStationDistance = testDistance;
+                            closestStation = selectedPassengerStop;
+                        }
+                    }
+
+                    return closestStation;
                 }
 
                 //At first station go West

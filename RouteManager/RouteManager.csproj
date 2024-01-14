@@ -130,9 +130,7 @@
     <Compile Include="v2\ModInterface.cs" />
     <Compile Include="v2\UI\CoreInterface.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Patches\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <PackageReference Include="Lib.Harmony">
       <Version>2.2.2</Version>
