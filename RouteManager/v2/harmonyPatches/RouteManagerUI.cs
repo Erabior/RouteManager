@@ -85,9 +85,10 @@ namespace RouteManager.v2.harmonyPatches
             {
                 builder.AddButtonSelectable("Manual", mode2 == AutoEngineerMode.Off, delegate
                 {
-                    //Alteration: Hook for MOD deactivation
-                    //Potential bug fix. Disable management before allowing manual control.
-                    TrainManager.SetRouteModeEnabled(false, car);
+                    //Disable mod only if not paused
+                    if(LocoTelem.RouteModePaused.ContainsKey(car) && LocoTelem.RouteModePaused[car] == false)
+                        TrainManager.SetRouteModeEnabled(false, car);
+
                     SetOrdersValue(AutoEngineerMode.Off, null, null, null);
                 });
                 builder.AddButtonSelectable("Road", mode2 == AutoEngineerMode.Road, delegate
@@ -96,8 +97,10 @@ namespace RouteManager.v2.harmonyPatches
                 });
                 builder.AddButtonSelectable("Yard", mode2 == AutoEngineerMode.Yard, delegate
                 {
-                    //Alteration: Hook for MOD deactivation
-                    TrainManager.SetRouteModeEnabled(false, car);
+                    //Disable mod only if not paused
+                    if (LocoTelem.RouteModePaused.ContainsKey(car) && LocoTelem.RouteModePaused[car] == false)
+                        TrainManager.SetRouteModeEnabled(false, car);
+
                     SetOrdersValue(AutoEngineerMode.Yard, null, null, null);
                 });
 
@@ -123,7 +126,7 @@ namespace RouteManager.v2.harmonyPatches
             {
                 LocoTelem.RouteMode[car] = false;
             }
-            if (!LocoTelem.RouteMode[car])
+            if (!LocoTelem.RouteMode[car] || LocoTelem.RouteModePaused[car])
             {
                 /**********************************************************************************
                 *
@@ -133,9 +136,6 @@ namespace RouteManager.v2.harmonyPatches
                 *
                 **********************************************************************************/
 
-                //Remove forward and reverse if route mode is enabled. Our AI should handle this.
-                if (!LocoTelem.RouteMode[car])
-                {
                     builder.AddField("Direction", builder.ButtonStrip(delegate (UIPanelBuilder builder)
                     {
                         builder.AddObserver(persistence.ObserveOrders(delegate
@@ -167,7 +167,7 @@ namespace RouteManager.v2.harmonyPatches
 
                         });
                     }));
-                }
+
 
                 /**********************************************************************************
                 *
@@ -205,6 +205,12 @@ namespace RouteManager.v2.harmonyPatches
                         TrainManager.SetRouteModeEnabled(isOn, car);
                     });
                     hstack.AddLabel("Enable Route Mode");
+
+                    hstack.AddToggle(() => TrainManager.IsRouteModePaused(car), isOn =>
+                    {
+                        TrainManager.PauseRouteMode(isOn, car);
+                    });
+                    hstack.AddLabel("Pause for Refueling");
 
                     // Subscribe to the OnRouteModeChanged event
                     TrainManager.OnRouteModeChanged += (changedCar) =>

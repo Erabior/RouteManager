@@ -298,15 +298,18 @@ namespace RouteManager.v2.core
                 {
                     RouteManager.logger.LogToDebug($" LocoTelem.RouteMode does not contain {locomotive.id} creating bool for {locomotive.id}");
                     LocoTelem.RouteMode[locomotive] = false;
+                    LocoTelem.RouteModePaused[locomotive] = false;
                 }
                 RouteManager.logger.LogToDebug($"changing LocoTelem.Route Mode from {!IsOn} to {IsOn}");
                 LocoTelem.RouteMode[locomotive] = IsOn;
+                LocoTelem.RouteModePaused[locomotive] = false;
                 OnRouteModeChanged?.Invoke(locomotive);
 
                 if (!LocoTelem.locomotiveCoroutines.ContainsKey(locomotive))
                 {
                     RouteManager.logger.LogToDebug($" LocoTelem.locomotiveCoroutines does not contain {locomotive.id} creating bool for {locomotive.DisplayName}");
                     LocoTelem.locomotiveCoroutines[locomotive] = false;
+                    LocoTelem.RouteModePaused[locomotive] = false;
                 }
             }
             else if (!DestinationManager.IsAnyStationSelectedForLocomotive(locomotive) && IsOn)
@@ -316,11 +319,13 @@ namespace RouteManager.v2.core
             else if (DestinationManager.IsAnyStationSelectedForLocomotive(locomotive) && !IsOn)
             {
                 LocoTelem.RouteMode[locomotive] = false;
+                LocoTelem.RouteModePaused[locomotive] = false;
                 OnRouteModeChanged?.Invoke(locomotive);
             }
             else if (!DestinationManager.IsAnyStationSelectedForLocomotive(locomotive) && !IsOn)
             {
                 LocoTelem.RouteMode[locomotive] = false;
+                LocoTelem.RouteModePaused[locomotive] = false;
                 OnRouteModeChanged?.Invoke(locomotive);
             }
             else
@@ -328,6 +333,50 @@ namespace RouteManager.v2.core
                 RouteManager.logger.LogToDebug($"Route Mode ({LocoTelem.RouteMode[locomotive]}) and IsAnyStationSelectedForLocomotive ({DestinationManager.IsAnyStationSelectedForLocomotive(locomotive)}) are no combination of false or true ");
             }
             return;
+        }
+
+        public static bool IsRouteModePaused(Car locomotive)
+        {
+            // Check if the locomotive exists in the TransitMode dictionary
+            if (LocoTelem.RouteModePaused.ContainsKey(locomotive))
+            {
+                return LocoTelem.RouteModePaused[locomotive];
+            }
+            else
+            {
+                // Handle the case where the key does not exist, for example, by logging an error or initializing the key
+                RouteManager.logger.LogToError($"Paused Mode dictionary does not contain key: {locomotive}");
+
+                // Optionally initialize the key with a default value
+                LocoTelem.RouteModePaused[locomotive] = false; // Default value
+
+                return false;
+            }
+        }
+
+        public static event Action<Car> OnRouteModePaused;
+        public static void PauseRouteMode(bool IsOn, Car locomotive)
+        {
+            if(LocoTelem.RouteMode.ContainsKey(locomotive)) 
+            {
+                if (IsOn && LocoTelem.RouteMode[locomotive])
+                {
+                    RouteManager.logger.LogToDebug(String.Format("Loco {0} route mode is now paused!", locomotive.DisplayName));
+                    LocoTelem.RouteModePaused[locomotive] = true;
+                }
+                else
+                {
+                    RouteManager.logger.LogToDebug(String.Format("Loco {0} route mode is now unpaused!", locomotive.DisplayName));
+                    LocoTelem.RouteModePaused[locomotive] = false;
+                }
+            }
+            else
+            {
+                RouteManager.logger.LogToDebug(String.Format("Loco {0} route mode not enabled. Will not pause!", locomotive.DisplayName));
+                LocoTelem.RouteModePaused[locomotive] = false;
+            }
+
+            OnRouteModeChanged?.Invoke(locomotive);
         }
 
 

@@ -109,10 +109,15 @@ namespace RouteManager.v2.core
             //Loop through transit logic
             while (LocoTelem.TransitMode[locomotive])
             {
-
                 if (needToExitCoroutine(locomotive))
                 {
                     yield break;
+                }
+
+                //Refueling
+                while (LocoTelem.RouteModePaused[locomotive])
+                {
+                    yield return null;
                 }
 
 
@@ -305,9 +310,16 @@ namespace RouteManager.v2.core
             //Loop through station logic while loco is not in transit mode...
             while (!LocoTelem.TransitMode[locomotive])
             {
+
                 if (needToExitCoroutine(locomotive))
                 {
                     yield break;
+                }
+
+                //Refueling
+                while (LocoTelem.RouteModePaused[locomotive])
+                {
+                    yield return null;
                 }
 
                 AutoEngineerPersistence persistence = new AutoEngineerPersistence(locomotive.KeyValueObject);
@@ -449,15 +461,6 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug("ENTERED FUNCTION: onApproachLongDist", LogLevel.Trace);
 
             RouteManager.logger.LogToDebug(String.Format("Locomotive {0} triggered Long Approach.", locomotive.DisplayName), LogLevel.Verbose);
-
-            // Appears that this will not work through abstraction outside of the autoengineer enumerator.
-            ////If yet to whistle on approach, then whistle
-            //if (!LocoTelem.approachWhistleSounded[locomotive])
-            //{
-            //    RouteManager.logger.LogToDebug(String.Format("Locomotive {0} activating Appproach Whistle", locomotive.DisplayName), LogLevel.Verbose);
-            //    TrainManager.standardWhistle(locomotive);
-            //    LocoTelem.approachWhistleSounded[locomotive] = true;
-            //}
 
             RouteManager.logger.LogToDebug(String.Format("Locomotive {0} on Long Approach: Speed limited to {1}", locomotive.DisplayName, LocoTelem.RMMaxSpeed[locomotive]), LogLevel.Debug);
 
