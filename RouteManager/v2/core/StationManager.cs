@@ -294,7 +294,7 @@ namespace RouteManager.v2.core
                     //Workaround for Cochran 
                     if (station != null)
                     {
-                        if (station.identifier == "alarka")
+                        if (station.identifier == "alarka" || LocoTelem.previousDestinations[locomotive].Contains(stringIdentToStation("alarka")))
                             station = alarkaJunctionWorkAround(locomotive, station);
                     }
 
@@ -317,7 +317,7 @@ namespace RouteManager.v2.core
                     //Workaround for Cochran 
                     if (station != null)
                     {
-                        if (station.identifier == "alarka")
+                        if (station.identifier == "alarka" || LocoTelem.previousDestinations[locomotive].Contains(stringIdentToStation("alarka")))
                             station = alarkaJunctionWorkAround(locomotive, station);
                     }
 
@@ -339,7 +339,7 @@ namespace RouteManager.v2.core
                         //Workaround for Cochran 
                         if (station != null)
                         {
-                            if (station.identifier == "alarka" )
+                            if (station.identifier == "alarka" || LocoTelem.previousDestinations[locomotive].Contains(stringIdentToStation("alarka")))
                                 station = alarkaJunctionWorkAround(locomotive, station);
                         }
 
@@ -358,7 +358,7 @@ namespace RouteManager.v2.core
                         //Workaround for Cochran 
                         if (station != null)
                         {
-                            if (station.identifier == "alarka")
+                            if (station.identifier == "alarka" || LocoTelem.previousDestinations[locomotive].Contains(stringIdentToStation("alarka")))
                                 station = alarkaJunctionWorkAround(locomotive, station);
                         }
 

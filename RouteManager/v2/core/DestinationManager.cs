@@ -39,7 +39,7 @@ namespace RouteManager.v2.core
 
         public static float GetDistanceToStation(Car locomotive, PassengerStop station)
         {
-            RouteManager.logger.LogToDebug(String.Format("Loco: {0} getting distance to destination", locomotive.DisplayName));
+            RouteManager.logger.LogToDebug(String.Format("Loco: {0} getting distance to destination", locomotive.DisplayName),LogLevel.Trace);
 
             Graph trackGraph = Graph.Shared;
             float shortestDistance = float.MaxValue;
