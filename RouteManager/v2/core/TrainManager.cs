@@ -233,7 +233,7 @@ namespace RouteManager.v2.core
 
             foreach (string identifier in relevantStations)
             {
-                RouteManager.logger.LogToDebug(String.Format("relevantStations contains {0}", identifier), Logger.logLevel.Verbose);
+                RouteManager.logger.LogToDebug(String.Format("relevantStations contains {0}", identifier), LogLevel.Verbose);
             }
 
             //Filter to include only selected stations
@@ -243,7 +243,7 @@ namespace RouteManager.v2.core
 
             foreach (string identifier in selectedStationIdentifiers)
             {
-                RouteManager.logger.LogToDebug(String.Format("selectedStationIdentifiers contains {0}", identifier), Logger.logLevel.Verbose);
+                RouteManager.logger.LogToDebug(String.Format("selectedStationIdentifiers contains {0}", identifier), LogLevel.Verbose);
             }
 
             HashSet<string> filteredStations = relevantStations
@@ -252,10 +252,10 @@ namespace RouteManager.v2.core
 
             foreach (string identifier in filteredStations)
             {
-                RouteManager.logger.LogToDebug(String.Format("filteredStations contains {0}", identifier), Logger.logLevel.Verbose);
+                RouteManager.logger.LogToDebug(String.Format("filteredStations contains {0}", identifier), LogLevel.Verbose);
             }
 
-            RouteManager.logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), Logger.logLevel.Debug);
+            RouteManager.logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), LogLevel.Debug);
 
             // Apply the filtered stations to each coach
             foreach (Car coach in locomotive.EnumerateCoupled().Where(car => car.Archetype == CarArchetype.Coach))
@@ -263,7 +263,7 @@ namespace RouteManager.v2.core
 
                 foreach (string identifier in filteredStations)
                 {
-                    RouteManager.logger.LogToDebug(String.Format("    Applying {0} to car {1}", identifier, coach.DisplayName), Logger.logLevel.Verbose);
+                    RouteManager.logger.LogToDebug(String.Format("    Applying {0} to car {1}", identifier, coach.DisplayName), LogLevel.Verbose);
                 }
 
                 StateManager.ApplyLocal(new SetPassengerDestinations(coach.id, filteredStations.ToList()));
