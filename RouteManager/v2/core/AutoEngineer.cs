@@ -476,7 +476,7 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug(String.Format("Locomotive {0} triggered Medium Approach.", locomotive.DisplayName), LogLevel.Verbose);
 
             //Gradually reduce maximum speed the closer to the platform we get. 
-            float calculatedSpeed = distanceToStation / 8f;
+            float calculatedSpeed = distanceToStation / 10f;
 
             //Prevent overspeed.
             if (calculatedSpeed > LocoTelem.RMMaxSpeed[locomotive])

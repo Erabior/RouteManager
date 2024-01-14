@@ -339,7 +339,7 @@ namespace RouteManager.v2.core
                         //Workaround for Cochran 
                         if (station != null)
                         {
-                            if (station.identifier == "alarka")
+                            if (station.identifier == "alarka" )
                                 station = alarkaJunctionWorkAround(locomotive, station);
                         }
 
@@ -381,7 +381,9 @@ namespace RouteManager.v2.core
                 .Distinct()
                 .ToList();
 
-            if (selectedStationIdentifiers.Contains("cochran") && selectedStationIdentifiers.Contains("alarka"))
+            if (selectedStationIdentifiers.Contains("cochran") && 
+                selectedStationIdentifiers.Contains("alarka") &&
+                !LocoTelem.previousDestinations[locomotive].Contains(stringIdentToStation("cochran")))
                 return LocoTelem.SelectedStations[locomotive][LocoTelem.SelectedStations[locomotive].FindIndex(p => p.identifier == "cochran")];
             else
                 return nextStation;
