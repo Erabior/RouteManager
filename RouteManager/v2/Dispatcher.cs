@@ -25,6 +25,8 @@ namespace RouteManager.v2
             //Log status
             RouteManager.logger.LogToDebug("--------------------------------------------------------------------------------------------------");
             RouteManager.logger.LogToDebug("Dispatcher Initializing");
+            RouteManager.logger.LogToDebug("    Dispatcher Version".PadRight(30) + RouteManager.getModVersion());
+            RouteManager.logger.LogToDebug("    Dispatcher Mod Manager".PadRight(30) + RouteManager.getModLoader());
             RouteManager.logger.LogToDebug("--------------------------------------------------------------------------------------------------");
 
             //Hook the map unload event to gracefully stop all instances prior to map unload. 

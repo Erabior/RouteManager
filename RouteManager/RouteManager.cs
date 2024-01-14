@@ -17,6 +17,8 @@ namespace RouteManager
         public const string modName = "Dispatcher";
         public const string modVersion = AppVersion.Version;
 
+        public static string modLoader;
+
         public static IRMLogger logger;
         public static IRMSettingsManager settingsManager;
         public static SettingsData Settings = new SettingsData();
@@ -27,10 +29,12 @@ namespace RouteManager
         {
             harmony.PatchAll();
         }
-        public RouteManager(IRMLogger loggerInterface, IRMSettingsManager settingsInterface)
+
+        public RouteManager(IRMLogger loggerInterface, IRMSettingsManager settingsInterface,string callingModLoader)
         {
             logger = loggerInterface;
             settingsManager = settingsInterface;
+            modLoader = callingModLoader;
         }
 
 
@@ -50,6 +54,12 @@ namespace RouteManager
         public static string getModVersion()
         {
             return modVersion;
+        }
+
+        //Accessor for getting current mod information
+        public static string getModLoader()
+        {
+            return modLoader;
         }
     }
 

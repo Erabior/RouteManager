@@ -229,6 +229,10 @@ namespace RouteManager.v2.core
 
             PassengerStop nextStop = calculateNextStation(orderedSelectedStations, LocoTelem.SelectedStations[locomotive], currentStation, locomotive);
 
+            //Workaround for Cochran 
+            if(nextStop.identifier == "alarka")
+                nextStop = alarkaJunctionWorkAround(locomotive, nextStop);
+
             RouteManager.logger.LogToDebug(String.Format("Loco {0} next stop determined to be: {1}", locomotive.DisplayName , nextStop.identifier), LogLevel.Debug);
 
             return nextStop;
@@ -342,6 +346,21 @@ namespace RouteManager.v2.core
             //Worst case, start from the beginning...
             RouteManager.logger.LogToDebug(String.Format("Loco {0} faild to find next station ... Defaulting to first stop", locomotive.DisplayName), LogLevel.Verbose);
             return selectedPassengerStops.First();
+        }
+
+        //Overal logic needs adjusted to handle this better long term but to get V2 ready we will have to live
+        //with a generic work around until we can revisit this after v2's launch.
+        private static PassengerStop alarkaJunctionWorkAround(Car locomotive, PassengerStop nextStation)
+        {
+            List<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
+                .Select(passengerStop => passengerStop.identifier)
+                .Distinct()
+                .ToList();
+
+            if (selectedStationIdentifiers.Contains("cochran") && selectedStationIdentifiers.Contains("alarka"))
+                return LocoTelem.SelectedStations[locomotive][LocoTelem.SelectedStations[locomotive].FindIndex(p => p.identifier == "cochran")];
+            else
+                return nextStation;
         }
 
         private static void updateLocoTelemEndOfLine(Car locomotive, bool direction)

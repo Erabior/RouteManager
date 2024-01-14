@@ -19,7 +19,7 @@ namespace RouteManager.BepInEx
         void Awake()
         {
             //Create a new instance of RouteManager and pass in a BepInExLogger instance
-            RMInstance = new RouteManager(logger,settingsManager);
+            RMInstance = new RouteManager(logger,settingsManager, "Bepis Injector Extensible");
 
             //Get the settings object so we can change settings
             settingsData = RouteManager.Settings;

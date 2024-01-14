@@ -115,11 +115,9 @@ namespace RouteManager.v2.core
                     yield break;
                 }
 
-                //Potential fix for edge case where loco reverses directions multiple times due to a race condition
-                if (Math.Abs(olddist - distanceToStation) > 5)
-                {
-                    olddist = distanceToStation;
-                }
+
+                olddist = distanceToStation;
+
 
                 //Getting close to a station update some values...
                 //Cheeky optimization to reduce excessive logging...
