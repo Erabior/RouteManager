@@ -4,7 +4,7 @@ namespace RouteManager.v2.UI
 {
     public class ModInterface : MonoBehaviour
     {
-        CoreInterface coreUserInterface;
+        testInterface coreUserInterface;
 
         void Awake()
         {
@@ -14,7 +14,8 @@ namespace RouteManager.v2.UI
             RouteManager.logger.LogToDebug("Dispatcher UI Initializing");
             RouteManager.logger.LogToDebug("--------------------------------------------------------------------------------------------------");
 
-            coreUserInterface = new CoreInterface();
+            coreUserInterface = new testInterface();
+            
 
             //Log status
             RouteManager.logger.LogToDebug("--------------------------------------------------------------------------------------------------");

@@ -8,11 +8,11 @@ using UnityEngine;
 
 namespace RouteManager.v2.UI
 {
-    public class CoreInterface : MonoBehaviour
+    public class testInterface : MonoBehaviour
     {
         GameObject mainUIPanel;
 
-        public CoreInterface()
+        public testInterface()
         {
 
             //Create Canvas to Contain RRE Elements

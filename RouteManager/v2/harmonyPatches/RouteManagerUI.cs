@@ -13,6 +13,7 @@ using Model;
 using RouteManager.v2.core;
 using RouteManager.v2.dataStructures;
 using RouteManager.v2.Logging;
+using RouteManager.v2.UI;
 
 
 namespace RouteManager.v2.harmonyPatches
@@ -35,6 +36,8 @@ namespace RouteManager.v2.harmonyPatches
             RectTransform uiPanel = UnityEngine.Object.FindFirstObjectByType<CarInspector>().GetComponent<RectTransform>();
             RouteManager.logger.LogToDebug("Ui Panel Size was:" + uiPanel.sizeDelta.ToString(), LogLevel.Verbose);
             uiPanel.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 500);
+
+            bool placeHolder = false;
 
             /**********************************************************************************
             *
@@ -222,41 +225,50 @@ namespace RouteManager.v2.harmonyPatches
                     };
                 });
 
-                //Define the list to bind to the vertical scroll bar.
-                var stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
-                var orderedStops = new string[] { "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka", "almond", "nantahala", "topton", "rhodo", "andrews" }
-                                   .Select(id => stopsLookup[id])
-                                   .Where(ps => !ps.ProgressionDisabled)
-                                   .ToList();
-
-                // Create a scrollable view to list the stations
-                builder.VScrollView(delegate (UIPanelBuilder builder)
+                if (RouteManager.Settings.experimentalUI)
                 {
-                    foreach (PassengerStop stop in orderedStops)
+                    builder.AddButtonSelectable("Define Stations", placeHolder, delegate
                     {
-                        builder.HStack(delegate (UIPanelBuilder hstack)
-                        {
+                        routeManagerWindow.Show(car);
+                    });
+                }
+                else
+                {
+                    //Define the list to bind to the vertical scroll bar.
+                    var stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
+                    var orderedStops = new string[] { "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka", "almond", "nantahala", "topton", "rhodo", "andrews" }
+                                       .Select(id => stopsLookup[id])
+                                       .Where(ps => !ps.ProgressionDisabled)
+                                       .ToList();
 
-                            // Add a checkbox for each station
-                            hstack.AddToggle(() => DestinationManager.IsStationSelected(stop, car), isOn =>
+                    // Create a scrollable view to list the stations
+                    builder.VScrollView(delegate (UIPanelBuilder builder)
+                    {
+                        foreach (PassengerStop stop in orderedStops)
+                        {
+                            builder.HStack(delegate (UIPanelBuilder hstack)
                             {
 
-                                DestinationManager.SetStationSelected(stop, car, isOn);
-                                builder.Rebuild();
+                                // Add a checkbox for each station
+                                hstack.AddToggle(() => DestinationManager.IsStationSelected(stop, car), isOn =>
+                                {
 
-                                // Update when checkbox state changes
-                                UpdateManagedTrainsSelectedStations(car);
+                                    DestinationManager.SetStationSelected(stop, car, isOn);
+                                    builder.Rebuild();
 
-                                if (LocoTelem.RouteMode[car])
-                                    TrainManager.CopyStationsFromLocoToCoaches(car);
+                                    // Update when checkbox state changes
+                                    UpdateManagedTrainsSelectedStations(car);
+
+                                    if (LocoTelem.RouteMode[car])
+                                        TrainManager.CopyStationsFromLocoToCoaches(car);
+                                });
+
+                                // Add a label next to the checkbox
+                                hstack.AddLabel(stop.name);
                             });
-
-                            // Add a label next to the checkbox
-                            hstack.AddLabel(stop.name);
-                        });
-                    }
-                });
-
+                        }
+                    });
+                }
 
                 if (RouteManager.Settings.waitUntilFull && LocoTelem.RouteMode[car])
                 {

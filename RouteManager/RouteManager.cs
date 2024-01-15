@@ -87,7 +87,11 @@ namespace RouteManager
                     RouteManager.logger.LogToDebug($"Dispatcher Added", LogLevel.Info);
                     //Enable Experimental UI
                     if (RouteManager.Settings.experimentalUI)
-                        erabiorDispatcher.AddComponent<ModInterface>();
+                    {
+                        //erabiorDispatcher.AddComponent<ModInterface>();
+                        erabiorDispatcher.AddComponent<routeManagerWindow>();
+                    }
+
                 }
             }
 
