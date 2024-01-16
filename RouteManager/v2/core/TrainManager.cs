@@ -366,11 +366,12 @@ namespace RouteManager.v2.core
                 }
                 else
                 {
-                    RouteManager.logger.LogToDebug(String.Format("Loco {0} route mode is now unpaused!", locomotive.DisplayName));
-                    LocoTelem.RouteModePaused[locomotive] = false;
 
                     //Restore data if possible
-                    StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int) LocoTelem.RMMaxSpeed[locomotive], null));
+                    StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+
+                    RouteManager.logger.LogToDebug(String.Format("Loco {0} route mode is now unpaused!", locomotive.DisplayName));
+                    LocoTelem.RouteModePaused[locomotive] = false;
                 }
             }
             else
