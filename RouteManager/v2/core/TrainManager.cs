@@ -345,7 +345,7 @@ namespace RouteManager.v2.core
             else
             {
                 // Handle the case where the key does not exist, for example, by logging an error or initializing the key
-                RouteManager.logger.LogToError($"Paused Mode dictionary does not contain key: {locomotive}");
+                RouteManager.logger.LogToDebug($"Paused Mode dictionary does not contain key: {locomotive}. Setting it now.",LogLevel.Warning);
 
                 // Optionally initialize the key with a default value
                 LocoTelem.RouteModePaused[locomotive] = false; // Default value
@@ -368,6 +368,9 @@ namespace RouteManager.v2.core
                 {
                     RouteManager.logger.LogToDebug(String.Format("Loco {0} route mode is now unpaused!", locomotive.DisplayName));
                     LocoTelem.RouteModePaused[locomotive] = false;
+
+                    //Restore data if possible
+                    StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingEastWard[locomotive], (int) LocoTelem.RMMaxSpeed[locomotive], null));
                 }
             }
             else

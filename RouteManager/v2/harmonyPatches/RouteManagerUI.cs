@@ -150,7 +150,7 @@ namespace RouteManager.v2.harmonyPatches
                             bool? forward3 = false;
 
                             //IF STATEMENT wrapper for Station Management Logic
-                            if (!LocoTelem.RouteMode[car])
+                            if (!LocoTelem.RouteMode[car] || LocoTelem.RouteModePaused[car])
                             {
                                 //Original Code
                                 SetOrdersValue(null, forward3, null, null);
@@ -162,7 +162,7 @@ namespace RouteManager.v2.harmonyPatches
                             bool? forward2 = true;
 
                             //IF STATEMENT wrapper for Station Management Logic
-                            if (!LocoTelem.RouteMode[car])
+                            if (!LocoTelem.RouteMode[car] || LocoTelem.RouteModePaused[car])
                             {
                                 //Original Code
                                 SetOrdersValue(null, forward2, null, null);
@@ -213,7 +213,7 @@ namespace RouteManager.v2.harmonyPatches
                     {
                         TrainManager.PauseRouteMode(isOn, car);
                     });
-                    hstack.AddLabel("Pause for Refueling");
+                    hstack.AddLabel("Pause for Refuel");
 
                     // Subscribe to the OnRouteModeChanged event
                     TrainManager.OnRouteModeChanged += (changedCar) =>
