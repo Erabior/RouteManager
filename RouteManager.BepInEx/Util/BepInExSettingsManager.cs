@@ -2,9 +2,10 @@
 using RouteManager.v2.dataStructures;
 using RouteManager.v2.helpers;
 using RouteManager.v2.Logging;
-
+using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace RouteManager.v2.core
 {
@@ -39,6 +40,7 @@ namespace RouteManager.v2.core
 
             float outValueFloat = 0;
             bool outValueBool = false;
+            CultureInfo culture = CultureInfo.InvariantCulture;
 
             //Set Log Level
             RMBepInEx.logger.currentLogLevel = Utilities.ParseEnum<LogLevel>(IniFile.Read("LogLevel", "Core"));
@@ -50,21 +52,21 @@ namespace RouteManager.v2.core
             }
 
             //Set Min Water Level
-            if (float.TryParse(IniFile.Read("WaterLevel", "Alerts"), out outValueFloat))
+            if (float.TryParse(IniFile.Read("WaterLevel", "Alerts"), NumberStyles.Number , culture, out outValueFloat))
             {
                 RMBepInEx.logger.LogToDebug("WaterLevel parsed as: " + outValueFloat, LogLevel.Verbose);
                 RMBepInEx.settingsData.minWaterQuantity = outValueFloat >= 0 ? outValueFloat : 500f;
             }
 
             //Set Min Coal Level
-            if (float.TryParse(IniFile.Read("CoalLevel", "Alerts"), out outValueFloat))
+            if (float.TryParse(IniFile.Read("CoalLevel", "Alerts"), NumberStyles.Number, culture, out outValueFloat))
             {
                 RMBepInEx.logger.LogToDebug("CoalLevel parsed as: " + outValueFloat, LogLevel.Verbose);
                 RMBepInEx.settingsData.minCoalQuantity = outValueFloat >= 0 ? outValueFloat : 0.5f;
             }
 
             //Set Min Diesel Level
-            if (float.TryParse(IniFile.Read("DieselLevel", "Alerts"), out outValueFloat))
+            if (float.TryParse(IniFile.Read("DieselLevel", "Alerts"), NumberStyles.Number, culture, out outValueFloat))
             {
                 RMBepInEx.logger.LogToDebug("DieselLevel parsed as: " + outValueFloat, LogLevel.Verbose);
                 RMBepInEx.settingsData.minDieselQuantity = outValueFloat >= 0 ? outValueFloat : 100f;
@@ -106,6 +108,25 @@ namespace RouteManager.v2.core
             //Trace Logging
             RMBepInEx.logger.LogToDebug("EXITING FUNCTION: LoadRouteManagerSettings", LogLevel.Trace);
             return true;
+        }
+
+        //Groundwork for culture handling
+        private CultureInfo determineCultureInfo(string input)
+        {
+            CultureInfo languageFormat = CultureInfo.InvariantCulture;
+
+            // if the first regex matches, the number string is in us culture
+            if (Regex.IsMatch(input, @"^(:?[\d,]+\.)*\d+$"))
+            {
+                languageFormat = new CultureInfo("en-US");
+            }
+            // if the second regex matches, the number string is in de culture
+            else if (Regex.IsMatch(input, @"^(:?[\d.]+,)*\d+$"))
+            {
+                languageFormat = new CultureInfo("de-DE");
+            }
+
+            return languageFormat;
         }
 
         public bool Apply()
