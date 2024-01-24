@@ -32,6 +32,12 @@ public class UMMSettings : ModSettings, IDrawable
     [Draw("Alert on Departure", Tooltip = "Show an alert when the train departs a station")]
     public bool showDepartureMessage = true;
 
+    [Draw("Enable Console TimeStamps", Tooltip = "Enables timestamps for Route Manager messages printed to console.")]
+    public bool showTimestamp = false;
+
+    [Draw("Enable Console DayStamps", Tooltip = "Enables daystamps for Route Manager messages printed to console.")]
+    public bool showDaystamp = false;
+
     [Space(10)]
 
     [Header("Debugging & Development")]
@@ -40,12 +46,6 @@ public class UMMSettings : ModSettings, IDrawable
    
     [Draw("Logging Level", Tooltip = "Sets verbosity of event logging")]
     public LogLevel logLevel = LogLevel.Debug;
-
-    [Draw("Enable Console TimeStamps", Tooltip = "Enables timestamps for Route Manager messages printed to console.")]
-    public bool showTimestamp = false;
-
-    [Draw("Enable Console DayStamps", Tooltip = "Enables daystamps for Route Manager messages printed to console.")]
-    public bool showDaystamp = false;
 
     public void Draw(ModEntry modEntry)
     {
