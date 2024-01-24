@@ -346,7 +346,11 @@ namespace RouteManager.v2.core
 
                 //Prior to loading, if CURRENT DESTINATION is the end of the line, then lets reset the coaches
                 if (StationManager.currentlyAtLastStation(locomotive))
+                {
+                    RouteManager.logger.LogToDebug(String.Format("Locomotive {0} is at last station stop. Copy stations to cars for return trip",locomotive.DisplayName));
+
                     TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+                }
 
                 //Now that train is stopped, perform station ops and check fuel quantities before departure.
                 if (wasCurrentStopServed(locomotive) && checkFuelQuantities(locomotive))
