@@ -1,7 +1,32 @@
 
 
+
 # RouteManager
-This mod is VERY barebones. The purpose of this mod is to allow people to automate passenger service. This mod does not automate the throwing of switches for the passenger train. You must ensure the switches are thrown properly for the passenger train for the time being. The mod currently does not support automating freight.  More features will be added in the future to expand the capabilities of this mod, but for right now this mod only automates passenger service.
+This mod is automates passenger service only. This mod has no control of switches and all switches must therefore be prealigned for the correct path. 
+
+**Core Features**
+
+* Pilots consist from station to station stopping at each selected stop.
+* Configurable alerts to low consumables
+    * Coal
+    * Water
+    * Fuel
+* Automatic Bell and Whistle on station approach
+* Support for BepLnEx and Unity Mod Manger
+
+***
+
+**V2 Improvements**
+
+* Updated UI
+    * Expanded Car Inspector window for easier scrolling of the station list.
+* Configurable Max Speed
+    * Speed slider now applies while in route mode to control the maximum speed.
+* Option to pause control for refueling
+	* Vastly improved refueling support with the new pause feature.
+* Improved Station Loading / Unloading
+* Improved Station routing 
+    * Cochran / Alarka Depo are known to still be problematic. Further improvement coming in 2.1
 
 ***
 
@@ -9,9 +34,7 @@ This mod is VERY barebones. The purpose of this mod is to allow people to automa
 
 https://github.com/Erabior/RouteManager/releases/latest
 
-***
-
-**Installation:**
+# Installation
 
 There are two methods of installation, depending on the mod manager you use:
 
@@ -61,13 +84,11 @@ There are two methods of installation, depending on the mod manager you use:
 
 3. Select 'Road' mode
 
-4. Select all of the stations you want your train to stop at. Note: Although you may only see a single station, it is indeed a scroll-able list. (Hopefully will be addressed i a future release.)
+4. Select all of the stations you want your train to stop at.
 
 5. Click 'Enable Route Mode'
 
-***
-
-**Configuration:**
+# Configuration
 
 **BepInEx Users**
 
@@ -85,31 +106,22 @@ The mod contains a .ini file that allows for some customization of the mod's beh
 | Alerts | ShowDepartureMessage|  Console alerts on train departure from station  | Bool | False | True / False
 | Dev | NewInterface  | Allows access do DEV features | Bool | False |
 
+***
+
 **Unity Mod Manager Users**
 
 Configuration can be done via the in-game Unity Mod Manager interface.
 1. Open the in-game interface (default shortcut is Ctrl-F10 if you have closed the window)
 2. Click the options icon next to 'Dispatcher'
-![image](https://i.imgur.com/hWr019p.png)
+![image](https://i.imgur.com/2Vw1cjW.png)
 
 Settings changes take effect immediately, but will only save for next time if the 'Save' button at the bottom of the window is clicked.
-
+***
 **Notes:**
 
 - Dev features are unsupported and listed only for completeness of documentation.
 
-***
-
-**Notes:**
-
-1. The Route Manager Logic will take over and stop your train at every station you have selected—no need to worry about selecting passengers in the coaches either. The Route Manager will take care of that as well!
-
-2. ~~Make sure to keep track of the coal and water remaining in your locomotive as there is currently no check for low fuel/water~~
-Basic alerting of low consumables has been implemented as of v1.0.2.0
-
-***
-
-**Building From Source:**
+# Building From Source
 
 Note: This assumes you have some fundamental understanding of how Github & visual studio work and so is intended more as a quick start than a full guide.
  1. Download and install Visual Studio community edition. Not visual Studio Code.
