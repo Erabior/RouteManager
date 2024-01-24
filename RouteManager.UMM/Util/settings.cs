@@ -24,11 +24,13 @@ public class UMMSettings : ModSettings, IDrawable
 
     [Header("Behaviour")]
     [Draw("Wait Until Full", Tooltip = "Wait at the station until all passenger carriages are full")]
-    public static bool waitUntilFull = false;
+    public bool waitUntilFull = false;
+
     [Draw("Alert on Arrival", Tooltip = "Show an alert when the train arrives at a station")]
-    public static bool showArrivalMessage = true;
+    public bool showArrivalMessage = true;
+
     [Draw("Alert on Departure", Tooltip = "Show an alert when the train departs a station")]
-    public static bool showDepartureMessage = true;
+    public bool showDepartureMessage = true;
 
     [Space(10)]
 
@@ -39,8 +41,10 @@ public class UMMSettings : ModSettings, IDrawable
     [Draw("Logging Level", Tooltip = "Sets verbosity of event logging")]
     public LogLevel logLevel = LogLevel.Debug;
 
+    [Draw("Enable Console TimeStamps", Tooltip = "Enables timestamps for Route Manager messages printed to console.")]
     public bool showTimestamp = false;
 
+    [Draw("Enable Console DayStamps", Tooltip = "Enables daystamps for Route Manager messages printed to console.")]
     public bool showDaystamp = false;
 
     public void Draw(ModEntry modEntry)
