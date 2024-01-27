@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using RouteManager.v2.Logging;
+using Network;
 
 namespace RouteManager.v2.core
 {
@@ -386,8 +387,12 @@ namespace RouteManager.v2.core
                         //Bugfix: message would previously be generated even when departure was not cleared. 
 
 
-                        if (RouteManager.Settings.showDepartureMessage)
-                            RouteManager.logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), LocoTelem.previousDestinations[locomotive].Last().DisplayName.ToUpper(), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
+                        if (RouteManager.Settings.showDepartureMessage) { 
+                            string message = String.Format("Dispatcher: {0} has departed {1} for {2}", Hyperlink.To(locomotive), LocoTelem.previousDestinations[locomotive].Last().DisplayName.ToUpper(), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper());
+                            //RouteManager.logger.LogToConsole(message);
+                            Multiplayer.Broadcast(message);
+                        }
+
                     }
                 }
                 else
@@ -399,18 +404,27 @@ namespace RouteManager.v2.core
                         //Generate warning for each type of low fuel.
                         foreach (KeyValuePair<string, float> type in LocoTelem.lowFuelQuantities[locomotive])
                         {
+                            string message=null;
+
                             if (type.Key == "coal")
                             {
-                                RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is low on coal and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
+                                message = String.Format("Locomotive {0} is low on coal and is holding at {1}", Hyperlink.To(locomotive), holdLocationName);
+                                
                             }
                             if (type.Key == "water")
                             {
-                                RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is low on water and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
+                                message = String.Format("Locomotive {0} is low on water and is holding at {1}", Hyperlink.To(locomotive), holdLocationName);
                             }
 
                             if (type.Key == "diesel-fuel")
                             {
-                                RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is low on diesel and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
+                                message = String.Format("Locomotive {0} is low on diesel and is holding at {1}", Hyperlink.To(locomotive), holdLocationName);
+                            }
+
+                            if (message != null)
+                            {
+                                //RouteManager.logger.LogToConsole($"Dispatcher: {message}");
+                                Multiplayer.Broadcast($"Dispatcher: {message}");
                             }
                         }
                         yield return new WaitForSeconds(30);
@@ -572,9 +586,11 @@ namespace RouteManager.v2.core
                 //Disable transit mode.
                 LocoTelem.TransitMode[locomotive] = false;
 
-                if (RouteManager.Settings.showArrivalMessage)
-                    RouteManager.logger.LogToConsole(String.Format("{0} has arrived at {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
-
+                if (RouteManager.Settings.showArrivalMessage) { 
+                    string message = String.Format("Dispatcher: {0} has arrived at {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper());
+                    //RouteManager.logger.LogToConsole(message);
+                    Multiplayer.Broadcast(message);
+                }
             }
 
 
@@ -611,7 +627,11 @@ namespace RouteManager.v2.core
                     //Only notify if not configured to wait until full
 
                     if (!RouteManager.Settings.waitUntilFull)
-                        RouteManager.logger.LogToConsole(String.Format("Locomotive {0} consist is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName));
+                    {
+                        string message = String.Format("Dispatcher: Locomotive {0} consist is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName);
+                        //RouteManager.logger.LogToConsole(message);
+                        Multiplayer.Broadcast(message);
+                    }
 
                     return true;
                 }
@@ -741,8 +761,12 @@ namespace RouteManager.v2.core
                             //Only if our current dest = our last visited, consider the coroutine terminatable.
                             if (LocoTelem.currentDestination[locomotive] == LocoTelem.previousDestinations[locomotive].Last())
                             {
-                                RouteManager.logger.LogToConsole(String.Format("{0} has no more stations. Halting Control.", Hyperlink.To(locomotive)));
+                                string message = String.Format("Dispatcher: {0} has no more stations. Halting Control.", Hyperlink.To(locomotive));
+                                //RouteManager.logger.LogToConsole(message);
+                                Multiplayer.Broadcast(message);
+
                                 TrainManager.SetRouteModeEnabled(false, locomotive);
+
                                 return true;
                             }
                         }

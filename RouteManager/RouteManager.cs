@@ -89,7 +89,7 @@ namespace RouteManager
                     if (RouteManager.Settings.experimentalUI)
                     {
                         //erabiorDispatcher.AddComponent<ModInterface>();
-                        erabiorDispatcher.AddComponent<routeManagerWindow>();
+                        //erabiorDispatcher.AddComponent<routeManagerWindow>();
                     }
 
                 }

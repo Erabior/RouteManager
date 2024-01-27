@@ -41,6 +41,7 @@ namespace RouteManager.UMM
             }
             catch (Exception ex)
             {
+                RouteManager.logger.LogToDebug(ex.Message);
                 return false;
             }
         }

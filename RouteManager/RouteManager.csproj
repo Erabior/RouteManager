@@ -122,6 +122,7 @@
     <Compile Include="v2\dataStructures\StationMapData.cs" />
     <Compile Include="v2\dataStructures\StationInformation.cs" />
     <Compile Include="v2\Dispatcher.cs" />
+    <Compile Include="v2\harmonyPatches\ProgrammaticWindowCreatorPatch.cs" />
     <Compile Include="v2\harmonyPatches\RouteManagerUI.cs" />
     <Compile Include="v2\helpers\DebugFunctions.cs" />
     <Compile Include="v2\helpers\IniFile.cs" />
