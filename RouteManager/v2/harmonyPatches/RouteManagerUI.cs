@@ -14,6 +14,7 @@ using RouteManager.v2.core;
 using RouteManager.v2.dataStructures;
 using RouteManager.v2.Logging;
 using RouteManager.v2.UI;
+using UI.Common;
 
 
 namespace RouteManager.v2.harmonyPatches
@@ -36,6 +37,7 @@ namespace RouteManager.v2.harmonyPatches
             RectTransform uiPanel = UnityEngine.Object.FindFirstObjectByType<CarInspector>().GetComponent<RectTransform>();
             RouteManager.logger.LogToDebug("Ui Panel Size was:" + uiPanel.sizeDelta.ToString(), LogLevel.Verbose);
             uiPanel.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 500);
+            UnityEngine.Object.FindFirstObjectByType<CarInspector>().GetComponent<Window>().SetPosition(Window.Position.LowerRight); //fix hanging off the screen
 
             bool placeHolder = false;
 
