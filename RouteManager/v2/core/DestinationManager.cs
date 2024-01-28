@@ -19,10 +19,10 @@ namespace RouteManager.v2.core
         };
 
         //Update the list of stations to stop at.
-        public static void SetSelectedStations(Car car, List<PassengerStop> selectedStops)
+        public static void SetStopStations(Car car, List<PassengerStop> selectedStops)
         {
             //Trace Logging
-            RouteManager.logger.LogToDebug("ENTERED FUNCTION: SetSelectedStations", LogLevel.Trace);
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: SetStopStations", LogLevel.Trace);
 
             //Something went wrong
             if (car == null)
@@ -31,10 +31,49 @@ namespace RouteManager.v2.core
             }
 
             //Uppdate consists's station list
-            LocoTelem.SelectedStations[car] = selectedStops;
+            LocoTelem.stopStations[car] = selectedStops;
 
             //Trace Logging
-            RouteManager.logger.LogToDebug("EXITING FUNCTION: SetSelectedStations", LogLevel.Trace);
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: SetStopStations", LogLevel.Trace);
+        }
+
+        //Update the list of passengers to board.
+        public static void SetPickupStations(Car car, List<PassengerStop> selectedPickups)
+        {
+            //Trace Logging
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: SetPickupStations", LogLevel.Trace);
+
+            //Something went wrong
+            if (car == null)
+            {
+                throw new ArgumentNullException(nameof(car));
+            }
+
+            //Update consists's station list
+            LocoTelem.pickupStations[car] = selectedPickups;
+
+            //Trace Logging
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: SetPickupStations", LogLevel.Trace);
+        }
+
+        
+        //Update the list of passengers to board.
+        public static void SetTransferStations(Car car,Dictionary<PassengerStop, PassengerStop> selectedTransfers)
+        {
+            //Trace Logging
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: SetTransferStations", LogLevel.Trace);
+
+            //Something went wrong
+            if (car == null)
+            {
+                throw new ArgumentNullException(nameof(car));
+            }
+
+            //Update consists's station list
+            LocoTelem.transferStations[car] = selectedTransfers;
+
+            //Trace Logging
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: SetTransferStations", LogLevel.Trace);
         }
 
         public static float GetDistanceToStation(Car locomotive, PassengerStop station)
@@ -108,29 +147,85 @@ namespace RouteManager.v2.core
 
 
         //Determine if station is selected
-        public static bool IsStationSelected(PassengerStop stop, Car locomotive)
+        public static bool IsStopStationSelected(PassengerStop stop, Car locomotive)
         {
             //Trace Function
-            //RouteManager.logger.LogToDebug("ENTERED FUNCTION: IsStationSelected", LogLevel.Trace);
+            //RouteManager.logger.LogToDebug("ENTERED FUNCTION: IsStopStationSelected", LogLevel.Trace);
 
-            bool result = LocoTelem.UIStationSelections[locomotive].TryGetValue(stop.identifier, out bool isSelected) && isSelected;
+            bool result = LocoTelem.UIStopStationSelections[locomotive].TryGetValue(stop.identifier, out bool isSelected) && isSelected;
 
             //Trace Function
-            //RouteManager.logger.LogToDebug("EXITING FUNCTION: IsStationSelected", LogLevel.Trace);
+            //RouteManager.logger.LogToDebug("EXITING FUNCTION: IsStopStationSelected", LogLevel.Trace);
             return result;
         }
 
         //Update station selection
-        public static void SetStationSelected(PassengerStop stop, Car locomotive, bool isSelected)
+        public static void SetStopStationSelected(PassengerStop stop, Car locomotive, bool isSelected)
         {
             //Trace Function
-            RouteManager.logger.LogToDebug("ENTERED FUNCTION: SetStationSelected", LogLevel.Trace);
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: SetStopStationSelected", LogLevel.Trace);
 
-            LocoTelem.UIStationSelections[locomotive][stop.identifier] = isSelected;
+            LocoTelem.UIStopStationSelections[locomotive][stop.identifier] = isSelected;
 
             //Trace Function
-            RouteManager.logger.LogToDebug("EXITING FUNCTION: SetStationSelected", LogLevel.Trace);
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: SetStopStationSelected", LogLevel.Trace);
         }
+
+        //Determine if station is selected
+        public static bool IsPickupStationSelected(PassengerStop stop, Car locomotive)
+        {
+            //Trace Function
+            //RouteManager.logger.LogToDebug("ENTERED FUNCTION: IsPickupStationSelected", LogLevel.Trace);
+
+            bool result = LocoTelem.UIPickupStationSelections[locomotive].TryGetValue(stop.identifier, out bool isSelected) && isSelected;
+
+            //Trace Function
+            //RouteManager.logger.LogToDebug("EXITING FUNCTION: IsPickupStationSelected", LogLevel.Trace);
+            return result;
+        }
+
+        //Update station selection
+        public static void SetPickupStationSelected(PassengerStop stop, Car locomotive, bool isSelected)
+        {
+            //Trace Function
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: SetPickupStationSelected", LogLevel.Trace);
+
+            LocoTelem.UIPickupStationSelections[locomotive][stop.identifier] = isSelected;
+
+            //Trace Function
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: SetPickupStationSelected", LogLevel.Trace);
+        }
+
+        //Determine if station is selected
+        public static PassengerStop IsTransferStationSelected(PassengerStop stop, Car locomotive)
+        {
+            //Trace Function
+            //RouteManager.logger.LogToDebug("ENTERED FUNCTION: IsPickupStationSelected", LogLevel.Trace);
+            PassengerStop selected;
+
+            bool result = LocoTelem.UITransferStationSelections[locomotive].TryGetValue(stop.identifier, out selected);
+
+            //Trace Function
+            //RouteManager.logger.LogToDebug("EXITING FUNCTION: IsPickupStationSelected", LogLevel.Trace);
+            return selected;
+        }
+
+        //Update station selection
+        public static void SetTransferStationSelected(PassengerStop stop, Car locomotive, PassengerStop selected)
+        {
+            //Trace Function
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: SetPickupStationSelected", LogLevel.Trace);
+
+            LocoTelem.UITransferStationSelections[locomotive][stop.identifier] = selected;
+
+            //Trace Function
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: SetPickupStationSelected", LogLevel.Trace);
+        }
+
+
+
+
+
 
         //Check if Consist has any stations enabled
         public static bool IsAnyStationSelectedForLocomotive(Car locomotive)
@@ -138,11 +233,11 @@ namespace RouteManager.v2.core
             //Trace Function
             RouteManager.logger.LogToDebug("ENTERED FUNCTION: IsAnyStationSelectedForLocomotive", LogLevel.Trace);
 
-            // Check if the locomotive exists in the SelectedStations dictionary
-            if (LocoTelem.SelectedStations.TryGetValue(locomotive, out List<PassengerStop> selectedStations))
+            // Check if the locomotive exists in the stopStations dictionary
+            if (LocoTelem.stopStations.TryGetValue(locomotive, out List<PassengerStop> stopStations))
             {
                 // Return true if there is at least one selected station
-                return selectedStations.Any();
+                return stopStations.Any();
             }
 
             //Trace Function
@@ -158,7 +253,8 @@ namespace RouteManager.v2.core
             //Trace Function
             RouteManager.logger.LogToDebug("ENTERED FUNCTION: InitializeStationSelectionForLocomotive", LogLevel.Trace);
 
-            if (!LocoTelem.UIStationSelections.ContainsKey(locomotive))
+            //TODO: Check if this is a stop or pickup station
+            if (!LocoTelem.UIStopStationSelections.ContainsKey(locomotive))
             {
                 var stationSelectionsForLocomotive = new Dictionary<string, bool>();
                 var allStops = PassengerStop.FindAll();
@@ -168,7 +264,10 @@ namespace RouteManager.v2.core
                     stationSelectionsForLocomotive[stop.identifier] = false;
                 }
 
-                LocoTelem.UIStationSelections[locomotive] = stationSelectionsForLocomotive;
+                //TODO: Check if this is a stop or pickup station
+                LocoTelem.UIStopStationSelections[locomotive] = stationSelectionsForLocomotive;
+                LocoTelem.UIPickupStationSelections[locomotive] = new Dictionary<string, bool>();//stationSelectionsForLocomotive;
+                LocoTelem.UITransferStationSelections[locomotive] = new Dictionary<string, PassengerStop>();
             }
 
             //Trace Function

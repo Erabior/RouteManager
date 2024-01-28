@@ -237,7 +237,7 @@ namespace RouteManager.v2.core
             }
 
             //Filter to include only selected stations
-            HashSet<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
+            HashSet<string> selectedStationIdentifiers = LocoTelem.stopStations[locomotive]
                 .Select(stop => stop.identifier)
                 .ToHashSet();
 

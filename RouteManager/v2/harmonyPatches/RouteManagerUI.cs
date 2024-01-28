@@ -252,14 +252,14 @@ namespace RouteManager.v2.harmonyPatches
                             {
 
                                 // Add a checkbox for each station
-                                hstack.AddToggle(() => DestinationManager.IsStationSelected(stop, car), isOn =>
+                                hstack.AddToggle(() => DestinationManager.IsStopStationSelected(stop, car), isOn =>
                                 {
 
-                                    DestinationManager.SetStationSelected(stop, car, isOn);
+                                    DestinationManager.SetStopStationSelected(stop, car, isOn);
                                     builder.Rebuild();
 
                                     // Update when checkbox state changes
-                                    UpdateManagedTrainsSelectedStations(car);
+                                    UpdateManagedTrainsStopStations(car);
 
                                     if (LocoTelem.RouteMode[car])
                                         TrainManager.CopyStationsFromLocoToCoaches(car);
@@ -279,12 +279,6 @@ namespace RouteManager.v2.harmonyPatches
                 }
 
                 bool anyStationSelected = DestinationManager.IsAnyStationSelectedForLocomotive(car);
-
-                //If any station is selected, add a button to the UI
-                //if (anyStationSelected)
-                //{
-                //    builder.AddButton("Print Car Info", () => ManagedTrains.PrintCarInfo(car));
-                //}
 
                 /**********************************************************************************
                 *
@@ -430,14 +424,14 @@ namespace RouteManager.v2.harmonyPatches
             return false; 
         }
 
-        private static void UpdateManagedTrainsSelectedStations(Car car)
+        private static void UpdateManagedTrainsStopStations(Car car)
         {
             // Get the list of all selected stations
             var allStops = PassengerStop.FindAll();
-            var selectedStations = allStops.Where(stop => DestinationManager.IsStationSelected(stop, car)).ToList();
+            var selectedStations = allStops.Where(stop => DestinationManager.IsStopStationSelected(stop, car)).ToList();
 
             // Update the ManagedTrains with the selected stations for this car
-            DestinationManager.SetSelectedStations(car, selectedStations);
+            DestinationManager.SetStopStations(car, selectedStations);
         }
     }
 }

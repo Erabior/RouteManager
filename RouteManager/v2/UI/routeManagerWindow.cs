@@ -12,6 +12,7 @@ using UI.Builder;
 using UI.Common;
 using UI.CompanyWindow;
 using UnityEngine;
+using static Game.Reputation.PassengerReputationCalculator;
 
 
 namespace RouteManager.v2.UI
@@ -129,38 +130,50 @@ namespace RouteManager.v2.UI
                             builder.AddLabel(stop.DisplayName).Width(200f);
 
                             //Pickup passengers travelling to this station
-                            builder.AddToggle(() => DestinationManager.IsStationSelected(stop, _instance._car), isOn =>
+                            builder.AddToggle(() => DestinationManager.IsPickupStationSelected(stop, _instance._car), isOn =>
                             {
 
-                                DestinationManager.SetStationSelected(stop, _instance._car, isOn);
+                                DestinationManager.SetPickupStationSelected(stop, _instance._car, isOn);
                                 builder.Rebuild();
 
                                 // Update when checkbox state changes
-                                UpdateManagedTrainsSelectedStations(_instance._car);
+                                UpdateManagedTrainsPickupStations(_instance._car);
 
-                                if (LocoTelem.RouteMode[_instance._car])
+                                /*if (LocoTelem.RouteMode[_instance._car])
                                     TrainManager.CopyStationsFromLocoToCoaches(_instance._car);
+                                */
                             }).Tooltip("Pickup", $"This train will collect passengers heading to {stop.DisplayName}.<br>If passengers are collected for {stop.DisplayName} but the train does not stop at {stop.DisplayName}, then a Transfer station will need to be set.")
                               .Width(80f);
                             
                             //Train stops at this station
-                            builder.AddToggle(() => DestinationManager.IsStationSelected(stop, _instance._car), isOn =>
+                            builder.AddToggle(() => DestinationManager.IsStopStationSelected(stop, _instance._car), isOn =>
                             {
 
-                                DestinationManager.SetStationSelected(stop, _instance._car, isOn);
+                                DestinationManager.SetStopStationSelected(stop, _instance._car, isOn);
                                 builder.Rebuild();
 
                                 // Update when checkbox state changes
-                                UpdateManagedTrainsSelectedStations(_instance._car);
+                                UpdateManagedTrainsStopStations(_instance._car);
 
-                                if (LocoTelem.RouteMode[_instance._car])
-                                    TrainManager.CopyStationsFromLocoToCoaches(_instance._car);
-                            }).Tooltip("Stopping", "This train will stop at this station.")
+                                /*if (LocoTelem.RouteMode[_instance._car])
+                                    TrainManager.CopyStationsFromLocoToCoaches(_instance._car);*/
+                            })/*.Tooltip("Stop", "This train will stop at this station.")*/
                             .Width(80f);
 
                             //Passengers bound for this station need to get off here
-                            builder.AddDropdownIntPicker(values, -1, (int i) => (i >= 0) ? orderedStops[i].DisplayName : "", canWrite: true, delegate (int i)
+                            PassengerStop selTransfer = DestinationManager.IsTransferStationSelected(stop, _instance._car);
+                            int selInt = -1;
+                            if (selTransfer != null)
                             {
+                                selInt = orderedStops.FindIndex(stop => stop == selTransfer);
+                            }
+                            builder.AddDropdownIntPicker(values, selInt, (int i) => (i >= 0) ? orderedStops[i].DisplayName : "", canWrite: true, delegate (int i)
+                            {
+                                //do stuff to select station
+                                DestinationManager.SetTransferStationSelected(stop, _instance._car, (i>=0) ? orderedStops[i] : null);
+                                builder.Rebuild();
+
+                                UpdateManagedTrainsTransferStations(_instance._car);
 
                             }).Tooltip("Transfer", $"Passengers destined for {stop.DisplayName} will transfer trains here.").FlexibleWidth(200f);
 
@@ -188,14 +201,38 @@ namespace RouteManager.v2.UI
             return $"{num}T {arg}";
         }
 
-        private static void UpdateManagedTrainsSelectedStations(Car car)
+        private static void UpdateManagedTrainsStopStations(Car car)
         {
             // Get the list of all selected stations
             var allStops = PassengerStop.FindAll();
-            var selectedStations = allStops.Where(stop => DestinationManager.IsStationSelected(stop, car)).ToList();
+            var selectedStations = allStops.Where(stop => DestinationManager.IsStopStationSelected(stop, car)).ToList();
 
             // Update the ManagedTrains with the selected stations for this car
-            DestinationManager.SetSelectedStations(car, selectedStations);
+            DestinationManager.SetStopStations(car, selectedStations);
+        }
+
+        private static void UpdateManagedTrainsPickupStations(Car car)
+        {
+            // Get the list of all selected stations
+            var allStops = PassengerStop.FindAll();
+            var selectedStations = allStops.Where(stop => DestinationManager.IsPickupStationSelected(stop, car)).ToList();
+
+            // Update the ManagedTrains with the selected stations for this car
+            DestinationManager.SetPickupStations(car, selectedStations);
+        }
+
+        private static void UpdateManagedTrainsTransferStations(Car car)
+        {
+            // Get the list of all selected stations
+            var allStops = PassengerStop.FindAll();
+            //var selectedStations = allStops.Where(stop => DestinationManager.IsTransferStationSelected(stop, car)).ToList();
+
+            var selectedStations = allStops
+                                    .Where(stop => DestinationManager.IsTransferStationSelected(stop, car) != null)
+                                    .ToDictionary<PassengerStop,PassengerStop>(key => DestinationManager.IsTransferStationSelected(key, car));
+
+            // Update the ManagedTrains with the selected stations for this car
+            DestinationManager.SetTransferStations(car, selectedStations);
         }
     }
 }

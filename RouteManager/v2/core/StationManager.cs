@@ -73,16 +73,16 @@ namespace RouteManager.v2.core
         public static bool currentlyAtLastStation(Car locomotive)
         {
             //Get Selected menu items
-            List<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
+            List<string> selectedStationIdentifiers = LocoTelem.stopStations[locomotive]
                 .Select(passengerStop => passengerStop.identifier)
                 .Distinct()
                 .ToList();
 
-            List<string> orderedSelectedStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
+            List<string> orderedstopStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
 
-            int currentIndex = orderedSelectedStations.IndexOf(LocoTelem.closestStation[locomotive].Item1.identifier);
+            int currentIndex = orderedstopStations.IndexOf(LocoTelem.closestStation[locomotive].Item1.identifier);
 
-            if (currentIndex == orderedSelectedStations.Count - 1 || currentIndex == 0)
+            if (currentIndex == orderedstopStations.Count - 1 || currentIndex == 0)
                 return true;
 
             return false;
@@ -170,7 +170,7 @@ namespace RouteManager.v2.core
                 {
                     RouteManager.logger.LogToDebug(String.Format("Loco {0} has previous destinations not containing closeset station", locomotive.DisplayName), LogLevel.Verbose);
                     //If the closest station is selected....
-                    if (LocoTelem.SelectedStations[locomotive].Contains(LocoTelem.closestStation[locomotive].Item1))
+                    if (LocoTelem.stopStations[locomotive].Contains(LocoTelem.closestStation[locomotive].Item1))
                     {
                         RouteManager.logger.LogToDebug(String.Format("Loco {0} Initial destintion is the closest: {1}", locomotive.DisplayName , LocoTelem.closestStation[locomotive].Item1));
                         return LocoTelem.closestStation[locomotive].Item1;
@@ -180,12 +180,12 @@ namespace RouteManager.v2.core
             else
             {
                 //If the closest station is selected....
-                if (LocoTelem.SelectedStations[locomotive].Contains(LocoTelem.closestStation[locomotive].Item1))
+                if (LocoTelem.stopStations[locomotive].Contains(LocoTelem.closestStation[locomotive].Item1))
                 {
                     RouteManager.logger.LogToDebug(String.Format("Loco {0} Initial destintion is the closest: {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1));
                     return LocoTelem.closestStation[locomotive].Item1;
                 }
-                else if (LocoTelem.SelectedStations[locomotive].Contains(LocoTelem.currentDestination[locomotive]) && !LocoTelem.previousDestinations[locomotive].Contains(LocoTelem.currentDestination[locomotive]))
+                else if (LocoTelem.stopStations[locomotive].Contains(LocoTelem.currentDestination[locomotive]) && !LocoTelem.previousDestinations[locomotive].Contains(LocoTelem.currentDestination[locomotive]))
                 {
                     RouteManager.logger.LogToDebug(String.Format("Loco {0} Initial destintion is the current: {1}", locomotive.DisplayName, LocoTelem.currentDestination[locomotive]));
                     return LocoTelem.currentDestination[locomotive];
@@ -219,15 +219,15 @@ namespace RouteManager.v2.core
             }
 
             //Get Selected menu items
-            List<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
+            List<string> selectedStationIdentifiers = LocoTelem.stopStations[locomotive]
                 .Select(passengerStop => passengerStop.identifier)
                 .Distinct()
                 .ToList();
 
             //Convert selected menu items into an ordered list of station stops
-            List<string> orderedSelectedStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
+            List<string> orderedstopStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
 
-            PassengerStop nextStop = calculateNextStation(orderedSelectedStations, LocoTelem.SelectedStations[locomotive], currentStation, locomotive);
+            PassengerStop nextStop = calculateNextStation(orderedstopStations, LocoTelem.stopStations[locomotive], currentStation, locomotive);
 
             RouteManager.logger.LogToDebug(String.Format("Loco {0} next stop determined to be: {1}", locomotive.DisplayName , nextStop.identifier), LogLevel.Debug);
 
@@ -237,7 +237,7 @@ namespace RouteManager.v2.core
 
 
         //Brand new station logic.
-        private static PassengerStop calculateNextStation(List<string> orderedSelectedStations, List<PassengerStop> selectedPassengerStops, PassengerStop currentStation, Car locomotive)
+        private static PassengerStop calculateNextStation(List<string> orderedstopStations, List<PassengerStop> selectedPassengerStops, PassengerStop currentStation, Car locomotive)
         {
             //Debug
             RouteManager.logger.LogToDebug(String.Format("Loco {0} calculating next station", locomotive.DisplayName), LogLevel.Verbose);
@@ -247,11 +247,11 @@ namespace RouteManager.v2.core
             if (selectedPassengerStops != null && selectedPassengerStops.Count > 1)
             {
                 //Current station index
-                int currentIndex = orderedSelectedStations.IndexOf(currentStation.identifier);
+                int currentIndex = orderedstopStations.IndexOf(currentStation.identifier);
                 
-                for (int i = 0; i < orderedSelectedStations.Count; i++)
+                for (int i = 0; i < orderedstopStations.Count; i++)
                 {
-                    RouteManager.logger.LogToDebug(String.Format("Selected Station: {0} has position {1}", orderedSelectedStations[i],i), LogLevel.Verbose);
+                    RouteManager.logger.LogToDebug(String.Format("Selected Station: {0} has position {1}", orderedstopStations[i],i), LogLevel.Verbose);
                 }
 
                 RouteManager.logger.LogToDebug(String.Format("Current Index was calculated as: {0}", currentIndex), LogLevel.Debug);
@@ -286,10 +286,10 @@ namespace RouteManager.v2.core
                     updateLocoTelemEndOfLine(locomotive, false);
 
                     //Bounds Checking
-                    if (currentIndex + 1 <= orderedSelectedStations.Count)
-                        station = stringIdentToStation(orderedSelectedStations[currentIndex + 1]);
+                    if (currentIndex + 1 <= orderedstopStations.Count)
+                        station = stringIdentToStation(orderedstopStations[currentIndex + 1]);
                     else
-                        station = stringIdentToStation(orderedSelectedStations[currentIndex]);
+                        station = stringIdentToStation(orderedstopStations[currentIndex]);
 
                     //Workaround for Cochran 
                     if (station != null)
@@ -301,7 +301,7 @@ namespace RouteManager.v2.core
                     return station != null ? station : selectedPassengerStops.Last();
                 }
                 //At last station go East
-                else if (currentIndex == orderedSelectedStations.Count - 1)
+                else if (currentIndex == orderedstopStations.Count - 1)
                 {
                     RouteManager.logger.LogToDebug(String.Format("Loco {0} at end of line, returning east", locomotive.DisplayName), LogLevel.Debug);
 
@@ -310,9 +310,9 @@ namespace RouteManager.v2.core
 
                     //Bounds Checking
                     if (currentIndex - 1 >= 0)
-                        station = stringIdentToStation(orderedSelectedStations[currentIndex - 1]);
+                        station = stringIdentToStation(orderedstopStations[currentIndex - 1]);
                     else
-                        station = stringIdentToStation(orderedSelectedStations[currentIndex]);
+                        station = stringIdentToStation(orderedstopStations[currentIndex]);
 
                     //Workaround for Cochran 
                     if (station != null)
@@ -332,9 +332,9 @@ namespace RouteManager.v2.core
                         RouteManager.logger.LogToDebug(String.Format("Loco {0} next station is to the east", locomotive.DisplayName), LogLevel.Debug);
                         //Bounds Checking
                         if (currentIndex - 1 >= 0)
-                            station = stringIdentToStation(orderedSelectedStations[currentIndex - 1]);
+                            station = stringIdentToStation(orderedstopStations[currentIndex - 1]);
                         else
-                            station = stringIdentToStation(orderedSelectedStations[currentIndex]);
+                            station = stringIdentToStation(orderedstopStations[currentIndex]);
 
                         //Workaround for Cochran 
                         if (station != null)
@@ -350,10 +350,10 @@ namespace RouteManager.v2.core
                         RouteManager.logger.LogToDebug(String.Format("Loco {0} next station is to the west", locomotive.DisplayName), LogLevel.Debug);
 
                         //Bounds Checking
-                        if (currentIndex + 1 <= orderedSelectedStations.Count)
-                            station = stringIdentToStation(orderedSelectedStations[currentIndex + 1]);
+                        if (currentIndex + 1 <= orderedstopStations.Count)
+                            station = stringIdentToStation(orderedstopStations[currentIndex + 1]);
                         else
-                            station = stringIdentToStation(orderedSelectedStations[currentIndex]);
+                            station = stringIdentToStation(orderedstopStations[currentIndex]);
 
                         //Workaround for Cochran 
                         if (station != null)
@@ -376,7 +376,7 @@ namespace RouteManager.v2.core
         //with a generic work around until we can revisit this after v2's launch.
         private static PassengerStop alarkaJunctionWorkAround(Car locomotive, PassengerStop nextStation)
         {
-            List<string> selectedStationIdentifiers = LocoTelem.SelectedStations[locomotive]
+            List<string> selectedStationIdentifiers = LocoTelem.stopStations[locomotive]
                 .Select(passengerStop => passengerStop.identifier)
                 .Distinct()
                 .ToList();
@@ -384,7 +384,7 @@ namespace RouteManager.v2.core
             if (selectedStationIdentifiers.Contains("cochran") && 
                 selectedStationIdentifiers.Contains("alarka") &&
                 !LocoTelem.previousDestinations[locomotive].Contains(stringIdentToStation("cochran")))
-                return LocoTelem.SelectedStations[locomotive][LocoTelem.SelectedStations[locomotive].FindIndex(p => p.identifier == "cochran")];
+                return LocoTelem.stopStations[locomotive][LocoTelem.stopStations[locomotive].FindIndex(p => p.identifier == "cochran")];
             else
                 return nextStation;
         }

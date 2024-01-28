@@ -750,7 +750,7 @@ namespace RouteManager.v2.core
                 }
 
                 //If we have selected stations
-                if (LocoTelem.SelectedStations[locomotive].Count <= 1)
+                if (LocoTelem.stopStations[locomotive].Count <= 1)
                 {
                     //If our previous destination key exists
                     if (LocoTelem.previousDestinations.ContainsKey(locomotive) && LocoTelem.currentDestination.ContainsKey(locomotive))

@@ -190,8 +190,12 @@ namespace RouteManager.v2
             LocoTelem.currentDestination.Clear();
             LocoTelem.previousDestinations.Clear();
             LocoTelem.lowFuelQuantities.Clear();
-            LocoTelem.UIStationSelections.Clear();
-            LocoTelem.SelectedStations.Clear();
+            LocoTelem.UIStopStationSelections.Clear();
+            LocoTelem.UIPickupStationSelections.Clear();
+            LocoTelem.UITransferStationSelections.Clear();
+            LocoTelem.stopStations.Clear();
+            LocoTelem.pickupStations.Clear();
+            LocoTelem.transferStations.Clear();
         }
 
 
