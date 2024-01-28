@@ -23,7 +23,7 @@ namespace RouteManager.v2.harmonyPatches
     [HarmonyPatch(typeof(CarInspector), "PopulateAIPanel")]
     public static class CarInspectorPopulateAIPanelPatch
     {
-
+        static Vector2 initialSize = Vector2.zero;
         static bool Prefix(CarInspector __instance, UIPanelBuilder builder)
         {
             /**********************************************************************************
@@ -35,9 +35,26 @@ namespace RouteManager.v2.harmonyPatches
             **********************************************************************************/
 
             RectTransform uiPanel = UnityEngine.Object.FindFirstObjectByType<CarInspector>().GetComponent<RectTransform>();
-            RouteManager.logger.LogToDebug("Ui Panel Size was:" + uiPanel.sizeDelta.ToString(), LogLevel.Verbose);
-            uiPanel.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 500);
-            UnityEngine.Object.FindFirstObjectByType<CarInspector>().GetComponent<Window>().SetPosition(Window.Position.LowerRight); //fix hanging off the screen
+
+            //capture size before we do anything
+            if (initialSize.Equals(Vector2.zero))
+            {
+                initialSize = uiPanel.sizeDelta;
+            }
+
+            if (!RouteManager.Settings.experimentalUI)
+            {
+                RouteManager.logger.LogToDebug("Ui Panel Size was:" + uiPanel.sizeDelta.ToString(), LogLevel.Verbose);
+                uiPanel.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 500);
+                RouteManager.logger.LogToDebug("Ui Panel Size is:" + uiPanel.sizeDelta.ToString(), LogLevel.Verbose);
+            }
+            else
+            {
+                uiPanel.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, initialSize.y);
+            }
+
+            //fix hanging off the screen
+            UnityEngine.Object.FindFirstObjectByType<CarInspector>().GetComponent<Window>().SetPosition(Window.Position.LowerRight); 
 
             bool placeHolder = false;
 
@@ -231,8 +248,10 @@ namespace RouteManager.v2.harmonyPatches
                 {
                     builder.AddButtonSelectable("Define Stations", placeHolder, delegate
                     {
-                        routeManagerWindow.Show(car);
+                        RouteManagerWindow.Show(car);
                     });
+
+                    builder.AddExpandingVerticalSpacer();
                 }
                 else
                 {

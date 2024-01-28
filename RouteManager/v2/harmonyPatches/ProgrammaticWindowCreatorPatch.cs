@@ -34,7 +34,7 @@ namespace RouteManager.v2.harmonyPatches
             transform = __instance.transform;
 
 
-            CreateWindow<routeManagerWindow>(600, 500, Window.Position.Center, null);
+            CreateWindow<RouteManagerWindow>(600, 500, Window.Position.Center, null);
 
             RouteManager.logger.LogToDebug($"ProgrammaticWindowCreator.Start() Finished", LogLevel.Trace);
         }

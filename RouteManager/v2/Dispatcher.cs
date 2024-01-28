@@ -199,9 +199,6 @@ namespace RouteManager.v2
         }
 
 
-
-
-
         //Map is about to unload so lets cleanup all the instances of the mod.
         //Needed to Prevent crash on exit. 
         private void GameMapUnloaded(MapDidUnloadEvent mapDidUnloadEvent)

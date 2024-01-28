@@ -126,12 +126,14 @@ namespace RouteManager.v2.core
                 try
                 {
                     // Calculate the distance between the locomotive and the station's center point
+                    //TODO: Convert distance from 'as the crow flies' to 'by track'
                     RouteManager.logger.LogToDebug($"Station center was: {station.CenterPoint}", LogLevel.Verbose);
                     distance = Vector3.Distance(locoMotivePosition.Value, station.CenterPoint);
                 }
                 catch 
                 {
                     RouteManager.logger.LogToDebug($"Station center was: {StationInformation.Stations[station.identifier.ToLower()].Center}", LogLevel.Verbose);
+                    //TODO: Convert distance from 'as the crow flies' to 'by track'
                     distance = Vector3.Distance(locoMotivePosition.Value, StationInformation.Stations[station.identifier.ToLower()].Center);
                 }
 
@@ -326,7 +328,7 @@ namespace RouteManager.v2.core
                 //Keep going in the direction previously travelled...
                 else
                 {
-                    //If we are traveling torward Silva from Anderson
+                    //If we are traveling torward Sylva from Anderson
                     if (LocoTelem.locoTravelingEastWard[locomotive])
                     {
                         RouteManager.logger.LogToDebug(String.Format("Loco {0} next station is to the east", locomotive.DisplayName), LogLevel.Debug);

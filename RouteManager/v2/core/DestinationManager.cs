@@ -30,7 +30,7 @@ namespace RouteManager.v2.core
                 throw new ArgumentNullException(nameof(car));
             }
 
-            //Uppdate consists's station list
+            //Update consists's station list
             LocoTelem.stopStations[car] = selectedStops;
 
             //Trace Logging
@@ -70,7 +70,9 @@ namespace RouteManager.v2.core
             }
 
             //Update consists's station list
+            RouteManager.logger.LogToDebug("Updating SetTransferStations", LogLevel.Trace);
             LocoTelem.transferStations[car] = selectedTransfers;
+            RouteManager.logger.LogToDebug("Updated SetTransferStations", LogLevel.Trace);
 
             //Trace Logging
             RouteManager.logger.LogToDebug("EXITING FUNCTION: SetTransferStations", LogLevel.Trace);
@@ -117,19 +119,6 @@ namespace RouteManager.v2.core
 
             return shortestDistance;
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         /**************************************************************************************************************************
@@ -197,26 +186,26 @@ namespace RouteManager.v2.core
         }
 
         //Determine if station is selected
-        public static PassengerStop IsTransferStationSelected(PassengerStop stop, Car locomotive)
+        public static PassengerStop IsTransferStationSelected(PassengerStop transferFrom, Car locomotive)
         {
             //Trace Function
             //RouteManager.logger.LogToDebug("ENTERED FUNCTION: IsPickupStationSelected", LogLevel.Trace);
-            PassengerStop selected;
+            PassengerStop transferTo;
 
-            bool result = LocoTelem.UITransferStationSelections[locomotive].TryGetValue(stop.identifier, out selected);
+            bool result = LocoTelem.UITransferStationSelections[locomotive].TryGetValue(transferFrom.identifier, out transferTo);
 
             //Trace Function
             //RouteManager.logger.LogToDebug("EXITING FUNCTION: IsPickupStationSelected", LogLevel.Trace);
-            return selected;
+            return transferTo;
         }
 
         //Update station selection
-        public static void SetTransferStationSelected(PassengerStop stop, Car locomotive, PassengerStop selected)
+        public static void SetTransferStationSelected(PassengerStop transferFrom, Car locomotive, PassengerStop transferTo)
         {
             //Trace Function
             RouteManager.logger.LogToDebug("ENTERED FUNCTION: SetPickupStationSelected", LogLevel.Trace);
 
-            LocoTelem.UITransferStationSelections[locomotive][stop.identifier] = selected;
+            LocoTelem.UITransferStationSelections[locomotive][transferFrom.identifier] = transferTo;
 
             //Trace Function
             RouteManager.logger.LogToDebug("EXITING FUNCTION: SetPickupStationSelected", LogLevel.Trace);

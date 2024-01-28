@@ -129,7 +129,7 @@
     <Compile Include="v2\helpers\Utilities.cs" />
     <Compile Include="v2\Logging\IRMLogger.cs" />
     <Compile Include="v2\ModInterface.cs" />
-    <Compile Include="v2\UI\routeManagerWindow.cs" />
+    <Compile Include="v2\UI\RouteManagerWindow.cs" />
     <Compile Include="v2\UI\testInterface.cs" />
   </ItemGroup>
   <ItemGroup />

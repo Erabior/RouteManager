@@ -252,7 +252,11 @@ namespace RouteManager.v2.core
                 {
                     onApproachLongDist(locomotive);
 
-                    //Hack to work around the new auto engineer crossing detection to prevent double blow / werid horn blow behavior. 
+                    //make sure our passenger loading/unloading is set as we arrive at the station
+                    //LocoTelem.needToUpdatePassengerCoaches[locomotive] = true; //didn't trigger the update until departing, needs to happen prior to departure
+                    TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+
+                    //Hack to work around the new auto engineer crossing detection to prevent double blow / weird horn blow behavior. 
                     //This can be done better but further research is required. In the mean time this crude hack hopefully will reduce the occurances. 
                     if (!LocoTelem.approachWhistleSounded[locomotive] &&
 

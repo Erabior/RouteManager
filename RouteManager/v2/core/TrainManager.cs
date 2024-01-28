@@ -13,6 +13,7 @@ using Track;
 using RouteManager.v2.dataStructures;
 using Model.Definition.Data;
 using RouteManager.v2.Logging;
+using RollingStock;
 
 namespace RouteManager.v2.core
 {
@@ -237,7 +238,15 @@ namespace RouteManager.v2.core
             }
 
             //Filter to include only selected stations
+            /*Original
             HashSet<string> selectedStationIdentifiers = LocoTelem.stopStations[locomotive]
+                .Select(stop => stop.identifier)
+                .ToHashSet();
+            */
+            
+
+            //Passengers are in the list for pickup
+            HashSet<string> selectedStationIdentifiers = LocoTelem.pickupStations[locomotive]
                 .Select(stop => stop.identifier)
                 .ToHashSet();
 
@@ -246,8 +255,33 @@ namespace RouteManager.v2.core
                 RouteManager.logger.LogToDebug(String.Format("selectedStationIdentifiers contains {0}", identifier), LogLevel.Verbose);
             }
 
+            //Transfers for currentStation
+            //The result will be a list of passenger that need to get off at the current station
+            HashSet<string> transferStationIdentifiers = LocoTelem.transferStations[locomotive]
+                .Where(stop  => 
+                {
+                    RouteManager.logger.LogToDebug(String.Format($"transferStationIdentifiers.Where()\r\n\tCurrent Station: {currentStation}\r\n\tPickup from: {stop.Key.identifier}\r\n\tTransfer to: {stop.Value.identifier}"), LogLevel.Verbose);
+                    return stop.Value.identifier == currentStation;
+                 })
+                .Select(stop => stop.Key.identifier)
+                .ToHashSet();
+
+            foreach (string identifier in transferStationIdentifiers)
+            {
+                RouteManager.logger.LogToDebug(String.Format("transferStationIdentifiers contains {0}", identifier), LogLevel.Verbose);
+            }
+
+
+            //reduce the filtered stations to only the selected stations and remove any transfers for the station
             HashSet<string> filteredStations = relevantStations
-                .Where(station => selectedStationIdentifiers.Contains(station))
+                .Where(station => 
+                {
+                    //if the current station appears in the transfer station list, we need to filter out the corresponding pickups
+                    if (transferStationIdentifiers.Contains(station))
+                        return false;
+
+                    return selectedStationIdentifiers.Contains(station);/* && !transferStationIdentifiers.Contains(station) */
+                })
                 .ToHashSet();
 
             foreach (string identifier in filteredStations)
