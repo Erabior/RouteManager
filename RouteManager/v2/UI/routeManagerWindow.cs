@@ -137,8 +137,8 @@ namespace RouteManager.v2.UI
                             UpdateManagedTrainsPickupStations(_instance._car);
 
                             if (LocoTelem.RouteMode[_instance._car])
-                                TrainManager.CopyStationsFromLocoToCoaches(_instance._car);
-
+                                TrainManager.CopyStationsFromLocoToCoaches_dev(_instance._car);
+                            
                             builder.Rebuild();
                         }).Tooltip("Pickup", $"This train will collect passengers heading to {stop.DisplayName}.<br>If passengers are collected for {stop.DisplayName} but the train does not stop at {stop.DisplayName}, then a Transfer station will need to be set.")
                           .Width(80f);
@@ -164,7 +164,7 @@ namespace RouteManager.v2.UI
                             UpdateManagedTrainsStopStations(_instance._car);
 
                             if (LocoTelem.RouteMode[_instance._car])
-                                TrainManager.CopyStationsFromLocoToCoaches(_instance._car);
+                                TrainManager.CopyStationsFromLocoToCoaches_dev(_instance._car);
 
                             builder.Rebuild();
                         }).Width(80f);
@@ -201,7 +201,7 @@ namespace RouteManager.v2.UI
                                 UpdateManagedTrainsTransferStations(_instance._car);
 
                                 if (LocoTelem.RouteMode[_instance._car])
-                                    TrainManager.CopyStationsFromLocoToCoaches(_instance._car);
+                                    TrainManager.CopyStationsFromLocoToCoaches_dev(_instance._car);
 
                                 //really, really rebuild - possibly need to setup nested builders so we only trigger a rebuild on a smaller panel?
                                 _instance.Rebuild();

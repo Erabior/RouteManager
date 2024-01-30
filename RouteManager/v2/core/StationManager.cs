@@ -78,11 +78,11 @@ namespace RouteManager.v2.core
                 .Distinct()
                 .ToList();
 
-            List<string> orderedstopStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
+            List<string> orderedStopStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
 
-            int currentIndex = orderedstopStations.IndexOf(LocoTelem.closestStation[locomotive].Item1.identifier);
+            int currentIndex = orderedStopStations.IndexOf(LocoTelem.closestStation[locomotive].Item1.identifier);
 
-            if (currentIndex == orderedstopStations.Count - 1 || currentIndex == 0)
+            if (currentIndex == orderedStopStations.Count - 1 || currentIndex == 0)
                 return true;
 
             return false;

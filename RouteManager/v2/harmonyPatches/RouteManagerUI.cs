@@ -281,7 +281,17 @@ namespace RouteManager.v2.harmonyPatches
                                     UpdateManagedTrainsStopStations(car);
 
                                     if (LocoTelem.RouteMode[car])
-                                        TrainManager.CopyStationsFromLocoToCoaches(car);
+                                    {
+                                        if (RouteManager.Settings.experimentalUI)
+                                        {
+                                            TrainManager.CopyStationsFromLocoToCoaches_dev(car);
+                                        }
+                                        else
+                                        {
+                                            TrainManager.CopyStationsFromLocoToCoaches(car);
+                                        }
+                                    }
+                                        
                                 });
 
                                 // Add a label next to the checkbox

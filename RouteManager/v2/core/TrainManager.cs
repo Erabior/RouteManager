@@ -210,7 +210,7 @@ namespace RouteManager.v2.core
 
         public static void CopyStationsFromLocoToCoaches(Car locomotive)
         {
-            RouteManager.logger.LogToDebug(String.Format("Loco: {0} update coach station selection", locomotive.DisplayName),LogLevel.Verbose);
+            RouteManager.logger.LogToDebug(String.Format("Loco: {0} update coach station selection", locomotive.DisplayName), LogLevel.Verbose);
 
             string currentStation = LocoTelem.currentDestination[locomotive].identifier;
             int currentStationIndex = DestinationManager.orderedStations.IndexOf(currentStation);
@@ -222,11 +222,11 @@ namespace RouteManager.v2.core
             if (StationManager.currentlyAtLastStation(locomotive))
             {
                 relevantStations = DestinationManager.orderedStations.Except(new List<String>() { LocoTelem.closestStation[locomotive].Item1.identifier });
-            } 
+            }
             else if (isTravelingEastWard)
             {
                 relevantStations = DestinationManager.orderedStations.Take(currentStationIndex + 1).Reverse();
-            } 
+            }
             else
             {
                 relevantStations = DestinationManager.orderedStations.Skip(currentStationIndex);
@@ -238,15 +238,7 @@ namespace RouteManager.v2.core
             }
 
             //Filter to include only selected stations
-            /*Original
             HashSet<string> selectedStationIdentifiers = LocoTelem.stopStations[locomotive]
-                .Select(stop => stop.identifier)
-                .ToHashSet();
-            */
-            
-
-            //Passengers are in the list for pickup
-            HashSet<string> selectedStationIdentifiers = LocoTelem.pickupStations[locomotive]
                 .Select(stop => stop.identifier)
                 .ToHashSet();
 
@@ -255,15 +247,75 @@ namespace RouteManager.v2.core
                 RouteManager.logger.LogToDebug(String.Format("selectedStationIdentifiers contains {0}", identifier), LogLevel.Verbose);
             }
 
-            //Transfers for currentStation
-            //The result will be a list of passenger that need to get off at the current station
-            HashSet<string> transferStationIdentifiers = LocoTelem.transferStations[locomotive]
-                .Where(stop  => 
+            HashSet<string> filteredStations = relevantStations
+                .Where(station => selectedStationIdentifiers.Contains(station))
+                .ToHashSet();
+
+            foreach (string identifier in filteredStations)
+            {
+                RouteManager.logger.LogToDebug(String.Format("filteredStations contains {0}", identifier), LogLevel.Verbose);
+            }
+
+            RouteManager.logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), LogLevel.Debug);
+
+            // Apply the filtered stations to each coach
+            foreach (Car coach in locomotive.EnumerateCoupled().Where(car => car.Archetype == CarArchetype.Coach))
+            {
+
+                foreach (string identifier in filteredStations)
                 {
-                    RouteManager.logger.LogToDebug(String.Format($"transferStationIdentifiers.Where()\r\n\tCurrent Station: {currentStation}\r\n\tPickup from: {stop.Key.identifier}\r\n\tTransfer to: {stop.Value.identifier}"), LogLevel.Verbose);
-                    return stop.Value.identifier == currentStation;
-                 })
-                .Select(stop => stop.Key.identifier)
+                    RouteManager.logger.LogToDebug(String.Format("    Applying {0} to car {1}", identifier, coach.DisplayName), LogLevel.Verbose);
+                }
+
+                StateManager.ApplyLocal(new SetPassengerDestinations(coach.id, filteredStations.ToList()));
+            }
+
+            LocoTelem.needToUpdatePassengerCoaches[locomotive] = false;
+        }
+
+        public static void CopyStationsFromLocoToCoaches_dev(Car locomotive)
+        {
+            RouteManager.logger.LogToDebug(String.Format("Loco: {0} update coach station selection", locomotive.DisplayName),LogLevel.Verbose);
+
+            string currentStation = LocoTelem.currentDestination[locomotive].identifier;
+            int currentStationIndex = DestinationManager.orderedStations.IndexOf(currentStation);
+            bool isTravelingEastWard = LocoTelem.locoTravelingEastWard[locomotive]; // true if traveling East
+
+            // Determine the range of stations to include based on travel direction
+            // using CTC logical direction
+            IEnumerable<string> stationsLeftOfMe;
+            IEnumerable<string> stationsRightOfMe;
+            IEnumerable<string> stopsLeftOfMe;
+            IEnumerable<string> stopsRightOfMe;
+            IEnumerable<string> transfersLeftOfMe;
+            IEnumerable<string> transfersRightOfMe;
+            IEnumerable<string> relevantRightStations;
+            IEnumerable<string> relevantLeftStations;
+
+            //Get all Pickups
+            HashSet<string> pickupStationIdentifiers = LocoTelem.pickupStations[locomotive]
+                .Select(stop => stop.identifier)
+                .ToHashSet();
+
+            foreach (string identifier in pickupStationIdentifiers)
+            {
+                RouteManager.logger.LogToDebug(String.Format("pickupStationIdentifiers contains {0}", identifier), LogLevel.Verbose);
+            }
+
+            //Get all Stops
+            HashSet<string> stopStationIdentifiers = LocoTelem.stopStations[locomotive]
+                .Select(stop => stop.identifier)
+                .ToHashSet();
+
+            foreach (string identifier in stopStationIdentifiers)
+            {
+                RouteManager.logger.LogToDebug(String.Format("stopStationIdentifiers contains {0}", identifier), LogLevel.Verbose);
+            }
+
+            //Get all transfers
+            HashSet<string> transferStationIdentifiers = LocoTelem.transferStations[locomotive]
+                .Select(stop => stop.Value.identifier)
+                .Distinct()
                 .ToHashSet();
 
             foreach (string identifier in transferStationIdentifiers)
@@ -271,18 +323,113 @@ namespace RouteManager.v2.core
                 RouteManager.logger.LogToDebug(String.Format("transferStationIdentifiers contains {0}", identifier), LogLevel.Verbose);
             }
 
+            //get stations to the left of current position that are pickup points
+            stationsLeftOfMe = DestinationManager.orderedStations.Skip(currentStationIndex)
+                                                                 .Where(station => pickupStationIdentifiers.Contains(station));
 
-            //reduce the filtered stations to only the selected stations and remove any transfers for the station
-            HashSet<string> filteredStations = relevantStations
-                .Where(station => 
+            foreach (string identifier in stationsLeftOfMe)
+            {
+                RouteManager.logger.LogToDebug(String.Format("stationsLeftOfMe contains {0}", identifier), LogLevel.Verbose);
+            }
+
+            //get stations to the right of current position that are pickup points
+            stationsRightOfMe = DestinationManager.orderedStations.Take(currentStationIndex-1)
+                                                                  .Where(station => pickupStationIdentifiers.Contains(station));
+
+            foreach (string identifier in stationsRightOfMe)
+            {
+                RouteManager.logger.LogToDebug(String.Format("stationsRightOfMe contains {0}", identifier), LogLevel.Verbose);
+            }
+
+
+            if (isTravelingEastWard) //travelling right (using CTC logical direction)
+            {
+
+                //get stations to the left of current position that are pickup points
+                stopsLeftOfMe = DestinationManager.orderedStations.Skip(currentStationIndex)
+                                                                  .Where(station => stopStationIdentifiers.Contains(station));
+
+                foreach (string identifier in stopsLeftOfMe)
                 {
-                    //if the current station appears in the transfer station list, we need to filter out the corresponding pickups
-                    if (transferStationIdentifiers.Contains(station))
-                        return false;
+                    RouteManager.logger.LogToDebug(String.Format("stopsLeftOfMe contains {0}", identifier), LogLevel.Verbose);
+                }
 
-                    return selectedStationIdentifiers.Contains(station);/* && !transferStationIdentifiers.Contains(station) */
-                })
-                .ToHashSet();
+                //get stations to the left of current position that are transfer drop off points
+                transfersLeftOfMe = DestinationManager.orderedStations.Skip(currentStationIndex)
+                                                                      .Where(station => transferStationIdentifiers.Contains(station));
+
+                foreach (string identifier in transfersLeftOfMe)
+                {
+                    RouteManager.logger.LogToDebug(String.Format("stopsLeftOfMe contains {0}", identifier), LogLevel.Verbose);
+                }
+
+
+                //Keep the stations to the right that don't have a stop to the right
+                relevantRightStations = stationsRightOfMe.Where(station =>
+                                                                    !stopsLeftOfMe.Contains(station) &&
+                                                                    !transfersLeftOfMe.Contains(station)
+                                                                );
+
+                foreach (string identifier in relevantRightStations)
+                {
+                    RouteManager.logger.LogToDebug(String.Format("relevantRightStations contains {0}", identifier), LogLevel.Verbose);
+                }
+
+
+                //Keep the stations to the left that don't have a stop to the right
+                relevantLeftStations = stationsLeftOfMe.Where(station =>
+                                                                    !stopsLeftOfMe.Contains(station) &&
+                                                                    !transfersLeftOfMe.Contains(station)
+                                                               );
+
+                foreach (string identifier in relevantLeftStations)
+                {
+                    RouteManager.logger.LogToDebug(String.Format("relevantLeftStations contains {0}", identifier), LogLevel.Verbose);
+                }
+            }
+            else //travelling left (using CTC logical direction)
+            {
+                //get stations to the right of current position that are pickup points
+                stopsRightOfMe = DestinationManager.orderedStations.Take(currentStationIndex - 1)
+                                                                      .Where(station => stopStationIdentifiers.Contains(station));
+
+                foreach (string identifier in stopsRightOfMe)
+                {
+                    RouteManager.logger.LogToDebug(String.Format("stopsRightOfMe contains {0}", identifier), LogLevel.Verbose);
+                }
+
+                //get stations to the right of current position that are transfer drop off points
+                transfersRightOfMe = DestinationManager.orderedStations.Take(currentStationIndex - 1)
+                                                                      .Where(station => transferStationIdentifiers.Contains(station));
+                
+                foreach (string identifier in transfersRightOfMe)
+                {
+                    RouteManager.logger.LogToDebug(String.Format("transfersRightOfMe contains {0}", identifier), LogLevel.Verbose);
+                }
+
+                //Keep the stations to the right that don't have a stop to the right
+                relevantRightStations = stationsRightOfMe.Where(station =>
+                                                                    !stopsRightOfMe.Contains(station) &&
+                                                                    !transfersRightOfMe.Contains(station)
+                                                                );
+                foreach (string identifier in relevantRightStations)
+                {
+                    RouteManager.logger.LogToDebug(String.Format("relevantRightStations contains {0}", identifier), LogLevel.Verbose);
+                }
+
+                //Keep the stations to the left that don't have a stop to the right
+                relevantLeftStations = stationsLeftOfMe.Where(station =>
+                                                                !stopsRightOfMe.Contains(station) &&
+                                                                !transfersRightOfMe.Contains(station)
+                                                               );
+                
+                foreach (string identifier in relevantLeftStations)
+                {
+                    RouteManager.logger.LogToDebug(String.Format("relevantLeftStations contains {0}", identifier), LogLevel.Verbose);
+                }
+            }
+
+            HashSet<string> filteredStations = relevantRightStations.Union(relevantLeftStations).ToHashSet();
 
             foreach (string identifier in filteredStations)
             {

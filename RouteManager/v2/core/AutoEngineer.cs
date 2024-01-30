@@ -52,7 +52,16 @@ namespace RouteManager.v2.core
 
                 //Update passenger markers as needed.
                 if (LocoTelem.needToUpdatePassengerCoaches[locomotive])
-                    TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+                {
+                    if (RouteManager.Settings.experimentalUI)
+                    {
+                        TrainManager.CopyStationsFromLocoToCoaches_dev(locomotive);
+                    }
+                    else { 
+                        TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+                    }
+
+                }
 
                 RouteManager.logger.LogToDebug(String.Format("Locomotive {0} center of train is car {1}", locomotive.DisplayName, LocoTelem.CenterCar[locomotive].DisplayName), LogLevel.Verbose);
 
@@ -254,7 +263,14 @@ namespace RouteManager.v2.core
 
                     //make sure our passenger loading/unloading is set as we arrive at the station
                     //LocoTelem.needToUpdatePassengerCoaches[locomotive] = true; //didn't trigger the update until departing, needs to happen prior to departure
-                    TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+                    if (RouteManager.Settings.experimentalUI)
+                    {
+                        TrainManager.CopyStationsFromLocoToCoaches_dev(locomotive);
+                    }
+                    else
+                    {
+                        TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+                    }
 
                     //Hack to work around the new auto engineer crossing detection to prevent double blow / weird horn blow behavior. 
                     //This can be done better but further research is required. In the mean time this crude hack hopefully will reduce the occurances. 
@@ -354,7 +370,14 @@ namespace RouteManager.v2.core
                 {
                     RouteManager.logger.LogToDebug(String.Format("Locomotive {0} is at last station stop. Copy stations to cars for return trip",locomotive.DisplayName));
 
-                    TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+                    if (RouteManager.Settings.experimentalUI)
+                    {
+                        TrainManager.CopyStationsFromLocoToCoaches_dev(locomotive);
+                    }
+                    else
+                    {
+                        TrainManager.CopyStationsFromLocoToCoaches(locomotive);
+                    }
                 }
 
                 //Now that train is stopped, perform station ops and check fuel quantities before departure.
@@ -407,7 +430,6 @@ namespace RouteManager.v2.core
                             if (type.Key == "coal")
                             {
                                 RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is low on coal and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
-
                             }
                             if (type.Key == "water")
                             {
@@ -747,9 +769,7 @@ namespace RouteManager.v2.core
                             if (LocoTelem.currentDestination[locomotive] == LocoTelem.previousDestinations[locomotive].Last())
                             {
                                 RouteManager.logger.LogToConsole(String.Format("{0} has no more stations. Halting Control.", Hyperlink.To(locomotive)));
-
                                 TrainManager.SetRouteModeEnabled(false, locomotive);
-
                                 return true;
                             }
                         }
