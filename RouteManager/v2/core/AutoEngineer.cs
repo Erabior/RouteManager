@@ -391,10 +391,8 @@ namespace RouteManager.v2.core
                         //Bugfix: message would previously be generated even when departure was not cleared. 
 
 
-                        if (RouteManager.Settings.showDepartureMessage) { 
-                            string message = String.Format("Dispatcher: {0} has departed {1} for {2}", Hyperlink.To(locomotive), LocoTelem.previousDestinations[locomotive].Last().DisplayName.ToUpper(), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper());
-                            //RouteManager.logger.LogToConsole(message);
-                            Multiplayer.Broadcast(message);
+                        if (RouteManager.Settings.showDepartureMessage) {
+                            RouteManager.logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), LocoTelem.previousDestinations[locomotive].Last().DisplayName.ToUpper(), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
                         }
 
                     }
@@ -408,28 +406,22 @@ namespace RouteManager.v2.core
                         //Generate warning for each type of low fuel.
                         foreach (KeyValuePair<string, float> type in LocoTelem.lowFuelQuantities[locomotive])
                         {
-                            string message=null;
 
                             if (type.Key == "coal")
                             {
-                                message = String.Format("Locomotive {0} is low on coal and is holding at {1}", Hyperlink.To(locomotive), holdLocationName);
-                                
+                                RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is low on coal and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
+
                             }
                             if (type.Key == "water")
                             {
-                                message = String.Format("Locomotive {0} is low on water and is holding at {1}", Hyperlink.To(locomotive), holdLocationName);
+                                RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is low on water and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
                             }
 
                             if (type.Key == "diesel-fuel")
                             {
-                                message = String.Format("Locomotive {0} is low on diesel and is holding at {1}", Hyperlink.To(locomotive), holdLocationName);
+                                RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is low on diesel and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
                             }
 
-                            if (message != null)
-                            {
-                                //RouteManager.logger.LogToConsole($"Dispatcher: {message}");
-                                Multiplayer.Broadcast($"Dispatcher: {message}");
-                            }
                         }
                         yield return new WaitForSeconds(30);
                     }
