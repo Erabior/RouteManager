@@ -579,7 +579,7 @@ namespace RouteManager.v2.core
                 LocoTelem.TransitMode[locomotive] = false;
 
                 if (RouteManager.Settings.showArrivalMessage)
-                    RouteManager.logger.LogToConsole(String.Format("Dispatcher: {0} has arrived at {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
+                    RouteManager.logger.LogToConsole(String.Format("{0} has arrived at {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
             }
 
 
@@ -616,7 +616,7 @@ namespace RouteManager.v2.core
                     //Only notify if not configured to wait until full
 
                     if (!RouteManager.Settings.waitUntilFull)
-                        RouteManager.logger.LogToConsole(String.Format("Dispatcher: Locomotive {0} consist is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName));
+                        RouteManager.logger.LogToConsole(String.Format("Locomotive {0} consist is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName));
 
                     return true;
                 }
@@ -746,7 +746,7 @@ namespace RouteManager.v2.core
                             //Only if our current dest = our last visited, consider the coroutine terminatable.
                             if (LocoTelem.currentDestination[locomotive] == LocoTelem.previousDestinations[locomotive].Last())
                             {
-                                RouteManager.logger.LogToConsole(String.Format("Dispatcher: {0} has no more stations. Halting Control.", Hyperlink.To(locomotive)));
+                                RouteManager.logger.LogToConsole(String.Format("{0} has no more stations. Halting Control.", Hyperlink.To(locomotive)));
 
                                 TrainManager.SetRouteModeEnabled(false, locomotive);
 
