@@ -391,10 +391,8 @@ namespace RouteManager.v2.core
                         //Bugfix: message would previously be generated even when departure was not cleared. 
 
 
-                        if (RouteManager.Settings.showDepartureMessage) {
+                        if (RouteManager.Settings.showDepartureMessage)
                             RouteManager.logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), LocoTelem.previousDestinations[locomotive].Last().DisplayName.ToUpper(), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
-                        }
-
                     }
                 }
                 else
@@ -406,7 +404,6 @@ namespace RouteManager.v2.core
                         //Generate warning for each type of low fuel.
                         foreach (KeyValuePair<string, float> type in LocoTelem.lowFuelQuantities[locomotive])
                         {
-
                             if (type.Key == "coal")
                             {
                                 RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is low on coal and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
@@ -421,7 +418,6 @@ namespace RouteManager.v2.core
                             {
                                 RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is low on diesel and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
                             }
-
                         }
                         yield return new WaitForSeconds(30);
                     }
@@ -582,11 +578,8 @@ namespace RouteManager.v2.core
                 //Disable transit mode.
                 LocoTelem.TransitMode[locomotive] = false;
 
-                if (RouteManager.Settings.showArrivalMessage) { 
-                    string message = String.Format("Dispatcher: {0} has arrived at {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper());
-                    //RouteManager.logger.LogToConsole(message);
-                    Multiplayer.Broadcast(message);
-                }
+                if (RouteManager.Settings.showArrivalMessage)
+                    RouteManager.logger.LogToConsole(String.Format("Dispatcher: {0} has arrived at {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
             }
 
 
@@ -623,11 +616,7 @@ namespace RouteManager.v2.core
                     //Only notify if not configured to wait until full
 
                     if (!RouteManager.Settings.waitUntilFull)
-                    {
-                        string message = String.Format("Dispatcher: Locomotive {0} consist is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName);
-                        //RouteManager.logger.LogToConsole(message);
-                        Multiplayer.Broadcast(message);
-                    }
+                        RouteManager.logger.LogToConsole(String.Format("Dispatcher: Locomotive {0} consist is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName));
 
                     return true;
                 }
@@ -757,9 +746,7 @@ namespace RouteManager.v2.core
                             //Only if our current dest = our last visited, consider the coroutine terminatable.
                             if (LocoTelem.currentDestination[locomotive] == LocoTelem.previousDestinations[locomotive].Last())
                             {
-                                string message = String.Format("Dispatcher: {0} has no more stations. Halting Control.", Hyperlink.To(locomotive));
-                                //RouteManager.logger.LogToConsole(message);
-                                Multiplayer.Broadcast(message);
+                                RouteManager.logger.LogToConsole(String.Format("Dispatcher: {0} has no more stations. Halting Control.", Hyperlink.To(locomotive)));
 
                                 TrainManager.SetRouteModeEnabled(false, locomotive);
 
