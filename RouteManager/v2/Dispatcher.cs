@@ -71,7 +71,14 @@ namespace RouteManager.v2
 
                         prepareDataStructures(currentLoco);
 
-                        StartCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
+                        if(RouteManager.Settings.experimentalUI)
+                        {
+                            StartCoroutine(Engineer.AutoEngineerControlRoutine_dev(currentLoco));
+                        }
+                        else
+                        {
+                            StartCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
+                        }
 
                     }
                     else if (LocoTelem.locomotiveCoroutines.ContainsKey(currentLoco))
@@ -79,9 +86,12 @@ namespace RouteManager.v2
                         if (LocoTelem.locomotiveCoroutines[currentLoco] && !LocoTelem.RouteMode[currentLoco])
                         {
                             RouteManager.logger.LogToDebug($"loco {currentLoco.DisplayName} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {currentLoco.DisplayName}");
-
-                            StopCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
-
+                            if (RouteManager.Settings.experimentalUI)
+                            {
+                                StopCoroutine(Engineer.AutoEngineerControlRoutine_dev(currentLoco));
+                            }else{
+                                StopCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
+                            }
                             LocoTelem.locomotiveCoroutines[currentLoco] = false;
 
                             RouteManager.logger.LogToDebug($"Stopped Coroutine for {currentLoco.DisplayName}");
@@ -190,12 +200,14 @@ namespace RouteManager.v2
             LocoTelem.currentDestination.Clear();
             LocoTelem.previousDestinations.Clear();
             LocoTelem.lowFuelQuantities.Clear();
-            LocoTelem.UIStationSelections.Clear();
-            LocoTelem.SelectedStations.Clear();
+            LocoTelem.UIStopStationSelections.Clear();
+            LocoTelem.UIPickupStationSelections.Clear();
+            LocoTelem.UITransferStationSelections.Clear();
+            LocoTelem.stopStations.Clear();
+            LocoTelem.pickupStations.Clear();
+            LocoTelem.transferStations.Clear();
+            LocoTelem.relevantPassengers.Clear();
         }
-
-
-
 
 
         //Map is about to unload so lets cleanup all the instances of the mod.
@@ -212,8 +224,14 @@ namespace RouteManager.v2
 
                 for (int i = 0; i < keys.Count(); i++)
                 {
-                    StopCoroutine(Engineer.AutoEngineerControlRoutine(keys[i]));
-
+                    if (RouteManager.Settings.experimentalUI)
+                    {
+                        StopCoroutine(Engineer.AutoEngineerControlRoutine_dev(keys[i]));
+                    }
+                    else
+                    {
+                        StopCoroutine(Engineer.AutoEngineerControlRoutine(keys[i]));
+                    }
                     //Attempt to prevent trains from taking off before route manager can be re-configured
                     try
                     {
