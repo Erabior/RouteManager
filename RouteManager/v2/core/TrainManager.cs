@@ -277,166 +277,120 @@ namespace RouteManager.v2.core
         {
             RouteManager.logger.LogToDebug(String.Format("Loco: {0} update coach station selection", locomotive.DisplayName),LogLevel.Verbose);
 
-            string currentStation = LocoTelem.currentDestination[locomotive].identifier;
+            string currentStation = StationManager.GetClosestStation_dev(locomotive).Item1.identifier; //LocoTelem.currentDestination[locomotive].identifier;
             int currentStationIndex = DestinationManager.orderedStations.IndexOf(currentStation);
             bool isTravelingEastWard = LocoTelem.locoTravelingEastWard[locomotive]; // true if traveling East
+            IEnumerable<string> filteredStations;
 
-            // Determine the range of stations to include based on travel direction
-            // using CTC logical direction
-            IEnumerable<string> stationsLeftOfMe;
-            IEnumerable<string> stationsRightOfMe;
-            IEnumerable<string> stopsLeftOfMe;
-            IEnumerable<string> stopsRightOfMe;
-            IEnumerable<string> transfersLeftOfMe;
-            IEnumerable<string> transfersRightOfMe;
-            IEnumerable<string> relevantRightStations;
-            IEnumerable<string> relevantLeftStations;
+            RouteManager.logger.LogToDebug($"CopyStationsFromLocoToCoaches_dev() Current Station {currentStation}, Current Station Index: {currentStationIndex}, Is Travelling East: {isTravelingEastWard}", LogLevel.Verbose);
 
-            //Get all Pickups
-            HashSet<string> pickupStationIdentifiers = LocoTelem.pickupStations[locomotive]
-                .Select(stop => stop.identifier)
-                .ToHashSet();
+            var stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
+            RouteManager.logger.LogToDebug($"CopyStationsFromLocoToCoaches_dev() stopsLookup Complete");
+            List <PassengerStop> orderedStops = DestinationManager.orderedStations.Select(id => stopsLookup[id])
+                                                                                 .ToList();
+            RouteManager.logger.LogToDebug($"CopyStationsFromLocoToCoaches_dev() orderedStops Complete");
+            List<PassengerStop> stationsLeftOfMe = orderedStops.Skip(currentStationIndex+1).ToList();
+            List<PassengerStop> stopsLeftOfMe = LocoTelem.stopStations[locomotive].Where(stop => stationsLeftOfMe.Contains(stop)).ToList();
+            List<PassengerStop> stationsRightOfMe = orderedStops.Take(currentStationIndex).ToList(); //+0 
+            List<PassengerStop> stopsRightOfMe = LocoTelem.stopStations[locomotive].Where(stop => stationsRightOfMe.Contains(stop)).ToList();
+            RouteManager.logger.LogToDebug($"CopyStationsFromLocoToCoaches_dev() stations left & right Complete");
 
-            foreach (string identifier in pickupStationIdentifiers)
+            Dictionary<PassengerStop, PassengerStop> transferStations; 
+            LocoTelem.transferStations.TryGetValue(locomotive, out transferStations);
+            if (transferStations == null )
+                transferStations = new Dictionary<PassengerStop, PassengerStop>();
+
+            RouteManager.logger.LogToDebug($"CopyStationsFromLocoToCoaches_dev() transfer stations Complete");
+
+            RouteManager.logger.LogToDebug($"stationsLeftOfMe: {string.Join(", ", stationsLeftOfMe.Select(stop=>stop.identifier))}", LogLevel.Verbose);
+            RouteManager.logger.LogToDebug($"stationsRightOfMe: {string.Join(", ", stationsRightOfMe.Select(stop=>stop.identifier))}", LogLevel.Verbose);
+            RouteManager.logger.LogToDebug($"stopsLeftOfMe: {string.Join(", ", stopsLeftOfMe.Select(stop=>stop.identifier))}", LogLevel.Verbose);
+            RouteManager.logger.LogToDebug($"stopsRightOfMe: {string.Join(", ", stopsRightOfMe.Select(stop=>stop.identifier))}", LogLevel.Verbose);
+
+            //Filter to stations marked as a pickup
+            List<PassengerStop> pickupsLeftOfMe = stationsLeftOfMe.Where(station => LocoTelem.pickupStations[locomotive].Contains(station)).ToList();
+            List<PassengerStop> pickupsRightOfMe = stationsRightOfMe.Where(station => LocoTelem.pickupStations[locomotive].Contains(station)).ToList();
+
+            RouteManager.logger.LogToDebug($"Pickup stationsLeftOfMe: {string.Join(", ", pickupsLeftOfMe.Select(stop => stop.identifier))}", LogLevel.Verbose);
+            RouteManager.logger.LogToDebug($"Pickup stationsRightOfMe: {string.Join(", ", pickupsRightOfMe.Select(stop => stop.identifier))}", LogLevel.Verbose);
+
+            if (isTravelingEastWard) //Travelling CTC logical right
             {
-                RouteManager.logger.LogToDebug(String.Format("pickupStationIdentifiers contains {0}", identifier), LogLevel.Verbose);
+                //If a pickup station on my left is also a stop station we want to remove it
+                List<PassengerStop> filteredPickupsLeftOfMe = pickupsLeftOfMe.Where(station => !LocoTelem.stopStations[locomotive].Contains(station)).ToList();
+                RouteManager.logger.LogToDebug($"Pickups left of me with no stop: {string.Join(", ", filteredPickupsLeftOfMe.Select(stop => stop.identifier))}", LogLevel.Verbose);
+
+                //Find where the remaining pickups left of me will be dropped off, only keep the pickups if drop off point is a stop to the right
+                filteredPickupsLeftOfMe =
+                    transferStations.Where(station =>
+                    {
+                        RouteManager.logger.LogToDebug($"assessing: {station.Key}, {station.Value}, Contains Key: {filteredPickupsLeftOfMe.Contains(station.Key)}, Contains Value: {stopsRightOfMe.Contains(station.Value)}, Matches Current Station: {station.Value.identifier == currentStation}");
+                        return filteredPickupsLeftOfMe.Contains(station.Key) && (stopsRightOfMe.Contains(station.Value) );
+                    })
+                                    .Select(station => station.Key).ToList();
+                RouteManager.logger.LogToDebug($"Pickups left of me with a transfer to my right: {string.Join(", ", filteredPickupsLeftOfMe.Select(stop => stop.identifier))}", LogLevel.Verbose);
+
+                //Find the pickups right of me without a stop
+                List<PassengerStop> pickupsRightOfMeNoStop = pickupsRightOfMe.Where(station => !LocoTelem.stopStations[locomotive].Contains(station)).ToList();
+                RouteManager.logger.LogToDebug($"Pickups right of me with no stop: {string.Join(", ", pickupsRightOfMeNoStop.Select(stop => stop.identifier))}", LogLevel.Verbose);
+
+                //Pickups right of me where the passengers are transferred/dropped off at a station to my left
+                pickupsRightOfMeNoStop = transferStations.Where(station =>
+                    {
+                        RouteManager.logger.LogToDebug($"assessing: {station.Key}, {station.Value}, Contains Key: {pickupsRightOfMeNoStop.Contains(station.Key)}, Contains Value: {stopsLeftOfMe.Contains(station.Value)}, Matches Current Station: {station.Value.identifier == currentStation}");
+                        return pickupsRightOfMeNoStop.Contains(station.Key) && ((stopsLeftOfMe.Contains(station.Value) || station.Value.identifier == currentStation));
+                    })
+                    .Select(station => station.Key).ToList();
+                RouteManager.logger.LogToDebug($"Pickups right of me with no stop and the transfer to my left: {string.Join(", ", pickupsRightOfMeNoStop.Select(stop => stop.identifier))}", LogLevel.Verbose);
+
+                //Remove stations with no stop and a transfer to my left from the list of pickups to my right
+                List<PassengerStop> filteredPickupsRightOfMe = pickupsRightOfMe.Where(station => !pickupsRightOfMeNoStop.Contains(station)).ToList();
+                RouteManager.logger.LogToDebug($"Pickups right of me with a stop or transfer to my right: {string.Join(", ", filteredPickupsRightOfMe.Select(stop => stop.identifier))}", LogLevel.Verbose);
+
+                filteredStations = filteredPickupsRightOfMe.Union(filteredPickupsLeftOfMe).Select(station => station.identifier);
+
+            }
+            else  //Travelling CTC logical left
+            {
+                //If a pickup station on my right is also a stop station we want to remove it
+                List<PassengerStop> filteredPickupsRightOfMe = pickupsRightOfMe.Where(station => !LocoTelem.stopStations[locomotive].Contains(station)).ToList();
+                RouteManager.logger.LogToDebug($"Pickups right of me with no stop: {string.Join(", ", filteredPickupsRightOfMe.Select(stop => stop.identifier))}", LogLevel.Verbose);
+
+                //Find where the remaining pickups right of me will be dropped off, only keep the pickups if drop off point is a stop to the left
+                filteredPickupsRightOfMe =
+                    transferStations.Where(station =>
+                    {
+                        RouteManager.logger.LogToDebug($"assessing: {station.Key}, {station.Value}, Contains Key: {filteredPickupsRightOfMe.Contains(station.Key)}, Contains Value: {stopsLeftOfMe.Contains(station.Value)}, Matches Current Station: {station.Value.identifier == currentStation}", LogLevel.Trace);
+                        return filteredPickupsRightOfMe.Contains(station.Key) && (stopsLeftOfMe.Contains(station.Value));
+                    })
+                    .Select(station => station.Key).ToList();
+
+                RouteManager.logger.LogToDebug($"Pickups right of me with a transfer to my left: {string.Join(", ", filteredPickupsRightOfMe.Select(stop => stop.identifier))}", LogLevel.Verbose);
+
+                // Find the pickups left of me without a stop
+                List<PassengerStop> pickupsLeftOfMeNoStop = pickupsLeftOfMe.Where(station => !LocoTelem.stopStations[locomotive].Contains(station)).ToList();
+                RouteManager.logger.LogToDebug($"Pickups left of me with no stop: {string.Join(", ", pickupsLeftOfMeNoStop.Select(stop => stop.identifier))}", LogLevel.Verbose);
+
+                //Pickups left of me where the passengers are transferred/dropped off at a station to my right
+                pickupsLeftOfMeNoStop = transferStations.Where(station =>
+                {
+                    RouteManager.logger.LogToDebug($"assessing: {station.Key}, {station.Value}, Contains Key: {pickupsLeftOfMeNoStop.Contains(station.Key)}, Contains Value: {stopsRightOfMe.Contains(station.Value)}, Matches Current Station: {station.Value.identifier == currentStation}", LogLevel.Trace);
+                    return pickupsLeftOfMeNoStop.Contains(station.Key) && ((stopsRightOfMe.Contains(station.Value) || station.Value.identifier == currentStation));
+                })
+                    .Select(station => station.Key).ToList();
+                RouteManager.logger.LogToDebug($"Pickups left of me with no stop and the transfer to my right: {string.Join(", ", pickupsLeftOfMeNoStop.Select(stop => stop.identifier))}", LogLevel.Verbose);
+
+                //Remove stations with no stop and a transfer to my right from the list of pickups to my left
+                List<PassengerStop> filteredPickupsLeftOfMe = pickupsLeftOfMe.Where(station => !pickupsLeftOfMeNoStop.Contains(station)).ToList();
+                RouteManager.logger.LogToDebug($"Pickups left of me with a stop or transfer to my left: {string.Join(", ", filteredPickupsLeftOfMe.Select(stop => stop.identifier))}", LogLevel.Verbose);
+
+                filteredStations = filteredPickupsRightOfMe.Union(filteredPickupsLeftOfMe).Select(station => station.identifier);
+
             }
 
-            //Get all Stops
-            HashSet<string> stopStationIdentifiers = LocoTelem.stopStations[locomotive]
-                .Select(stop => stop.identifier)
-                .ToHashSet();
+            RouteManager.logger.LogToDebug($"Filtered stations: {string.Join(", ", filteredStations)}", LogLevel.Verbose);
 
-            foreach (string identifier in stopStationIdentifiers)
-            {
-                RouteManager.logger.LogToDebug(String.Format("stopStationIdentifiers contains {0}", identifier), LogLevel.Verbose);
-            }
-
-            //Get all transfers
-            HashSet<string> transferStationIdentifiers = LocoTelem.transferStations[locomotive]
-                .Select(stop => stop.Value.identifier)
-                .Distinct()
-                .ToHashSet();
-
-            foreach (string identifier in transferStationIdentifiers)
-            {
-                RouteManager.logger.LogToDebug(String.Format("transferStationIdentifiers contains {0}", identifier), LogLevel.Verbose);
-            }
-
-            //get stations to the left of current position that are pickup points
-            stationsLeftOfMe = DestinationManager.orderedStations.Skip(currentStationIndex)
-                                                                 .Where(station => pickupStationIdentifiers.Contains(station));
-
-            foreach (string identifier in stationsLeftOfMe)
-            {
-                RouteManager.logger.LogToDebug(String.Format("stationsLeftOfMe contains {0}", identifier), LogLevel.Verbose);
-            }
-
-            //get stations to the right of current position that are pickup points
-            stationsRightOfMe = DestinationManager.orderedStations.Take(currentStationIndex-1)
-                                                                  .Where(station => pickupStationIdentifiers.Contains(station));
-
-            foreach (string identifier in stationsRightOfMe)
-            {
-                RouteManager.logger.LogToDebug(String.Format("stationsRightOfMe contains {0}", identifier), LogLevel.Verbose);
-            }
-
-
-            if (isTravelingEastWard) //travelling right (using CTC logical direction)
-            {
-
-                //get stations to the left of current position that are pickup points
-                stopsLeftOfMe = DestinationManager.orderedStations.Skip(currentStationIndex)
-                                                                  .Where(station => stopStationIdentifiers.Contains(station));
-
-                foreach (string identifier in stopsLeftOfMe)
-                {
-                    RouteManager.logger.LogToDebug(String.Format("stopsLeftOfMe contains {0}", identifier), LogLevel.Verbose);
-                }
-
-                //get stations to the left of current position that are transfer drop off points
-                transfersLeftOfMe = DestinationManager.orderedStations.Skip(currentStationIndex)
-                                                                      .Where(station => transferStationIdentifiers.Contains(station));
-
-                foreach (string identifier in transfersLeftOfMe)
-                {
-                    RouteManager.logger.LogToDebug(String.Format("stopsLeftOfMe contains {0}", identifier), LogLevel.Verbose);
-                }
-
-
-                //Keep the stations to the right that don't have a stop to the right
-                relevantRightStations = stationsRightOfMe.Where(station =>
-                                                                    !stopsLeftOfMe.Contains(station) &&
-                                                                    !transfersLeftOfMe.Contains(station)
-                                                                );
-
-                foreach (string identifier in relevantRightStations)
-                {
-                    RouteManager.logger.LogToDebug(String.Format("relevantRightStations contains {0}", identifier), LogLevel.Verbose);
-                }
-
-
-                //Keep the stations to the left that don't have a stop to the right
-                relevantLeftStations = stationsLeftOfMe.Where(station =>
-                                                                    !stopsLeftOfMe.Contains(station) &&
-                                                                    !transfersLeftOfMe.Contains(station)
-                                                               );
-
-                foreach (string identifier in relevantLeftStations)
-                {
-                    RouteManager.logger.LogToDebug(String.Format("relevantLeftStations contains {0}", identifier), LogLevel.Verbose);
-                }
-            }
-            else //travelling left (using CTC logical direction)
-            {
-                //get stations to the right of current position that are pickup points
-                stopsRightOfMe = DestinationManager.orderedStations.Take(currentStationIndex - 1)
-                                                                      .Where(station => stopStationIdentifiers.Contains(station));
-
-                foreach (string identifier in stopsRightOfMe)
-                {
-                    RouteManager.logger.LogToDebug(String.Format("stopsRightOfMe contains {0}", identifier), LogLevel.Verbose);
-                }
-
-                //get stations to the right of current position that are transfer drop off points
-                transfersRightOfMe = DestinationManager.orderedStations.Take(currentStationIndex - 1)
-                                                                      .Where(station => transferStationIdentifiers.Contains(station));
-                
-                foreach (string identifier in transfersRightOfMe)
-                {
-                    RouteManager.logger.LogToDebug(String.Format("transfersRightOfMe contains {0}", identifier), LogLevel.Verbose);
-                }
-
-                //Keep the stations to the right that don't have a stop to the right
-                relevantRightStations = stationsRightOfMe.Where(station =>
-                                                                    !stopsRightOfMe.Contains(station) &&
-                                                                    !transfersRightOfMe.Contains(station)
-                                                                );
-                foreach (string identifier in relevantRightStations)
-                {
-                    RouteManager.logger.LogToDebug(String.Format("relevantRightStations contains {0}", identifier), LogLevel.Verbose);
-                }
-
-                //Keep the stations to the left that don't have a stop to the right
-                relevantLeftStations = stationsLeftOfMe.Where(station =>
-                                                                !stopsRightOfMe.Contains(station) &&
-                                                                !transfersRightOfMe.Contains(station)
-                                                               );
-                
-                foreach (string identifier in relevantLeftStations)
-                {
-                    RouteManager.logger.LogToDebug(String.Format("relevantLeftStations contains {0}", identifier), LogLevel.Verbose);
-                }
-            }
-
-            HashSet<string> filteredStations = relevantRightStations.Union(relevantLeftStations).ToHashSet();
-
-            foreach (string identifier in filteredStations)
-            {
-                RouteManager.logger.LogToDebug(String.Format("filteredStations contains {0}", identifier), LogLevel.Verbose);
-            }
-
-            RouteManager.logger.LogToDebug(String.Format("Loco: {0} updating car station selection", locomotive.DisplayName), LogLevel.Debug);
+            LocoTelem.relevantPassengers[locomotive] = filteredStations.ToList();
 
             // Apply the filtered stations to each coach
             foreach (Car coach in locomotive.EnumerateCoupled().Where(car => car.Archetype == CarArchetype.Coach))

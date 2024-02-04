@@ -164,7 +164,13 @@ namespace RouteManager.v2.UI
                             UpdateManagedTrainsStopStations(_instance._car);
 
                             if (LocoTelem.RouteMode[_instance._car])
+                            {
                                 TrainManager.CopyStationsFromLocoToCoaches_dev(_instance._car);
+                                
+                                //TODO: If we're already moving, we need to update our next station
+                                //(or at least check if this station is between us and the next station or the next station has been removed)
+                                
+                            }
 
                             builder.Rebuild();
                         }).Width(80f);

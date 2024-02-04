@@ -25,6 +25,7 @@ namespace RouteManager.v2.dataStructures
         public static Dictionary<Car, (PassengerStop, float)> closestStation { get; private set; } = new Dictionary<Car, (PassengerStop, float)>();
         public static Dictionary<Car, PassengerStop> currentDestination { get; private set; } = new Dictionary<Car, PassengerStop>();
         public static Dictionary<Car, List<PassengerStop>> previousDestinations { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
+        public static Dictionary<Car, PassengerStop> previousDestination { get; private set; } = new Dictionary<Car, PassengerStop>();
         public static Dictionary<Car, Dictionary<string, float>> lowFuelQuantities { get; private set; } = new Dictionary<Car, Dictionary<string, float>>();
 
         public static Dictionary<Car, Dictionary<string, bool>> UIPickupStationSelections { get; private set; } = new Dictionary<Car, Dictionary<string, bool>>();
@@ -33,5 +34,6 @@ namespace RouteManager.v2.dataStructures
         public static Dictionary<Car, List<PassengerStop>> pickupStations { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
         public static Dictionary<Car, List<PassengerStop>> stopStations { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
         public static Dictionary<Car, Dictionary<PassengerStop, PassengerStop>> transferStations { get; private set; } = new Dictionary<Car, Dictionary<PassengerStop, PassengerStop>>();
+        public static Dictionary<Car, List<string>> relevantPassengers { get; set; } = new Dictionary<Car, List<string>> ();
     }
 }

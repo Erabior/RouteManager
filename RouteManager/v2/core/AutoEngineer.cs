@@ -11,6 +11,9 @@ using System.Linq;
 using UnityEngine;
 using RouteManager.v2.Logging;
 using Network;
+using RollingStock;
+using Track;
+using static Game.Reputation.PassengerReputationCalculator;
 
 namespace RouteManager.v2.core
 {
@@ -52,16 +55,7 @@ namespace RouteManager.v2.core
 
                 //Update passenger markers as needed.
                 if (LocoTelem.needToUpdatePassengerCoaches[locomotive])
-                {
-                    if (RouteManager.Settings.experimentalUI)
-                    {
-                        TrainManager.CopyStationsFromLocoToCoaches_dev(locomotive);
-                    }
-                    else { 
-                        TrainManager.CopyStationsFromLocoToCoaches(locomotive);
-                    }
-
-                }
+                    TrainManager.CopyStationsFromLocoToCoaches(locomotive);
 
                 RouteManager.logger.LogToDebug(String.Format("Locomotive {0} center of train is car {1}", locomotive.DisplayName, LocoTelem.CenterCar[locomotive].DisplayName), LogLevel.Verbose);
 
@@ -74,6 +68,84 @@ namespace RouteManager.v2.core
                 {
                     RouteManager.logger.LogToDebug(String.Format("Locomotive {0} is entering into Station Stop mode", locomotive.DisplayName), LogLevel.Verbose);
                     yield return locomotiveStationStopControl(locomotive);
+                }
+
+                yield return null;
+            }
+
+            //Locomotive is no longer in Route Mode
+            RouteManager.logger.LogToDebug(String.Format("Loco: {0} \t Route mode was disabled! Stopping Coroutine.", locomotive.DisplayName, LogLevel.Debug));
+
+            //Trace Function
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: AutoEngineerControlRoutine", LogLevel.Trace);
+            yield break;
+        }
+
+        public IEnumerator AutoEngineerControlRoutine_dev(Car locomotive)
+        {
+            //Trace Function
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: AutoEngineerControlRoutine_dev", LogLevel.Trace);
+
+            //Debug
+            RouteManager.logger.LogToDebug("Dev Coroutine Triggered!", LogLevel.Verbose);
+            RouteManager.logger.LogToDebug(String.Format("Loco: {0} \t Route Mode: {1}", locomotive.DisplayName, LocoTelem.RouteMode[locomotive]), LogLevel.Debug);
+
+            //Setup departure clearances
+            LocoTelem.clearedForDeparture[locomotive] = false;
+
+            RouteManager.logger.LogToDebug(String.Format("Loco: {0} \t has ID: {1}", locomotive.DisplayName, locomotive.id), LogLevel.Debug);
+            
+            //Set some initial values
+            LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation_dev(locomotive); //closest station will only return a station marked as a stop
+            LocoTelem.currentDestination[locomotive] = StationManager.getNextStation_dev(locomotive);//LocoTelem.closestStation[locomotive].Item1; 
+            //StationManager.getInitialDestination(locomotive);
+
+            //set locomotive drive direction
+            LocoTelem.locoTravelingForward[locomotive] = GetDirection(locomotive, LocoTelem.currentDestination[locomotive]);
+
+            LocoTelem.closestStationNeedsUpdated[locomotive] = false;
+            LocoTelem.CenterCar[locomotive] = TrainManager.GetCenterCoach(locomotive);
+
+            //set initial passenger loading
+            TrainManager.CopyStationsFromLocoToCoaches_dev(locomotive);
+
+            //Give time for passenger loading/unloading if already at the station
+            if (Vector3.Distance(LocoTelem.closestStation[locomotive].Item1.CenterPoint, LocoTelem.CenterCar[locomotive].GetCenterPosition(Graph.Shared)) <= 15f) //StationManager.isTrainInStation(LocoTelem.CenterCar[locomotive]))
+            {
+
+                while (!wasCurrentStopServed_dev(locomotive)) 
+                {
+                    yield return new WaitForSeconds(1);
+                }
+
+                if (RouteManager.Settings.showDepartureMessage)
+                    RouteManager.logger.LogToConsole(String.Format("{0} has departed for {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
+               
+                LocoTelem.clearedForDeparture[locomotive] = true;
+            }
+
+            //Feature Ehancement #30
+            LocoTelem.initialSpeedSliderSet[locomotive] = false;
+
+            //Route Mode is enabled!
+            while (LocoTelem.RouteMode[locomotive])
+            {
+                if (needToExitCoroutine_dev(locomotive))
+                {
+                    yield break;
+                }
+
+                RouteManager.logger.LogToDebug(String.Format("Locomotive {0} center of train is car {1}", locomotive.DisplayName, LocoTelem.CenterCar[locomotive].DisplayName), LogLevel.Verbose);
+
+                if (LocoTelem.TransitMode[locomotive])
+                {
+                    RouteManager.logger.LogToDebug(String.Format("Locomotive {0} is entering into transit mode", locomotive.DisplayName), LogLevel.Verbose);
+                    yield return locomotiveTransitControl_dev(locomotive);
+                }
+                else
+                {
+                    RouteManager.logger.LogToDebug(String.Format("Locomotive {0} is entering into Station Stop mode", locomotive.DisplayName), LogLevel.Verbose);
+                    yield return locomotiveStationStopControl_dev(locomotive);
                 }
 
                 yield return null;
@@ -142,7 +214,7 @@ namespace RouteManager.v2.core
                     {
                         //Update Center & closest station
                         LocoTelem.CenterCar[locomotive] = TrainManager.GetCenterCoach(locomotive);
-                        LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation(locomotive);
+                        LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation_dev(locomotive);
                         LocoTelem.closestStationNeedsUpdated[locomotive] = false;
                     }
                     else if (Math.Abs(distanceToStation) > 1000)
@@ -171,7 +243,14 @@ namespace RouteManager.v2.core
                     if (delayExecution)
                     {
                         RouteManager.logger.LogToConsole("Unable to determine distance to station. Disabling Dispatcher control of locomotive: " + locomotive.DisplayName);
-                        StopCoroutine(AutoEngineerControlRoutine(locomotive));
+                        if (RouteManager.Settings.experimentalUI)
+                        {
+                            StopCoroutine(AutoEngineerControlRoutine_dev(locomotive));
+                        }
+                        else
+                        {
+                            StopCoroutine(AutoEngineerControlRoutine(locomotive));
+                        }
                     }
 
                     //Try again in 5 seconds
@@ -261,16 +340,185 @@ namespace RouteManager.v2.core
                 {
                     onApproachLongDist(locomotive);
 
+                    //Hack to work around the new auto engineer crossing detection to prevent double blow / weird horn blow behavior. 
+                    //This can be done better but further research is required. In the mean time this crude hack hopefully will reduce the occurances. 
+                    if (!LocoTelem.approachWhistleSounded[locomotive] &&
+
+                        ((locomotive.KeyValueObject[PropertyChange.KeyForControl(PropertyChange.Control.Horn)].FloatValue) <= 0f &&
+                        (locomotive.KeyValueObject[PropertyChange.KeyForControl(PropertyChange.Control.Bell)].BoolValue) != true))
+                    {
+                        RouteManager.logger.LogToDebug(String.Format("Locomotive {0} activating Appproach Whistle", locomotive.DisplayName), LogLevel.Verbose);
+                        yield return TrainManager.RMblow(locomotive, 0.25f, 1.5f);
+                        yield return TrainManager.RMblow(locomotive, 1f, 2.5f);
+                        yield return TrainManager.RMblow(locomotive, 1f, 1.75f, 0.25f);
+                        yield return TrainManager.RMblow(locomotive, 1f, 0.25f);
+                        yield return TrainManager.RMblow(locomotive, 0f);
+                        LocoTelem.approachWhistleSounded[locomotive] = true;
+                    }
+
+                    yield return new WaitForSeconds(1);
+                }
+                //Approaching platform
+                else if (distanceToStation <= 300 && distanceToStation > 100)
+                {
+                    onApproachMediumDist(locomotive, distanceToStation);
+                    yield return new WaitForSeconds(1);
+                }
+                //Entering Platform
+                else if (distanceToStation <= 100 && distanceToStation > stationPadding)
+                {
+                    onApproachShortDist(locomotive, distanceToStation);
+                    yield return new WaitForSeconds(1);
+                }
+                //Train in platform
+                else if (distanceToStation <= stationPadding && distanceToStation >= 0)
+                {
+                    onArrival(locomotive);
+                    yield return new WaitForSeconds(1);
+                }
+
+                /*****************************************************************
+                 * 
+                 * END Locomotive Movements
+                 * 
+                 *****************************************************************/
+
+                yield return null;
+            }
+
+            yield return null;
+        }
+
+        //Locomotive Enroute to Destination
+        public IEnumerator locomotiveTransitControl_dev(Car locomotive)
+        {
+
+            //Are we in a station?
+            if (StationManager.isTrainInStation(locomotive))
+            {
+                //Is that station the same as our current destination?
+                if (LocoTelem.currentDestination[locomotive].identifier == LocoTelem.closestStation[locomotive].Item1.identifier)
+                {
+                    RouteManager.logger.LogToDebug(String.Format("Loco {0} already at first station", locomotive.DisplayName, locomotive.Orientation), LogLevel.Verbose);
+                    LocoTelem.TransitMode[locomotive] = false;
+                    yield return new WaitForSeconds(1);
+                }
+            }
+
+            //TEMP LOGIC
+            float distanceToStation = float.MaxValue;
+            bool delayExecution = false;
+            //float olddist = float.MaxValue;
+            float trainVelocity = 0;
+            int stationPadding = 10;
+
+
+            //Loop through transit logic
+            while (LocoTelem.TransitMode[locomotive])
+            {
+                if (needToExitCoroutine_dev(locomotive))
+                {
+                    yield break;
+                }
+
+                //Refueling
+                while (LocoTelem.RouteModePaused[locomotive])
+                {
+                    yield return null;
+                }
+
+                //Getting close to a station update some values...
+                //Cheeky optimization to reduce excessive logging...
+                if (distanceToStation != float.MaxValue)
+                {
+                    if (Math.Abs(distanceToStation) <= 1000 && LocoTelem.closestStationNeedsUpdated[locomotive])
+                    {
+                        //Update Center & closest station
+                        LocoTelem.CenterCar[locomotive] = TrainManager.GetCenterCoach(locomotive);
+                        LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation_dev(locomotive);
+                        LocoTelem.closestStationNeedsUpdated[locomotive] = false;
+                    }
+                    else if (Math.Abs(distanceToStation) > 1000)
+                    {
+                        //Reset closestStationNeedsUpdated
+                        LocoTelem.closestStationNeedsUpdated[locomotive] = true;
+                    }
+                }
+
+                /*****************************************************************
+                 * 
+                 * Distance To Station Check
+                 * 
+                 *****************************************************************/
+
+                try
+                {
+                    distanceToStation = DestinationManager.GetDistanceToStation(locomotive, LocoTelem.currentDestination[locomotive]);
+                    delayExecution = false;
+                }
+                catch (Exception e)
+                {
+                    RouteManager.logger.LogToDebug(e.Message, LogLevel.Error);
+                    RouteManager.logger.LogToDebug(e.StackTrace, LogLevel.Error);
+                    //If after delaying execution for 5 seconds, stop coroutine for locomotive
+                    if (delayExecution)
+                    {
+                        RouteManager.logger.LogToConsole("Unable to determine distance to station. Disabling Dispatcher control of locomotive: " + locomotive.DisplayName);
+                        StopCoroutine(AutoEngineerControlRoutine_dev(locomotive));
+                    }
+
+                    //Try again in 5 seconds
+                    RouteManager.logger.LogToDebug(String.Format("Distance to station could not be calculated for {0}. Yielding for 5s", locomotive.DisplayName), LogLevel.Debug);
+                    delayExecution = true;
+                }
+
+                //Distance to station was not in acceptable range... try again later
+                if (distanceToStation <= -6969f)
+                {
+                    delayExecution = true;
+                }
+
+                //Try again in 5 seconds
+                if (delayExecution)
+                {
+                    yield return new WaitForSeconds(5);
+                }
+
+                /*****************************************************************
+                 * 
+                 * END Distance To Station Check
+                 * 
+                 *****************************************************************/
+
+                /*****************************************************************
+                 * 
+                 * START Locomotive Movements
+                 * 
+                 *****************************************************************/
+
+                //We may be able to avoid this with better logic elsewhere...
+                RouteManager.logger.LogToDebug(String.Format("Locomotive: {0} Distance to Station: {1}", locomotive.DisplayName, distanceToStation), LogLevel.Verbose);
+
+                StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingForward[locomotive], (int)LocoTelem.RMMaxSpeed[locomotive], null));
+
+                //Get Current train speed.
+                trainVelocity = Math.Abs(locomotive.velocity * 2.23694f);
+
+                //Enroute to Destination
+                if (distanceToStation > 500)
+                {
+                    RouteManager.logger.LogToDebug($"{locomotive.DisplayName} distance to station: {distanceToStation} Speed: {trainVelocity} Max speed: {(int)LocoTelem.RMMaxSpeed[locomotive]}");
+                    generalTransit(locomotive);
+
+                    yield return new WaitForSeconds(5);
+                }
+                //Entering Destination Boundary
+                else if (distanceToStation <= 400 && distanceToStation > 300)
+                {
+                    onApproachLongDist(locomotive);
+
                     //make sure our passenger loading/unloading is set as we arrive at the station
-                    //LocoTelem.needToUpdatePassengerCoaches[locomotive] = true; //didn't trigger the update until departing, needs to happen prior to departure
-                    if (RouteManager.Settings.experimentalUI)
-                    {
-                        TrainManager.CopyStationsFromLocoToCoaches_dev(locomotive);
-                    }
-                    else
-                    {
-                        TrainManager.CopyStationsFromLocoToCoaches(locomotive);
-                    }
+                    //TrainManager.CopyStationsFromLocoToCoaches_dev(locomotive);
 
                     //Hack to work around the new auto engineer crossing detection to prevent double blow / weird horn blow behavior. 
                     //This can be done better but further research is required. In the mean time this crude hack hopefully will reduce the occurances. 
@@ -370,14 +618,7 @@ namespace RouteManager.v2.core
                 {
                     RouteManager.logger.LogToDebug(String.Format("Locomotive {0} is at last station stop. Copy stations to cars for return trip",locomotive.DisplayName));
 
-                    if (RouteManager.Settings.experimentalUI)
-                    {
-                        TrainManager.CopyStationsFromLocoToCoaches_dev(locomotive);
-                    }
-                    else
-                    {
-                        TrainManager.CopyStationsFromLocoToCoaches(locomotive);
-                    }
+                    TrainManager.CopyStationsFromLocoToCoaches(locomotive);
                 }
 
                 //Now that train is stopped, perform station ops and check fuel quantities before departure.
@@ -450,6 +691,127 @@ namespace RouteManager.v2.core
             yield return null;
         }
 
+        private IEnumerator locomotiveStationStopControl_dev(Car locomotive)
+        {
+            float currentTrainVelocity = 100f;
+
+            RouteManager.logger.LogToDebug($"locomotiveStationStopControl_dev {LocoTelem.TransitMode[locomotive]}");
+
+            //Loop through station logic while loco is not in transit mode...
+            while (!LocoTelem.TransitMode[locomotive])
+            {
+
+                if (needToExitCoroutine_dev(locomotive))
+                {
+                    RouteManager.logger.LogToDebug("Exiting StationStopControl Dev");
+                    yield break;
+                }
+
+                RouteManager.logger.LogToDebug("Continuing StationStopControl");
+                //Refueling
+                while (LocoTelem.RouteModePaused[locomotive])
+                {
+                    yield return null;
+                }
+
+                AutoEngineerPersistence persistence = new AutoEngineerPersistence(locomotive.KeyValueObject);
+                if (persistence.Orders.MaxSpeedMph > 0)
+                {
+                    LocoTelem.TransitMode[locomotive] = true;
+                    yield break;
+                }
+
+                //Ensure the train is at a complete stop. Else wait for it to stop...
+                while ((currentTrainVelocity = TrainManager.GetTrainVelocity(locomotive)) > .1f)
+                {
+                    if (currentTrainVelocity > 0.1)
+                    {
+                        yield return new WaitForSeconds(1);
+                    }
+                }
+
+                /*
+                    Setup next station and passenger loading/unloading    
+                */
+
+                //Store previous station - we only really care where we've come from 
+                LocoTelem.previousDestination[locomotive] = LocoTelem.currentDestination[locomotive];
+
+                //Update Destination - review logic
+                LocoTelem.currentDestination[locomotive] = StationManager.getNextStation_dev(locomotive);
+                LocoTelem.locoTravelingForward[locomotive] = GetDirection(locomotive, LocoTelem.currentDestination[locomotive]);
+
+                RouteManager.logger.LogToDebug(String.Format("Locomotive {0} currentDestination is now {1}", locomotive.DisplayName, LocoTelem.currentDestination[locomotive].identifier), LogLevel.Debug);
+
+                //update the stations at each stop otherwise transfer stations will not work
+                TrainManager.CopyStationsFromLocoToCoaches_dev(locomotive);
+
+                //Wait for passengers to load/unload
+                while (!wasCurrentStopServed_dev(locomotive))
+                {
+                    yield return new WaitForSeconds(1f);
+                }
+
+                //Now that train is stopped, perform station ops and check fuel quantities before departure.
+                if (checkFuelQuantities(locomotive))
+                    LocoTelem.clearedForDeparture[locomotive] = true;
+
+
+                //Loco now clear for station departure. 
+                if (LocoTelem.clearedForDeparture[locomotive])
+                {
+                    
+                    //Notate we are cleared for departure
+                    RouteManager.logger.LogToDebug(String.Format("Locomotive {0} is cleared for departure.", locomotive.DisplayName));
+
+                    //Only do these things if we really should depart the station.
+                    if (LocoTelem.currentDestination[locomotive] != LocoTelem.previousDestination[locomotive])
+                    {
+                        //Transition to transit mode
+                        LocoTelem.TransitMode[locomotive] = true;
+                        LocoTelem.clearedForDeparture[locomotive] = false;
+
+                        //Feature Enahncement: Issue #24
+                        //Write to console the departure of the train consist at station X
+                        //Bugfix: message would previously be generated even when departure was not cleared. 
+
+                        if (RouteManager.Settings.showDepartureMessage)
+                            RouteManager.logger.LogToConsole(String.Format("{0} has departed {1} for {2}", Hyperlink.To(locomotive), LocoTelem.previousDestination[locomotive].DisplayName.ToUpper(), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
+                    }
+                }
+                else
+                {
+                    if (LocoTelem.lowFuelQuantities[locomotive].Count != 0)
+                    {
+                        string holdLocationName = LocoTelem.currentDestination[locomotive].DisplayName;
+
+                        //Generate warning for each type of low fuel.
+                        foreach (KeyValuePair<string, float> type in LocoTelem.lowFuelQuantities[locomotive])
+                        {
+                            if (type.Key == "coal")
+                            {
+                                RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is low on coal and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
+                            }
+                            if (type.Key == "water")
+                            {
+                                RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is low on water and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
+                            }
+
+                            if (type.Key == "diesel-fuel")
+                            {
+                                RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is low on diesel and is holding at {1}", Hyperlink.To(locomotive), holdLocationName));
+                            }
+                        }
+                        yield return new WaitForSeconds(30);
+                    }
+                    yield return new WaitForSeconds(5);
+                }
+            }
+
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: locomotiveStationStopControl_dev", LogLevel.Trace);
+            yield return null;
+        }
+
 
         //Train is enroute to destination
         private static void generalTransit(Car locomotive)
@@ -511,16 +873,16 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug(String.Format("Locomotive {0} triggered Medium Approach.", locomotive.DisplayName), LogLevel.Verbose);
 
             //Gradually reduce maximum speed the closer to the platform we get. 
-            float calculatedSpeed = distanceToStation / 10f;
+            float calculatedSpeed = distanceToStation / 16f; //prev: 10f - brakes more aggressive since update 2024.1.0 we need to slow down a little sooner
 
             //Prevent overspeed.
             if (calculatedSpeed > LocoTelem.RMMaxSpeed[locomotive])
                 calculatedSpeed = LocoTelem.RMMaxSpeed[locomotive];
 
-            //Minimum speed should not be less than 15Mph
-            if (calculatedSpeed < 15f)
+            //Minimum speed should not be less than 15Mph - testing 10Mph due to undershoot/excessive breaking
+            if (calculatedSpeed < 10f)
             {
-                calculatedSpeed = 15f;
+                calculatedSpeed = 10f;
             }
 
             RouteManager.logger.LogToDebug(String.Format("Locomotive {0} on Medium Approach: Speed limited to {1}", locomotive.DisplayName, (int)calculatedSpeed), LogLevel.Debug);
@@ -543,7 +905,7 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug(String.Format("Locomotive {0} triggered Short Approach.", locomotive.DisplayName), LogLevel.Verbose);
 
             //Gradually reduce maximum speed the closer to the platform we get. 
-            float calculatedSpeed = distanceToStation / 6f;
+            float calculatedSpeed = distanceToStation / 10f; //prev 6f.  100/6 = 16; 16 > min long distance approach of 15 so we could speed up when getting closer
 
             //Prevent overspeed.
             if (calculatedSpeed > LocoTelem.RMMaxSpeed[locomotive])
@@ -655,6 +1017,49 @@ namespace RouteManager.v2.core
 
             //Always assume stop has not been served unless determined otherwise. 
             return false;
+        } 
+        private static bool wasCurrentStopServed_dev(Car locomotive)
+        {
+            bool carsLoaded = true;
+            bool passWaiting = true;
+            bool trainFull = false;
+
+            //Initialize Variable
+            PassengerMarker? marker = default(PassengerMarker);
+
+            carsLoaded = carsStillLoaded_dev(locomotive, marker);
+
+            passWaiting = passStillWaiting(locomotive, marker);
+
+            trainFull = TrainManager.isTrainFull(locomotive);
+
+            //Must unload all passengers for the current station
+            if (!carsLoaded)
+            {
+                //No passengers to unload, however the train is full...
+                //Looks like those waiting passengers are going to have to find a train with room.
+                if (trainFull)
+                {
+                    //Only notify if not configured to wait until full
+
+                    if (!RouteManager.Settings.waitUntilFull)
+                        RouteManager.logger.LogToConsole(String.Format("Locomotive {0} consist is full. No room for additional passengers!", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName));
+
+                    return true;
+                }
+
+                //Station has passengers destined for a scheduled station
+                if (!passWaiting && !RouteManager.Settings.waitUntilFull)
+                {
+                    RouteManager.logger.LogToDebug(String.Format("Locomotive {0} consist has finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), LogLevel.Verbose);
+                    return true;
+                }
+            }
+
+            RouteManager.logger.LogToDebug(String.Format("Locomotive {0} consist has not finished loading and unloading at {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1.DisplayName), LogLevel.Verbose);
+
+            //Always assume stop has not been served unless determined otherwise. 
+            return false;
         }
 
 
@@ -695,6 +1100,41 @@ namespace RouteManager.v2.core
                 RouteManager.logger.LogToDebug(String.Format("Loco {0} consist empty for current stop", locomotive.DisplayName), LogLevel.Debug);
 
             return loadCheck;
+        }
+        private static bool carsStillLoaded_dev(Car locomotive, PassengerMarker? marker)
+        {
+
+            foreach (Car currentCar in locomotive.EnumerateCoupled().Where(car => car.Archetype == Model.Definition.CarArchetype.Coach))
+            {
+                //Get data for the current car
+                marker = currentCar.GetPassengerMarker();
+
+                //Since this type is nullable, make sure its not null...
+                if (marker != null && marker.HasValue)
+                {
+                    //Loop through the list of passenger data for the current coach.
+                    foreach (var stop in marker.Value.Groups)
+                    {
+                        RouteManager.logger.LogToDebug($"Checking cars still loaded, Destination: {stop.Destination} Count: {stop.Count}");
+                        RouteManager.logger.LogToDebug(String.Format("Passenger Car {0} has {1} passengers for the stop at {2}, Loco Destination {3}", currentCar.DisplayName, stop.Count, stop.Destination, LocoTelem.currentDestination[locomotive].identifier), LogLevel.Verbose);
+
+
+                        if (stop.Count > 0 && !LocoTelem.relevantPassengers[locomotive].Contains(stop.Destination))
+                        {
+                            //there are passengers that need to be unloaded
+                            RouteManager.logger.LogToDebug(String.Format("Loco {0} consist contains passengers for current stop", locomotive.DisplayName), LogLevel.Debug);
+                            return true;
+                        }
+                    }
+                    //StationManager.getNumberPassengersWaitingForDestination()
+                    //RouteManager.logger.LogToDebug(String.Format("Passenger Car {0} has {1} passengers for the current stop at {2}", currentCar.DisplayName, marker.Value.CountPassengersForStop(LocoTelem.currentDestination[locomotive].identifier), LocoTelem.currentDestination[locomotive].identifier), LogLevel.Verbose);
+                }
+                
+            }
+
+            RouteManager.logger.LogToDebug(String.Format("Loco {0} consist empty for current stop", locomotive.DisplayName), LogLevel.Debug);
+
+            return false;
         }
 
 
@@ -789,6 +1229,62 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug("EXITING FUNCTION: needToExitCoroutine", LogLevel.Trace);
             return false;
         }
+        //Initial checks to determine if we can continue with the coroutine
+        private bool needToExitCoroutine_dev(Car locomotive)
+        {
+            //Trace Function
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: needToExitCoroutine Dev", LogLevel.Trace);
+
+            try
+            {
+                //If no stations are selected for the locmotive, end the coroutine
+                if (!DestinationManager.IsAnyStationSelectedForLocomotive(locomotive))
+                {
+                    RouteManager.logger.LogToConsole("No stations selected. Stopping Coroutine for: " + locomotive.DisplayName);
+                    TrainManager.SetRouteModeEnabled(false, locomotive);
+                    return true;
+                }
+
+                //Engineer mode was changed and is no longer route mode
+                if (!LocoTelem.RouteMode[locomotive])
+                {
+                    RouteManager.logger.LogToDebug("Locomotive no longer in Route Mode. Stopping Coroutine for: " + locomotive.DisplayName, LogLevel.Debug);
+                    return true;
+                }
+
+                //If we have selected stations
+                if (LocoTelem.stopStations[locomotive].Count <= 1)
+                {
+                    //If our previous destination key exists
+                    if (LocoTelem.previousDestination.ContainsKey(locomotive) && LocoTelem.currentDestination.ContainsKey(locomotive))
+                    {
+                        //If there is data for the loco in prev dest.
+                        if (LocoTelem.previousDestination[locomotive] != null && LocoTelem.previousDestination[locomotive] != default(PassengerStop))
+                        {
+                            //Only if our current dest = our last visited, consider the coroutine terminatable.
+                            if (LocoTelem.currentDestination[locomotive] == LocoTelem.previousDestination[locomotive])
+                            {
+                                RouteManager.logger.LogToConsole(String.Format("{0} has no more stations. Halting Control.", Hyperlink.To(locomotive)));
+                                TrainManager.SetRouteModeEnabled(false, locomotive);
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                RouteManager.logger.LogToConsole("{0} Internal Error Occurred Halting control!" + locomotive.DisplayName);
+                RouteManager.logger.LogToError("{0} error in needToExitCoroutine" + locomotive.DisplayName);
+                RouteManager.logger.LogToError(ex.ToString());
+                RouteManager.logger.LogToError(ex.StackTrace);
+                return true;
+            }
+
+            //Trace Method
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: needToExitCoroutine Dev", LogLevel.Trace);
+            return false;
+        }
 
         private static bool checkFuelQuantities(Car locomotive)
         {
@@ -800,5 +1296,29 @@ namespace RouteManager.v2.core
 
             return false;
         }
+
+        private static bool GetDirection(Car locomotive, PassengerStop stop)
+        {
+            bool stationIsToOurRight = StationManager.isStationRight(locomotive, stop);
+
+            RouteManager.logger.LogToDebug($"Loco: {locomotive.DisplayName}, Facing right: {locomotive.Orientation > 0}, Station is to our right: {stationIsToOurRight}", LogLevel.Debug);
+
+            //determine if we need to travel in forward or reverse mode based on destination and loco orientation
+            if (stationIsToOurRight && locomotive.Orientation >= 0 ||
+                !stationIsToOurRight && locomotive.Orientation < 0)
+            {
+                return true;
+            }
+            else if (stationIsToOurRight && locomotive.Orientation < 0 ||
+                    !stationIsToOurRight && locomotive.Orientation >= 0)
+            {
+                return false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        
     }
 }
