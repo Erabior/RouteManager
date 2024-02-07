@@ -85,26 +85,17 @@ namespace RouteManager
                     //Bind the Route AI component to the Game Object instance
                     erabiorDispatcher.AddComponent<Dispatcher>();
                     RouteManager.logger.LogToDebug($"Dispatcher Added", LogLevel.Info);
-                    //Enable Experimental UI
-                    if (RouteManager.Settings.experimentalUI)
-                    {
-                        //erabiorDispatcher.AddComponent<ModInterface>();
-                        //erabiorDispatcher.AddComponent<routeManagerWindow>();
-                    }
-
                 }
             }
 
             private static void loadSettings()
             {
                 //Load Route Manager Configuration
-                RouteManager.logger.LogToDebug($"Coal minQty: {RouteManager.Settings.minCoalQuantity}",LogLevel.Info);
                 if (!RouteManager.settingsManager.Load())
                     RouteManager.logger.LogToError("FAILED TO LOAD SETTINGS!");
                 else
                     RouteManager.logger.LogToDebug("Loaded Settings.", LogLevel.Debug);
 
-                RouteManager.logger.LogToDebug($"Coal minQty: {RouteManager.Settings.minCoalQuantity}", LogLevel.Info);
 
                 //Attempt to apply settings
                 if (!RouteManager.settingsManager.Apply())

@@ -14,14 +14,14 @@ namespace RouteManager.v2.dataStructures
 
         public bool experimentalUI       = false;
 
-        public bool showTimestamp = false;
+        public bool showTimestamp        = false;
 
-        public bool showDaystamp = false;
+        public bool showDaystamp         = false;
 
-        public bool showArrivalMessage = true;
+        public bool showArrivalMessage   = true;
 
         public bool showDepartureMessage = true;
 
-        public bool waitUntilFull = false;
+        public bool waitUntilFull        = false;
     }
 }
