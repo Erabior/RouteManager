@@ -1,6 +1,8 @@
 {
-    "Releases":
-    [
-        {"Id": "RouteManager", "Version":  "2.1.0.0"}
-    ]
+    "Releases":  [
+                     {
+                         "Id":  "RouteManager",
+                         "Version":  "2.1.0.0"
+                     }
+                 ]
 }
