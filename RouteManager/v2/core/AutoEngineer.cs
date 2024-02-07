@@ -479,7 +479,7 @@ namespace RouteManager.v2.core
         }
 
         //Train is approaching platform
-        private static void onApproachMediumDist(Car locomotive, float distanceToStation)
+        private static void onApproachMediumDist(Car locomotive, float distanceToStation, float divisor = 16f)
         {
             //Trace Function
             RouteManager.logger.LogToDebug("ENTERED FUNCTION: onApproachMediumDist", LogLevel.Trace);
@@ -487,7 +487,7 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug(String.Format("Locomotive {0} triggered Medium Approach.", locomotive.DisplayName), LogLevel.Verbose);
 
             //Gradually reduce maximum speed the closer to the platform we get. 
-            float calculatedSpeed = distanceToStation / 16f; //prev: 10f - brakes more aggressive since update 2024.1.0 we need to slow down a little sooner
+            float calculatedSpeed = distanceToStation / divisor; //prev: 10f - brakes more aggressive since update 2024.1.0 we need to slow down a little sooner
 
             //Prevent overspeed.
             if (calculatedSpeed > LocoTelem.RMMaxSpeed[locomotive])
@@ -509,7 +509,7 @@ namespace RouteManager.v2.core
         }
 
         //Train is entering platform
-        private static void onApproachShortDist(Car locomotive, float distanceToStation)
+        private static void onApproachShortDist(Car locomotive, float distanceToStation, float divisor = 10f)
         {
             //Trace Function
             RouteManager.logger.LogToDebug("ENTERED FUNCTION: onApproachShortDist", LogLevel.Trace);
@@ -517,7 +517,7 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug(String.Format("Locomotive {0} triggered Short Approach.", locomotive.DisplayName), LogLevel.Verbose);
 
             //Gradually reduce maximum speed the closer to the platform we get. 
-            float calculatedSpeed = distanceToStation / 10f; //prev 6f.  100/6 = 16; 16 > min long distance approach of 15 so we could speed up when getting closer
+            float calculatedSpeed = distanceToStation / divisor; //prev 6f.  100/6 = 16; 16 > min long distance approach of 15 so we could speed up when getting closer
 
             //Prevent overspeed.
             if (calculatedSpeed > LocoTelem.RMMaxSpeed[locomotive])
@@ -1039,7 +1039,7 @@ namespace RouteManager.v2.core
                 //Approaching platform
                 else if (distanceToStation <= 300 && distanceToStation > 100)
                 {
-                    onApproachMediumDist(locomotive, distanceToStation);
+                    onApproachMediumDist(locomotive, distanceToStation, 10f);
                     yield return new WaitForSeconds(1);
                 }
                 //Entering Platform
