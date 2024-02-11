@@ -256,6 +256,7 @@ namespace RouteManager.v2.harmonyPatches
                         RouteManagerWindow.Show(car);
                     });
 
+                    /*
                     builder.AddButtonSelectable("Test Reachable", placeHolder, delegate
                     {
                         
@@ -284,6 +285,7 @@ namespace RouteManager.v2.harmonyPatches
                             
                         }
                     });
+                    */
                     builder.AddExpandingVerticalSpacer();
                 }
                 else

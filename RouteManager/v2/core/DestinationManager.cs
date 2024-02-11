@@ -255,28 +255,81 @@ namespace RouteManager.v2.core
         public static void PlanNextRoute(Location start,PassengerStop nextStation, ref List<RouteSwitchData> mainRoute)
         {
             TrackSpan[] tracks = nextStation.TrackSpans.ToArray();
-
+            
             if (tracks.Length > 1)
             {
-                Location secondPlatform = (Location)tracks[1].lower;
+                PlanNextRoute(start, (Location)tracks[1].lower, ref mainRoute, out RouteSwitchData commonPoint);
+            }
+        }
 
-                List<RouteSwitchData> requirementsP2;
-                if (GetRouteSwitches(start, secondPlatform, out requirementsP2))
+        public static bool PlanNextRoute(Location start, Location nextPlatform, ref List<RouteSwitchData> mainRoute, out RouteSwitchData commonPoint)
+        {
+            commonPoint = null;
+
+            List<RouteSwitchData> requirementsP2;
+            if (GetRouteSwitches(start, nextPlatform, out requirementsP2))
+            {
+                //found a route to second platform
+                //find last common node
+                commonPoint = mainRoute.Intersect(requirementsP2, new RouteSwitchDataComparer()).Last();
+                if (commonPoint != null)
                 {
-                    //found a route to second platform
-                    //find last common node
-                    RouteSwitchData common = mainRoute.Intersect(requirementsP2, new RouteSwitchDataComparer()).Last();
-                    if (common != null)
-                    {
-                        common.isDecision = true;
-                    }
-                    else
-                    {
-                        //routes don't intersect
-                        RouteManager.logger.LogToDebug("No intersection of routes to second platform!", LogLevel.Debug);
-                    }
+                    //common point between leaving the station and the current main route
+                    commonPoint.isDecision = true;
+                    //new route from P2
+                    mainRoute = requirementsP2;
+                }
+                else
+                {
+                    //routes don't intersect
+                    RouteManager.logger.LogToDebug("No intersection of routes to second platform!", LogLevel.Debug);
+                    return false;
                 }
             }
+            return true;
+        }
+
+        public static bool PlanRouteDeviation(ref List<RouteSwitchData> mainRoute, RouteSwitchData nextSwitch, Location current, Location nextPlatform)
+        {
+
+            //can we get to the next platform?
+            if (DestinationManager.PlanNextRoute(current, nextPlatform, ref mainRoute, out RouteSwitchData commonPoint1))
+            {
+                //find the last location on the mainRoute
+                Location finalDestination = new Location(mainRoute.Last().segmentTo, 0, mainRoute.Last().segmentTo.EndForNode(mainRoute.Last().trackSwitch));
+
+                List<RouteSwitchData> newRoute = new List<RouteSwitchData>(mainRoute); 
+                //can we get from the next platform to the final destination
+                if (DestinationManager.PlanNextRoute(nextPlatform, finalDestination, ref newRoute, out RouteSwitchData commonPoint2))
+                {
+                    //we can get in and out, without breaking our route, lets update the route
+
+                    //flip the current switch requirements at our common switches
+                    commonPoint1.requiredStateNormal = !commonPoint1.requiredStateNormal;
+                    commonPoint2.requiredStateNormal = !commonPoint2.requiredStateNormal;
+
+                    //merge the two routes
+                    int index1 = mainRoute.IndexOf(commonPoint1);
+                    int index2 = mainRoute.IndexOf(commonPoint2);
+
+                    int indexNewRoute = newRoute.IndexOf(commonPoint2);
+
+                    index1++;
+
+                    //remove all elements between common points
+                    mainRoute.RemoveRange(index1, index2 - index1);
+
+                    //insert any new elements
+                    mainRoute.InsertRange(index1, newRoute.Take(indexNewRoute));
+
+                    return true;
+                }
+            }
+            
+            
+            //can't deviate
+            return false;
+            
         }
 
         /**************************************************************************************************************************
@@ -293,8 +346,8 @@ namespace RouteManager.v2.core
          ***************************************************************************************************************************/
 
 
-        //Determine if station is selected
-        public static bool IsStopStationSelected(PassengerStop stop, Car locomotive)
+            //Determine if station is selected
+            public static bool IsStopStationSelected(PassengerStop stop, Car locomotive)
         {
             //Trace Function
             //RouteManager.logger.LogToDebug("ENTERED FUNCTION: IsStopStationSelected", LogLevel.Trace);

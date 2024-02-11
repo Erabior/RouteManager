@@ -97,7 +97,7 @@ namespace RouteManager.v2.core
 
             //Set some initial values
             //closest station will only return a station marked as a stop
-            //LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation_dev(locomotive);
+            LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation_dev(locomotive);
             LocoTelem.currentDestination[locomotive] = StationManager.getNextStation_dev(locomotive);
 
             //set locomotive drive direction
@@ -106,7 +106,7 @@ namespace RouteManager.v2.core
             //get route info - what are the switches on our route and what state do they need to be in?
             List<RouteSwitchData> switchRequirements;
             PassengerStop alarka = PassengerStop.FindAll().Where(stop => stop.identifier == "alarka").First();
-            
+
             if (DestinationManager.GetRouteSwitches(locomotive.LocationF, (Track.Location)alarka.TrackSpans.First().lower , out switchRequirements))
             {
                 //we have the total route to end of line/branch
@@ -118,26 +118,45 @@ namespace RouteManager.v2.core
                 //oh-oh we're flying blind!
             }
 
+            LocoTelem.routeSwitchRequirements[locomotive] = switchRequirements;
+
             LocoTelem.closestStationNeedsUpdated[locomotive] = false;
             LocoTelem.CenterCar[locomotive] = TrainManager.GetCenterCoach(locomotive);
 
             //set initial passenger loading
             TrainManager.CopyStationsFromLocoToCoaches_dev(locomotive);
 
+            RouteManager.logger.LogToDebug($"Copy complete", LogLevel.Debug);
+
+            RouteManager.logger.LogToDebug($"Closest station: {LocoTelem.closestStation.ContainsKey(locomotive)} Center Car: {LocoTelem.CenterCar.ContainsKey(locomotive)}", LogLevel.Debug);
+
             //Give time for passenger loading/unloading if already at the station
             if (Vector3.Distance(LocoTelem.closestStation[locomotive].Item1.CenterPoint, LocoTelem.CenterCar[locomotive].GetCenterPosition(Graph.Shared)) <= 15f) //StationManager.isTrainInStation(LocoTelem.CenterCar[locomotive]))
             {
+                RouteManager.logger.LogToDebug($"We're close", LogLevel.Debug);
 
                 while (!wasCurrentStopServed_dev(locomotive)) 
                 {
                     yield return new WaitForSeconds(1);
                 }
 
+                RouteManager.logger.LogToDebug($"Stop Served", LogLevel.Debug);
+
                 if (RouteManager.Settings.showDepartureMessage)
                     RouteManager.logger.LogToConsole(String.Format("{0} has departed for {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
-               
+
+                RouteManager.logger.LogToDebug($"Clearing", LogLevel.Debug);
                 LocoTelem.clearedForDeparture[locomotive] = true;
+                RouteManager.logger.LogToDebug($"Cleared", LogLevel.Debug);
             }
+
+
+
+            /**************************************************
+             * 
+             * Initialisation complete, start main routines
+             * 
+            ***************************************************/
 
             //Feature Ehancement #30
             LocoTelem.initialSpeedSliderSet[locomotive] = false;
@@ -425,9 +444,11 @@ namespace RouteManager.v2.core
             bool delayExecution = false;
             float trainVelocity;
             int stationPadding = 10;
-            float distanceToSwitch=float.MaxValue;
-            RouteSwitchData nextSwitch;
 
+            //get initial data
+            RouteSwitchData nextSwitch = LocoTelem.routeSwitchRequirements[locomotive].First();;
+            float distanceToSwitch = float.MinValue;
+            bool stopForSwitch = false;
 
 
             //Loop through transit logic
@@ -444,12 +465,72 @@ namespace RouteManager.v2.core
                     yield return null;
                 }
 
-                nextSwitch = LocoTelem.routeSwitchRequirements[locomotive].First();
+                while(distanceToSwitch <= 0)
+                {
+                    //remove the first switch
+                    RouteManager.logger.LogToDebug($"Removing switch: {nextSwitch.trackSwitch.id}, Distance: {distanceToSwitch}", LogLevel.Debug);
+                    LocoTelem.routeSwitchRequirements[locomotive].Remove(nextSwitch);
+
+                    nextSwitch = LocoTelem.routeSwitchRequirements[locomotive].First();
+                    distanceToSwitch = DestinationManager.GetDistanceToSwitch(locomotive, nextSwitch);
+                }
+
                 //check our next switch distance
                 distanceToSwitch = DestinationManager.GetDistanceToSwitch(locomotive, nextSwitch);
+                RouteManager.logger.LogToDebug($"Approaching: {nextSwitch.trackSwitch.id}, Distance: {distanceToSwitch}", LogLevel.Debug);
                 if (distanceToSwitch <= 400)
                 {
-                    
+                    if(nextSwitch.requiredStateNormal && nextSwitch.trackSwitch.isThrown)
+                    {
+                        //switch is not in the required position
+                        if(nextSwitch.isDecision)
+                        {
+                            //check if we can leave on an alternate platform
+                            TrackSpan[] ts = LocoTelem.currentDestination[locomotive].TrackSpans.ToArray();
+                            /*
+                            if (LocoTelem.nextPassengerPlatform[locomotive] == null)
+                            {
+                                LocoTelem.nextPassengerPlatform[locomotive] = 0;
+                            }
+                            
+                            while (LocoTelem.nextPassengerPlatform[locomotive] < ts.Length -1 )
+                            {
+                                //Try the next plaform
+                                LocoTelem.nextPassengerPlatform[locomotive]++;
+                                Location pNext = (Location)ts[(int)LocoTelem.nextPassengerPlatform[locomotive]].lower;
+
+                                //can a route be found?
+                                List<RouteSwitchData> mainRoute = LocoTelem.routeSwitchRequirements[locomotive];
+                            }
+                            */
+
+                            Location pNext = (Location)ts[1].lower;
+                            List<RouteSwitchData> mainRoute = LocoTelem.routeSwitchRequirements[locomotive];
+
+                            if (!DestinationManager.PlanRouteDeviation(ref mainRoute, nextSwitch, locomotive.LocationF, pNext ))
+                            {
+                                //we can't enter this platform come to a stop
+                                stopForSwitch = true;
+                                
+                            }
+                            RouteManager.logger.LogToDebug($"Locomotive {locomotive.DisplayName}: route updated for Switch");
+                        }
+                        else
+                        {
+                            stopForSwitch = true;
+                        }
+                    }
+
+                    if (stopForSwitch)
+                    {
+                        RouteManager.logger.LogToConsole(String.Format("Locomotive {0} is holding at a switch; required state {1}", Hyperlink.To(locomotive), nextSwitch.requiredStateNormal ? "NORMAL" : "REVERSED"));
+                        while (nextSwitch.requiredStateNormal == nextSwitch.trackSwitch.isThrown)
+                        {
+                            StateManager.ApplyLocal(new AutoEngineerCommand(locomotive.id, AutoEngineerMode.Road, LocoTelem.locoTravelingForward[locomotive], (int)0, null));
+                            yield return new WaitForSeconds(1);
+                        }
+                        stopForSwitch = false;
+                    }
                 }
 
                 //Getting close to a station update some values...
