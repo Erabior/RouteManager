@@ -15,6 +15,11 @@ using RouteManager.v2.dataStructures;
 using RouteManager.v2.Logging;
 using RouteManager.v2.UI;
 using UI.Common;
+using Track;
+using System.Collections.Generic;
+using Microsoft.SqlServer.Server;
+using TriangleNet.Geometry;
+using KeyValue.Runtime;
 
 
 namespace RouteManager.v2.harmonyPatches
@@ -251,6 +256,34 @@ namespace RouteManager.v2.harmonyPatches
                         RouteManagerWindow.Show(car);
                     });
 
+                    builder.AddButtonSelectable("Test Reachable", placeHolder, delegate
+                    {
+                        
+                        PassengerStop alarka = PassengerStop.FindAll().Where(stop => stop.identifier == "alarka").First();
+
+                        RouteManager.logger.LogToDebug($"Finding Route to Alarka (segments) {car.DisplayName} to {alarka?.name}...");
+                        RouteManager.logger.LogToDebug($"Current Location F: {car.LocationF}, Location A: {car.LocationA}, Location B: {car.LocationB}");
+
+                        List<TrackSegment> segmentSteps = Graph.Shared.FindRoute(car.LocationF, (Track.Location)alarka.TrackSpans.First().lower);
+
+                        RouteManager.logger.LogToDebug($"Route found: {segmentSteps.Count} steps:");
+
+                        for (int i = 0; i < segmentSteps.Count -1; i++)
+                        {
+                            TrackSegment seg = segmentSteps[i];
+                            TrackSegment segNext = segmentSteps[i + 1];
+
+                            bool? requiredSwitchState;
+                            bool isSwitch = DestinationManager.PathIsNormal(seg, segNext, out TrackNode? node, out requiredSwitchState);
+
+                            if (isSwitch)
+                            {
+                                RouteManager.logger.LogToDebug($"\r\nSeg.a: {seg.a.id}, {seg.a.name}\r\nSeg.b: {seg.b.id}, {seg.b.name}\r\nSegNext.a: {segNext.a.id}, {segNext.a.name}\r\nSegNext.b: {segNext.b.id}, {segNext.b.name}", LogLevel.Debug);
+                                RouteManager.logger.LogToDebug($"\t\t\tSegment: {seg?.id}, {seg?.name}, {seg?.trackClass}, Node A: {seg?.a.name}, Node B: {seg?.b.name}, Desired switch pos normal: {requiredSwitchState}",LogLevel.Debug);
+                            }
+                            
+                        }
+                    });
                     builder.AddExpandingVerticalSpacer();
                 }
                 else

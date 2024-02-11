@@ -155,7 +155,7 @@ namespace RouteManager.v2.core
             return (closestStation, closestDistance);
         }
 
-        public static (PassengerStop, float) GetClosestStation_dev(Car currentCar)
+        public static (PassengerStop, float)  GetClosestStation_dev(Car currentCar)
         {
             //Trace Logging
             RouteManager.logger.LogToDebug("ENTERED FUNCTION: GetClosestStation_dev", LogLevel.Trace);
@@ -177,6 +177,7 @@ namespace RouteManager.v2.core
             {
                 RouteManager.logger.LogToError("Could not obtain locomotive's front position.");
                 return (null, 0);
+
             }
 
             //Debugging Output
@@ -198,7 +199,7 @@ namespace RouteManager.v2.core
             {
                 float distance = 0;
 
-                RouteManager.logger.LogToDebug($"Station {station.name} neighbours: {string.Join(", ", station.neighbors.Select(ps => ps.identifier).ToArray())}");
+                RouteManager.logger.LogToDebug($"Station {station.name} neighbours: {string.Join(", ", station.neighbors.Select(ps => ps.identifier).ToArray())}",LogLevel.Debug);
 
                 try
                 {
@@ -232,6 +233,7 @@ namespace RouteManager.v2.core
                     closestDistance = distance;
                     closestStation = station;
                 }
+
             }
 
             //Debug output
@@ -243,6 +245,10 @@ namespace RouteManager.v2.core
             return (closestStation, closestDistance);
         }
 
+        public static IEnumerator<(PassengerStop, float)> CalculateDistanceToStation()
+        {
+            yield return (null, float.MaxValue);
+        }
 
         //Attempt to determine midroute station better when starting the coroutine.
         public static PassengerStop getInitialDestination(Car locomotive)
@@ -398,7 +404,8 @@ namespace RouteManager.v2.core
             if (!LocoTelem.currentDestination.ContainsKey(locomotive) || LocoTelem.currentDestination[locomotive] == default(PassengerStop))
             {
                 //No Destination set so for now, assume closest station.
-                currentStation = GetClosestStation_dev(locomotive).Item1;
+                LocoTelem.closestStation[locomotive] = GetClosestStation_dev(locomotive);
+                currentStation = LocoTelem.closestStation[locomotive].Item1;
                 RouteManager.logger.LogToDebug(String.Format("Loco {0} does not have a destination. Defaulting to closest station {1}", locomotive.DisplayName, currentStation.identifier), LogLevel.Debug);
             }
             else

@@ -7,6 +7,7 @@ using System.Linq;
 using Track;
 using UnityEngine;
 using RouteManager.v2.Logging;
+using UnityEngine.Rendering;
 
 namespace RouteManager.v2.core
 {
@@ -17,6 +18,13 @@ namespace RouteManager.v2.core
             "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka",
             "almond", "nantahala", "topton", "rhodo", "andrews"
         };
+
+        public static readonly List<string> orderedStations_dev = new List<string>
+        {
+            "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka", "cochran",
+            "almond", "nantahala", "topton", "rhodo", "andrews"
+        };
+
 
         //Update the list of stations to stop at.
         public static void SetStopStations(Car car, List<PassengerStop> selectedStops)
@@ -84,8 +92,10 @@ namespace RouteManager.v2.core
 
             Graph trackGraph = Graph.Shared;
             float shortestDistance = float.MaxValue;
+
+            //Todo: use end of train in direction of travel, rather than locomotive
             Car centerCar = LocoTelem.CenterCar[locomotive];
-            centerCar.GetCenterPosition(trackGraph);
+            //centerCar.GetCenterPosition(trackGraph);
 
             //Check all tracks associated with a station
             foreach (TrackSpan trackSpan in station.TrackSpans)
@@ -120,6 +130,154 @@ namespace RouteManager.v2.core
             return shortestDistance;
         }
 
+        //Returns True if node is a switch
+        //Returns False if node is not a switch
+        //switchNormal will be true if the traversal is the normal path, false if it's the reverse path and null if not traversable
+        //  i.e. moving from normal to reversed branch
+        public static bool PathIsNormal(TrackSegment from, TrackSegment to, out TrackNode? trackSwitch, out bool? switchNormal)
+        {
+            trackSwitch = GetCommonNode(from,to) ?? throw new Exception($"No common node for From: {from.id}, To: {to.id}");
+
+
+            RouteManager.logger.LogToDebug($"PathIsNormal: From: {from?.id}, {from?.name}, To: {to?.id}, {to?.name}, Node: {trackSwitch?.id}, {trackSwitch?.name}", LogLevel.Verbose);
+
+            bool result = Graph.Shared.DecodeSwitchAt(trackSwitch, out TrackSegment enter, out TrackSegment normal, out TrackSegment reversed);
+
+            if (result)
+            {
+                //we have switch, determine if we can go between from and to
+                if (from == enter && to == normal || from == normal && to == enter)
+                {
+                    switchNormal = true;
+                }
+                else if (from == enter && to == reversed || from == reversed && to == enter)
+                {
+                    switchNormal = false;
+                }
+                else
+                {
+                    RouteManager.logger.LogToError($"PathIsNormal: Unable to traverse switch");
+                    RouteManager.logger.LogToDebug($"PathIsNormal: Result: {result}, Enter: {enter?.id}, Normal: {normal?.id}, Reversed: {reversed?.id}", LogLevel.Verbose);
+
+                    switchNormal = null;
+                }
+            }
+            else
+            {
+                //not a switch
+                switchNormal = null;
+                return false;
+            }
+
+            return true;
+        }
+
+        public static TrackNode? GetCommonNode(TrackSegment a, TrackSegment b)
+        {
+
+            if (a == null || b == null)
+                return null;
+
+            if (a.a == b.a || a.a == b.b) {
+                return a.a;
+            }
+            else if (a.b == b.a || a.b == b.b)
+            {
+                return a.b;
+            }
+
+            return null;
+        }
+
+        public static bool GetRouteSwitches(Location start, Location destination, out List<RouteSwitchData> switchRequirements)
+        {
+            switchRequirements = new List<RouteSwitchData>();
+
+            //alarka hack - if Alarka is on our list, we need to use this as our final destination first and plan the route in 2 segments
+            //will need to be updated to make a general solution for branch lines
+
+            //TODO: put hack in
+            //PassengerStop alarka = PassengerStop.FindAll().Where(stop => stop.identifier == "alarka").First();
+            //(Track.Location)alarka.TrackSpans.First().lower
+            //RouteManager.logger.LogToDebug($"Finding Route to Alarka (segments) {loco.DisplayName} to {alarka?.name}...");
+            //RouteManager.logger.LogToDebug($"Current Location F: {loco.LocationF}, Location A: {loco.LocationA}, Location B: {loco.LocationB}");
+            // 
+
+            List<TrackSegment> segmentSteps = Graph.Shared.FindRoute(start, destination);
+
+            RouteManager.logger.LogToDebug($"Route found: {segmentSteps.Count} steps:");
+
+            for (int i = 0; i < segmentSteps.Count - 1; i++)
+            {
+                TrackSegment seg = segmentSteps[i];
+                TrackSegment segNext = segmentSteps[i + 1];
+
+                bool? requiredSwitchState;
+                bool isSwitch = DestinationManager.PathIsNormal(seg, segNext, out TrackNode trackSwitch, out requiredSwitchState);
+
+                if (isSwitch && requiredSwitchState != null)
+                {
+                    //RouteManager.logger.LogToDebug($"\r\nSeg.a: {seg.a.id}, {seg.a.name}\r\nSeg.b: {seg.b.id}, {seg.b.name}\r\nSegNext.a: {segNext.a.id}, {segNext.a.name}\r\nSegNext.b: {segNext.b.id}, {segNext.b.name}", LogLevel.Debug);
+                    //RouteManager.logger.LogToDebug($"\t\t\tSegment: {seg?.id}, {seg?.name}, {seg?.trackClass}, Node A: {seg?.a.name}, Node B: {seg?.b.name}, Desired switch pos normal: {requiredSwitchState}", LogLevel.Debug);
+
+                    switchRequirements.Add(new RouteSwitchData(trackSwitch, seg, segNext, (bool)requiredSwitchState));
+                }
+                else if (isSwitch && requiredSwitchState == null)
+                {
+                    RouteManager.logger.LogToError("Unable to resolve path!");
+                    return false;
+                }
+
+            }
+
+            return true;
+        }
+
+        public static float GetDistanceToSwitch(Car locomotive, RouteSwitchData trackSwitch)
+        {
+            RouteManager.logger.LogToDebug($"Loco: {locomotive.DisplayName} getting distance to switch {trackSwitch.trackSwitch?.id}", LogLevel.Trace);
+
+            Graph trackGraph = Graph.Shared;
+
+            //ToDo: use end of train, rather than locomotive
+            Car centerCar = LocoTelem.CenterCar[locomotive];
+            
+            //centerCar.GetCenterPosition(trackGraph);
+
+            Location swLocation = new Location(trackSwitch.segmentFrom, 0f, trackSwitch.segmentFrom.EndForNode(trackSwitch.trackSwitch));
+
+            float distanceA = trackGraph.FindDistance(centerCar.LocationA, swLocation);
+            float distanceB = trackGraph.FindDistance(centerCar.LocationB, swLocation);
+
+            return Math.Min(distanceA, distanceB);
+        }
+
+        public static void PlanNextRoute(Location start,PassengerStop nextStation, ref List<RouteSwitchData> mainRoute)
+        {
+            TrackSpan[] tracks = nextStation.TrackSpans.ToArray();
+
+            if (tracks.Length > 1)
+            {
+                Location secondPlatform = (Location)tracks[1].lower;
+
+                List<RouteSwitchData> requirementsP2;
+                if (GetRouteSwitches(start, secondPlatform, out requirementsP2))
+                {
+                    //found a route to second platform
+                    //find last common node
+                    RouteSwitchData common = mainRoute.Intersect(requirementsP2, new RouteSwitchDataComparer()).Last();
+                    if (common != null)
+                    {
+                        common.isDecision = true;
+                    }
+                    else
+                    {
+                        //routes don't intersect
+                        RouteManager.logger.LogToDebug("No intersection of routes to second platform!", LogLevel.Debug);
+                    }
+                }
+            }
+        }
 
         /**************************************************************************************************************************
          * 
@@ -190,9 +348,8 @@ namespace RouteManager.v2.core
         {
             //Trace Function
             //RouteManager.logger.LogToDebug("ENTERED FUNCTION: IsPickupStationSelected", LogLevel.Trace);
-            PassengerStop transferTo;
 
-            bool result = LocoTelem.UITransferStationSelections[locomotive].TryGetValue(transferFrom.identifier, out transferTo);
+            bool result = LocoTelem.UITransferStationSelections[locomotive].TryGetValue(transferFrom.identifier, out PassengerStop transferTo);
 
             //Trace Function
             //RouteManager.logger.LogToDebug("EXITING FUNCTION: IsPickupStationSelected", LogLevel.Trace);
