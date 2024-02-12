@@ -23,6 +23,10 @@ if($Type -eq "UMM"){
 	$json.Version = $Ver
 	$json | ConvertTo-Json -depth 32| set-content ($ProjDir + '\info.json')
 	
+	$json = Get-Content ($SolnDir + 'repository.json') -raw | ConvertFrom-Json
+	$json.Releases | Where{$_.id -eq 'RouteManager'} | ForEach{$_.Version = $Ver}
+	$json | ConvertTo-Json -depth 32| set-content ($SolnDir + '\repository.json')
+	
 	#Files to be compressed if we make a UMM zip
 	$compress = @{
 		Path = ($ProjDir + "bin\Release\RouteManager.UMM.dll"), ($ProjDir + '\info.json')

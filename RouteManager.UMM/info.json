@@ -6,5 +6,6 @@
     "AssemblyName":  "RouteManager.UMM.dll",
     "EntryMethod":  "RouteManager.UMM.RMUMM.Load",
     "ManagerVersion":  "0.27.8",
-    "HomePage":  "https://github.com/Erabior/RouteManager"
+    "HomePage":  "https://github.com/Erabior/RouteManager",
+    "Repository":  "https://raw.githubusercontent.com/Erabior/RouteManager/dev/repository.json"
 }
