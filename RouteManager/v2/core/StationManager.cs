@@ -155,101 +155,6 @@ namespace RouteManager.v2.core
             return (closestStation, closestDistance);
         }
 
-        public static (PassengerStop, float)  GetClosestStation_dev(Car currentCar)
-        {
-            //Trace Logging
-            RouteManager.logger.LogToDebug("ENTERED FUNCTION: GetClosestStation_dev", LogLevel.Trace);
-
-            //Debugging Output
-            RouteManager.logger.LogToDebug(String.Format("Car {0} calculating closest station...", currentCar.DisplayName), LogLevel.Debug);
-
-            // Initialize variables;
-            PassengerStop closestStation = null;
-            float closestDistance = float.MaxValue;
-            Graph graph = Graph.Shared;
-
-            //Get front of the locomotive's location
-            Location locoFront = currentCar.LocationA;
-            Location locoRear = currentCar.LocationB;
-
-            // If locoFront is null then bail
-            if (locoFront == null)
-            {
-                RouteManager.logger.LogToError("Could not obtain locomotive's front position.");
-                return (null, 0);
-
-            }
-
-            //Debugging Output
-            RouteManager.logger.LogToDebug(String.Format("Car {0} centerpoint {1} Facing right {2}", currentCar.DisplayName, locoFront.GetPosition(), currentCar.Orientation > 0), LogLevel.Verbose);
-
-            /*
-            RouteManager.logger.LogToDebug("List Platform Locations", LogLevel.Verbose);
-            
-            foreach (PassengerStop station in PassengerStop.FindAll().Where(ps => !ps.ProgressionDisabled))
-            {
-                RouteManager.logger.LogToDebug($"Station {station.name} neighbours: {string.Join(", ", station.neighbors.Select(ps => ps.identifier).ToArray())}");
-                RouteManager.logger.LogToDebug($"Station {station.name} Lower: {((Location)station.TrackSpans.First().lower).GetPosition()}, Rot: {((Location)station.TrackSpans.First().lower).GetPositionRotation()}, Direction: {((Location)station.TrackSpans.First().lower).GetDirection()}");
-                RouteManager.logger.LogToDebug($"Station {station.name} Upper: {((Location)station.TrackSpans.First().upper).GetPosition()}, Rot: {((Location)station.TrackSpans.First().upper).GetPositionRotation()}, Direction: {((Location)station.TrackSpans.First().upper).GetDirection()}");
-            }*/
-
-
-            // Iterate over each station that has been progress unlocked and station is a selected stop
-            foreach (PassengerStop station in PassengerStop.FindAll().Where(ps => !ps.ProgressionDisabled && LocoTelem.stopStations[currentCar].Contains(ps)))
-            {
-                float distance = 0;
-
-                RouteManager.logger.LogToDebug($"Station {station.name} neighbours: {string.Join(", ", station.neighbors.Select(ps => ps.identifier).ToArray())}",LogLevel.Debug);
-
-                try
-                {
-                    // Calculate the distance between the locomotive and the station's platform centre
-                    float distanceF = (graph.FindDistance(locoFront, (Location)station.TrackSpans.First().lower) + graph.FindDistance(locoFront, (Location)station.TrackSpans.First().upper)) / 2;
-                    float distanceR = (graph.FindDistance(locoRear, (Location)station.TrackSpans.First().lower) + graph.FindDistance(locoRear, (Location)station.TrackSpans.First().upper)) /2;
-
-                    if (isStationRight(currentCar, station) && currentCar.Orientation > 0 ||
-                        !isStationRight(currentCar, station) && currentCar.Orientation < 0)
-                    {
-                        distance = distanceF;
-                    }
-                    else if(isStationRight(currentCar, station) && currentCar.Orientation < 0 ||
-                            !isStationRight(currentCar, station) && currentCar.Orientation > 0)
-                    {
-                        distance = distanceR;
-                    }
-
-                    RouteManager.logger.LogToDebug($"Graph distance from {currentCar.DisplayName} to {station.identifier}: Front: {distanceF}, Rear: {distanceR}", LogLevel.Verbose);
-
-                }
-                catch
-                {
-                    RouteManager.logger.LogToDebug($"Error calculating graph distance", LogLevel.Verbose);
-                    return (null, float.MaxValue);
-                }
-
-                // Keep track of the closest station
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestStation = station;
-                }
-
-            }
-
-            //Debug output
-            RouteManager.logger.LogToDebug(String.Format("Car {0} Closest Station was: {1}", currentCar.DisplayName, closestStation.identifier), LogLevel.Debug);
-
-            //Trace Logging
-            RouteManager.logger.LogToDebug("EXITING FUNCTION: GetClosestStation_dev", LogLevel.Trace);
-
-            return (closestStation, closestDistance);
-        }
-
-        public static IEnumerator<(PassengerStop, float)> CalculateDistanceToStation()
-        {
-            yield return (null, float.MaxValue);
-        }
-
         //Attempt to determine midroute station better when starting the coroutine.
         public static PassengerStop getInitialDestination(Car locomotive)
         {
@@ -331,115 +236,6 @@ namespace RouteManager.v2.core
             return nextStop;
 
         }
-
-        public static PassengerStop getNextStation_dev(Car locomotive)
-        {
-            PassengerStop nextStop = null;
-            PassengerStop currentStation = default(PassengerStop);
-            int currentStationIndex = -1;
-
-            //Set a current destination if it does not exist, else use the current destination.
-            if (!LocoTelem.currentDestination.ContainsKey(locomotive) || LocoTelem.currentDestination[locomotive] == default(PassengerStop))
-            {
-                //No Destination set so for now, assume closest station.
-                LocoTelem.closestStation[locomotive] = GetClosestStation_dev(locomotive);
-                currentStation = LocoTelem.closestStation[locomotive].Item1;
-                RouteManager.logger.LogToDebug(String.Format("Loco {0} does not have a destination. Defaulting to closest station {1}", locomotive.DisplayName, currentStation.identifier), LogLevel.Debug);
-            }
-            else
-            {
-                currentStation = LocoTelem.currentDestination[locomotive];
-            }
-
-            Dictionary<string, PassengerStop> stationsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
-
-            //Get Selected menu items
-            List<string> selectedStationIdentifiers = LocoTelem.stopStations[locomotive]
-                .Select(passengerStop => passengerStop.identifier)
-                .Distinct()
-                .ToList();
-
-            //Convert selected menu items into an ordered list of station stops
-            List<string> orderedstopStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
-
-            currentStationIndex = orderedstopStations.IndexOf(currentStation.identifier);
-
-            RouteManager.logger.LogToDebug($"Current Index: {currentStationIndex} Travelling East: {LocoTelem.locoTravelingEastWard[locomotive]} osStations Count: {orderedstopStations.Count()}", LogLevel.Trace);
-
-            if (currentStationIndex < 0)
-            {
-                //find the current station index
-                int closestIndex = DestinationManager.orderedStations.FindIndex(stop => stop.Equals(currentStation.identifier));
-                if (LocoTelem.locoTravelingEastWard[locomotive])
-                {
-                    //what are the stops after this point?
-                    string nextStopStation = DestinationManager.orderedStations.Take(closestIndex - 1).Where(station => orderedstopStations.Contains(station)).Last();
-
-                    if (nextStopStation != null)
-                    {
-                        nextStop = stationsLookup[nextStopStation];
-                    }
-                    else
-                    {
-                        //past the end of the line, get the last stop station
-                        LocoTelem.locoTravelingEastWard[locomotive] = false;
-                        nextStop = stationsLookup[orderedstopStations.Last()];
-                    }
-
-                }
-                else
-                {
-                    //what are the stops after this point?
-                    string nextStopStation = DestinationManager.orderedStations.Skip(closestIndex + 1).Where(station => orderedstopStations.Contains(station)).First();
-
-                    if (nextStopStation != null)
-                    {
-                        nextStop = stationsLookup[nextStopStation];
-                    }
-                    else
-                    {
-                        //past the end of the line, get the last stop station
-                        LocoTelem.locoTravelingEastWard[locomotive] = true;
-                        nextStop = stationsLookup[orderedstopStations.First()];
-                    }
-                }
-            }
-            else
-            {
-
-                if (LocoTelem.locoTravelingEastWard[locomotive])
-                {
-                    if (currentStationIndex <= 0)
-                    {
-                        //we're at the end of the line
-                        LocoTelem.locoTravelingEastWard[locomotive] = false;
-                        nextStop = stationsLookup[orderedstopStations[currentStationIndex + 1]];
-                    }
-                    else
-                    {
-                        nextStop = stationsLookup[orderedstopStations[currentStationIndex - 1]];
-                    }
-                }
-                else
-                {
-                    if (currentStationIndex >= orderedstopStations.Count() - 1)
-                    {
-                        //we're at the end of the line
-                        LocoTelem.locoTravelingEastWard[locomotive] = true;
-                        nextStop = stationsLookup[orderedstopStations[currentStationIndex - 1]];
-                    }
-                    else
-                    {
-                        nextStop = stationsLookup[orderedstopStations[currentStationIndex + 1]];
-                    }
-                }
-            }
-
-            RouteManager.logger.LogToDebug(String.Format("Loco {0} next stop determined to be: {1}", locomotive.DisplayName, nextStop.identifier), LogLevel.Debug);
-
-            return nextStop;
-        }
-
 
         //Brand new station logic.
         private static PassengerStop calculateNextStation(List<string> orderedstopStations, List<PassengerStop> selectedPassengerStops, PassengerStop currentStation, Car locomotive)
@@ -661,95 +457,6 @@ namespace RouteManager.v2.core
          ************************************************************************************************************/
 
 
-
-        public static (PassengerStop, float) GetClosestStation_dev(Car currentCar)
-        {
-            //Trace Logging
-            RouteManager.logger.LogToDebug("ENTERED FUNCTION: GetClosestStation_dev", LogLevel.Trace);
-
-            //Debugging Output
-            RouteManager.logger.LogToDebug(String.Format("Car {0} calculating closest station...", currentCar.DisplayName), LogLevel.Debug);
-
-            // Initialize variables;
-            PassengerStop closestStation = null;
-            float closestDistance = float.MaxValue;
-            Graph graph = Graph.Shared;
-
-            //Get front of the locomotive's location
-            Location locoFront = currentCar.LocationA;
-            Location locoRear = currentCar.LocationB;
-
-            // If locoFront is null then bail
-            if (locoFront == null)
-            {
-                RouteManager.logger.LogToError("Could not obtain locomotive's front position.");
-                return (null, 0);
-            }
-
-            //Debugging Output
-            RouteManager.logger.LogToDebug(String.Format("Car {0} centerpoint {1} Facing right {2}", currentCar.DisplayName, locoFront.GetPosition(), currentCar.Orientation > 0), LogLevel.Verbose);
-
-            /*
-            RouteManager.logger.LogToDebug("List Platform Locations", LogLevel.Verbose);
-            
-            foreach (PassengerStop station in PassengerStop.FindAll().Where(ps => !ps.ProgressionDisabled))
-            {
-                RouteManager.logger.LogToDebug($"Station {station.name} neighbours: {string.Join(", ", station.neighbors.Select(ps => ps.identifier).ToArray())}");
-                RouteManager.logger.LogToDebug($"Station {station.name} Lower: {((Location)station.TrackSpans.First().lower).GetPosition()}, Rot: {((Location)station.TrackSpans.First().lower).GetPositionRotation()}, Direction: {((Location)station.TrackSpans.First().lower).GetDirection()}");
-                RouteManager.logger.LogToDebug($"Station {station.name} Upper: {((Location)station.TrackSpans.First().upper).GetPosition()}, Rot: {((Location)station.TrackSpans.First().upper).GetPositionRotation()}, Direction: {((Location)station.TrackSpans.First().upper).GetDirection()}");
-            }*/
-
-
-            // Iterate over each station that has been progress unlocked and station is a selected stop
-            foreach (PassengerStop station in PassengerStop.FindAll().Where(ps => !ps.ProgressionDisabled && LocoTelem.stopStations[currentCar].Contains(ps)))
-            {
-                float distance = 0;
-
-                RouteManager.logger.LogToDebug($"Station {station.name} neighbours: {string.Join(", ", station.neighbors.Select(ps => ps.identifier).ToArray())}");
-
-                try
-                {
-                    // Calculate the distance between the locomotive and the station's platform centre
-                    float distanceF = (graph.FindDistance(locoFront, (Location)station.TrackSpans.First().lower) + graph.FindDistance(locoFront, (Location)station.TrackSpans.First().upper)) / 2;
-                    float distanceR = (graph.FindDistance(locoRear, (Location)station.TrackSpans.First().lower) + graph.FindDistance(locoRear, (Location)station.TrackSpans.First().upper)) / 2;
-
-                    if (isStationRight(currentCar, station) && currentCar.Orientation > 0 ||
-                        !isStationRight(currentCar, station) && currentCar.Orientation < 0)
-                    {
-                        distance = distanceF;
-                    }
-                    else if (isStationRight(currentCar, station) && currentCar.Orientation < 0 ||
-                            !isStationRight(currentCar, station) && currentCar.Orientation > 0)
-                    {
-                        distance = distanceR;
-                    }
-
-                    RouteManager.logger.LogToDebug($"Graph distance from {currentCar.DisplayName} to {station.identifier}: Front: {distanceF}, Rear: {distanceR}", LogLevel.Verbose);
-
-                }
-                catch
-                {
-                    RouteManager.logger.LogToDebug($"Error calculating graph distance", LogLevel.Verbose);
-                    return (null, float.MaxValue);
-                }
-
-                // Keep track of the closest station
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestStation = station;
-                }
-            }
-
-            //Debug output
-            RouteManager.logger.LogToDebug(String.Format("Car {0} Closest Station was: {1}", currentCar.DisplayName, closestStation.identifier), LogLevel.Debug);
-
-            //Trace Logging
-            RouteManager.logger.LogToDebug("EXITING FUNCTION: GetClosestStation_dev", LogLevel.Trace);
-
-            return (closestStation, closestDistance);
-        }
-
         public static PassengerStop getNextStation_dev(Car locomotive)
         {
             PassengerStop nextStop = null;
@@ -760,7 +467,8 @@ namespace RouteManager.v2.core
             if (!LocoTelem.currentDestination.ContainsKey(locomotive) || LocoTelem.currentDestination[locomotive] == default(PassengerStop))
             {
                 //No Destination set so for now, assume closest station.
-                currentStation = GetClosestStation_dev(locomotive).Item1;
+                LocoTelem.closestStation[locomotive] = GetClosestStation_dev(locomotive);
+                currentStation = LocoTelem.closestStation[locomotive].Item1;
                 RouteManager.logger.LogToDebug(String.Format("Loco {0} does not have a destination. Defaulting to closest station {1}", locomotive.DisplayName, currentStation.identifier), LogLevel.Debug);
             }
             else
@@ -856,67 +564,101 @@ namespace RouteManager.v2.core
 
             return nextStop;
         }
-
-        /*
-        public static PassengerStop getInitialDestination_dev(Car locomotive)
+        public static (PassengerStop, float) GetClosestStation_dev(Car currentCar)
         {
+            //Trace Logging
+            RouteManager.logger.LogToDebug("ENTERED FUNCTION: GetClosestStation_dev", LogLevel.Trace);
 
-            if (isTrainInStation(locomotive))
+            //Debugging Output
+            RouteManager.logger.LogToDebug(String.Format("Car {0} calculating closest station...", currentCar.DisplayName), LogLevel.Debug);
+
+            // Initialize variables;
+            PassengerStop closestStation = null;
+            float closestDistance = float.MaxValue;
+            Graph graph = Graph.Shared;
+
+            //Get front of the locomotive's location
+            Location locoFront = currentCar.LocationA;
+            Location locoRear = currentCar.LocationB;
+
+            // If locoFront is null then bail
+            if (locoFront == null)
             {
-                return LocoTelem.closestStation[locomotive];
-            }
-            else
-            {
+                RouteManager.logger.LogToError("Could not obtain locomotive's front position.");
+                return (null, 0);
 
             }
+
+            //Debugging Output
+            RouteManager.logger.LogToDebug(String.Format("Car {0} centerpoint {1} Facing right {2}", currentCar.DisplayName, locoFront.GetPosition(), currentCar.Orientation > 0), LogLevel.Verbose);
 
             /*
-            PassengerStop nextStation = getNextStation(locomotive);
-
-            RouteManager.logger.LogToDebug(String.Format("Loco {0} determining initial destination", locomotive.DisplayName), LogLevel.Debug);
-
-            //Make sure a previous destination is set
-            if (LocoTelem.previousDestinations.ContainsKey(locomotive))
-            {
-                RouteManager.logger.LogToDebug(String.Format("Loco {0} has previous destinations", locomotive.DisplayName), LogLevel.Verbose);
-                //Compare Previous Destination
-                //If we have not visited the closest station
-                if (!LocoTelem.previousDestinations[locomotive].Contains(LocoTelem.closestStation[locomotive].Item1))
-                {
-                    RouteManager.logger.LogToDebug(String.Format("Loco {0} has previous destinations not containing closeset station", locomotive.DisplayName), LogLevel.Verbose);
-                    //If the closest station is selected....
-                    if (LocoTelem.stopStations[locomotive].Contains(LocoTelem.closestStation[locomotive].Item1))
-                    {
-                        RouteManager.logger.LogToDebug(String.Format("Loco {0} Initial destintion is the closest: {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1));
-                        return LocoTelem.closestStation[locomotive].Item1;
-                    }
-                }
-            }
-            else
-            {
-                //If the closest station is selected....
-                if (LocoTelem.stopStations[locomotive].Contains(LocoTelem.closestStation[locomotive].Item1))
-                {
-                    RouteManager.logger.LogToDebug(String.Format("Loco {0} Initial destintion is the closest: {1}", locomotive.DisplayName, LocoTelem.closestStation[locomotive].Item1));
-                    return LocoTelem.closestStation[locomotive].Item1;
-                }
-                else if (LocoTelem.stopStations[locomotive].Contains(LocoTelem.currentDestination[locomotive]) && !LocoTelem.previousDestinations[locomotive].Contains(LocoTelem.currentDestination[locomotive]))
-                {
-                    RouteManager.logger.LogToDebug(String.Format("Loco {0} Initial destintion is the current: {1}", locomotive.DisplayName, LocoTelem.currentDestination[locomotive]));
-                    return LocoTelem.currentDestination[locomotive];
-                }
-                else
-                {
-                    RouteManager.logger.LogToDebug(String.Format("Loco {0} Initial destintion is not the closest: {1}", locomotive.DisplayName, nextStation));
-                    return nextStation;
-                }
-            }
-
-            //Worst case, Just default to the next station
-            RouteManager.logger.LogToDebug(String.Format("Loco {0} getInitialDestination reached default case! Station was: {1}", locomotive.DisplayName, nextStation), LogLevel.Error);
-            return nextStation;
+            RouteManager.logger.LogToDebug("List Platform Locations", LogLevel.Verbose);
             
-        }*/
+            foreach (PassengerStop station in PassengerStop.FindAll().Where(ps => !ps.ProgressionDisabled))
+            {
+                RouteManager.logger.LogToDebug($"Station {station.name} neighbours: {string.Join(", ", station.neighbors.Select(ps => ps.identifier).ToArray())}");
+                RouteManager.logger.LogToDebug($"Station {station.name} Lower: {((Location)station.TrackSpans.First().lower).GetPosition()}, Rot: {((Location)station.TrackSpans.First().lower).GetPositionRotation()}, Direction: {((Location)station.TrackSpans.First().lower).GetDirection()}");
+                RouteManager.logger.LogToDebug($"Station {station.name} Upper: {((Location)station.TrackSpans.First().upper).GetPosition()}, Rot: {((Location)station.TrackSpans.First().upper).GetPositionRotation()}, Direction: {((Location)station.TrackSpans.First().upper).GetDirection()}");
+            }*/
 
+
+            // Iterate over each station that has been progress unlocked and station is a selected stop
+            foreach (PassengerStop station in PassengerStop.FindAll().Where(ps => !ps.ProgressionDisabled && LocoTelem.stopStations[currentCar].Contains(ps)))
+            {
+                float distance = 0;
+
+                RouteManager.logger.LogToDebug($"Station {station.name} neighbours: {string.Join(", ", station.neighbors.Select(ps => ps.identifier).ToArray())}", LogLevel.Debug);
+
+                try
+                {
+                    // Calculate the distance between the locomotive and the station's platform centre
+                    float distanceF = (graph.FindDistance(locoFront, (Location)station.TrackSpans.First().lower) + graph.FindDistance(locoFront, (Location)station.TrackSpans.First().upper)) / 2;
+                    float distanceR = (graph.FindDistance(locoRear, (Location)station.TrackSpans.First().lower) + graph.FindDistance(locoRear, (Location)station.TrackSpans.First().upper)) / 2;
+
+                    if (isStationRight(currentCar, station) && currentCar.Orientation > 0 ||
+                        !isStationRight(currentCar, station) && currentCar.Orientation < 0)
+                    {
+                        distance = distanceF;
+                    }
+                    else if (isStationRight(currentCar, station) && currentCar.Orientation < 0 ||
+                            !isStationRight(currentCar, station) && currentCar.Orientation > 0)
+                    {
+                        distance = distanceR;
+                    }
+
+                    RouteManager.logger.LogToDebug($"Graph distance from {currentCar.DisplayName} to {station.identifier}: Front: {distanceF}, Rear: {distanceR}", LogLevel.Verbose);
+
+                }
+                catch
+                {
+                    RouteManager.logger.LogToDebug($"Error calculating graph distance", LogLevel.Verbose);
+                    return (null, float.MaxValue);
+                }
+
+                // Keep track of the closest station
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closestStation = station;
+                }
+
+            }
+
+            //Debug output
+            RouteManager.logger.LogToDebug(String.Format("Car {0} Closest Station was: {1}", currentCar.DisplayName, closestStation.identifier), LogLevel.Debug);
+
+            //Trace Logging
+            RouteManager.logger.LogToDebug("EXITING FUNCTION: GetClosestStation_dev", LogLevel.Trace);
+
+            return (closestStation, closestDistance);
+        }
+
+
+        //Future use - try to avoid lag when calculating closest station
+        public static IEnumerator<(PassengerStop, float)> CalculateDistanceToStation()
+        {
+            yield return (null, float.MaxValue);
+        }
     }
 }

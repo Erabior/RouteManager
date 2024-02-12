@@ -81,119 +81,6 @@ namespace RouteManager.v2.core
             yield break;
         }
 
-        public IEnumerator AutoEngineerControlRoutine_dev(Car locomotive)
-        {
-            //Trace Function
-            RouteManager.logger.LogToDebug("ENTERED FUNCTION: AutoEngineerControlRoutine_dev", LogLevel.Trace);
-
-            //Debug
-            RouteManager.logger.LogToDebug("Dev Coroutine Triggered!", LogLevel.Verbose);
-            RouteManager.logger.LogToDebug(String.Format("Loco: {0} \t Route Mode: {1}", locomotive.DisplayName, LocoTelem.RouteMode[locomotive]), LogLevel.Debug);
-
-            //Setup departure clearances
-            LocoTelem.clearedForDeparture[locomotive] = false;
-
-            RouteManager.logger.LogToDebug(String.Format("Loco: {0} \t has ID: {1}", locomotive.DisplayName, locomotive.id), LogLevel.Debug);
-
-            //Set some initial values
-            //closest station will only return a station marked as a stop
-            LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation_dev(locomotive);
-            LocoTelem.currentDestination[locomotive] = StationManager.getNextStation_dev(locomotive);
-
-            //set locomotive drive direction
-            LocoTelem.locoTravelingForward[locomotive] = GetDirection(locomotive, LocoTelem.currentDestination[locomotive]);
-
-            //get route info - what are the switches on our route and what state do they need to be in?
-            List<RouteSwitchData> switchRequirements;
-            PassengerStop alarka = PassengerStop.FindAll().Where(stop => stop.identifier == "alarka").First();
-
-            if (DestinationManager.GetRouteSwitches(locomotive.LocationF, (Track.Location)alarka.TrackSpans.First().lower , out switchRequirements))
-            {
-                //we have the total route to end of line/branch
-                // Check if the next station has multiple platforms and find the last common switch
-                DestinationManager.PlanNextRoute(locomotive.LocationF, LocoTelem.currentDestination[locomotive], ref switchRequirements);           
-            }
-            else
-            {
-                //oh-oh we're flying blind!
-            }
-
-            LocoTelem.routeSwitchRequirements[locomotive] = switchRequirements;
-
-            LocoTelem.closestStationNeedsUpdated[locomotive] = false;
-            LocoTelem.CenterCar[locomotive] = TrainManager.GetCenterCoach(locomotive);
-
-            //set initial passenger loading
-            TrainManager.CopyStationsFromLocoToCoaches_dev(locomotive);
-
-            RouteManager.logger.LogToDebug($"Copy complete", LogLevel.Debug);
-
-            RouteManager.logger.LogToDebug($"Closest station: {LocoTelem.closestStation.ContainsKey(locomotive)} Center Car: {LocoTelem.CenterCar.ContainsKey(locomotive)}", LogLevel.Debug);
-
-            //Give time for passenger loading/unloading if already at the station
-            if (Vector3.Distance(LocoTelem.closestStation[locomotive].Item1.CenterPoint, LocoTelem.CenterCar[locomotive].GetCenterPosition(Graph.Shared)) <= 15f) //StationManager.isTrainInStation(LocoTelem.CenterCar[locomotive]))
-            {
-                RouteManager.logger.LogToDebug($"We're close", LogLevel.Debug);
-
-                while (!wasCurrentStopServed_dev(locomotive)) 
-                {
-                    yield return new WaitForSeconds(1);
-                }
-
-                RouteManager.logger.LogToDebug($"Stop Served", LogLevel.Debug);
-            }
-
-
-            if (RouteManager.Settings.showDepartureMessage)
-                RouteManager.logger.LogToConsole(String.Format("{0} has departed for {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
-
-            RouteManager.logger.LogToDebug($"Clearing", LogLevel.Debug);
-            LocoTelem.clearedForDeparture[locomotive] = true;
-            RouteManager.logger.LogToDebug($"Cleared", LogLevel.Debug);
-
-
-
-            /**************************************************
-             * 
-             * Initialisation complete, start main routines
-             * 
-            ***************************************************/
-
-            //Feature Ehancement #30
-            LocoTelem.initialSpeedSliderSet[locomotive] = false;
-
-            //Route Mode is enabled!
-            while (LocoTelem.RouteMode[locomotive])
-            {
-                if (needToExitCoroutine_dev(locomotive))
-                {
-                    yield break;
-                }
-
-                RouteManager.logger.LogToDebug(String.Format("Locomotive {0} center of train is car {1}", locomotive.DisplayName, LocoTelem.CenterCar[locomotive].DisplayName), LogLevel.Verbose);
-
-                if (LocoTelem.TransitMode[locomotive])
-                {
-                    RouteManager.logger.LogToDebug(String.Format("Locomotive {0} is entering into transit mode", locomotive.DisplayName), LogLevel.Verbose);
-                    yield return locomotiveTransitControl_dev(locomotive);
-                }
-                else
-                {
-                    RouteManager.logger.LogToDebug(String.Format("Locomotive {0} is entering into Station Stop mode", locomotive.DisplayName), LogLevel.Verbose);
-                    yield return locomotiveStationStopControl_dev(locomotive);
-                }
-
-                yield return null;
-            }
-
-            //Locomotive is no longer in Route Mode
-            RouteManager.logger.LogToDebug(String.Format("Loco: {0} \t Route mode was disabled! Stopping Coroutine.", locomotive.DisplayName, LogLevel.Debug));
-
-            //Trace Function
-            RouteManager.logger.LogToDebug("EXITING FUNCTION: AutoEngineerControlRoutine", LogLevel.Trace);
-            yield break;
-        }
-
         //Locomotive Enroute to Destination
         public IEnumerator locomotiveTransitControl(Car locomotive)
         {
@@ -695,8 +582,6 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug("EXITING FUNCTION: onArrival", LogLevel.Trace);
         }
 
-
-
         //Check to see if passengers are unloaded
         private static bool wasCurrentStopServed(Car locomotive)
         {
@@ -814,7 +699,6 @@ namespace RouteManager.v2.core
         }
 
 
-
         //Initial checks to determine if we can continue with the coroutine
         private bool needToExitCoroutine(Car locomotive)
         {
@@ -920,8 +804,6 @@ namespace RouteManager.v2.core
          ************************************************************************************************************/
 
 
-
-
         public IEnumerator AutoEngineerControlRoutine_dev(Car locomotive)
         {
             //Trace Function
@@ -937,12 +819,29 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug(String.Format("Loco: {0} \t has ID: {1}", locomotive.DisplayName, locomotive.id), LogLevel.Debug);
 
             //Set some initial values
-            LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation_dev(locomotive); //closest station will only return a station marked as a stop
-            LocoTelem.currentDestination[locomotive] = StationManager.getNextStation_dev(locomotive);//LocoTelem.closestStation[locomotive].Item1; 
-            //StationManager.getInitialDestination(locomotive);
+            //closest station will only return a station marked as a stop
+            LocoTelem.closestStation[locomotive] = StationManager.GetClosestStation_dev(locomotive);
+            LocoTelem.currentDestination[locomotive] = StationManager.getNextStation_dev(locomotive);
 
             //set locomotive drive direction
             LocoTelem.locoTravelingForward[locomotive] = GetDirection(locomotive, LocoTelem.currentDestination[locomotive]);
+
+            //get route info - what are the switches on our route and what state do they need to be in?
+            List<RouteSwitchData> switchRequirements;
+            PassengerStop alarka = PassengerStop.FindAll().Where(stop => stop.identifier == "alarka").First();
+
+            if (DestinationManager.GetRouteSwitches(locomotive.LocationF, (Track.Location)alarka.TrackSpans.First().lower, out switchRequirements))
+            {
+                //we have the total route to end of line/branch
+                // Check if the next station has multiple platforms and find the last common switch
+                DestinationManager.PlanNextRoute(locomotive.LocationF, LocoTelem.currentDestination[locomotive], ref switchRequirements);
+            }
+            else
+            {
+                //oh-oh we're flying blind!
+            }
+
+            LocoTelem.routeSwitchRequirements[locomotive] = switchRequirements;
 
             LocoTelem.closestStationNeedsUpdated[locomotive] = false;
             LocoTelem.CenterCar[locomotive] = TrainManager.GetCenterCoach(locomotive);
@@ -950,20 +849,38 @@ namespace RouteManager.v2.core
             //set initial passenger loading
             TrainManager.CopyStationsFromLocoToCoaches_dev(locomotive);
 
+            RouteManager.logger.LogToDebug($"Copy complete", LogLevel.Debug);
+
+            RouteManager.logger.LogToDebug($"Closest station: {LocoTelem.closestStation.ContainsKey(locomotive)} Center Car: {LocoTelem.CenterCar.ContainsKey(locomotive)}", LogLevel.Debug);
+
             //Give time for passenger loading/unloading if already at the station
             if (Vector3.Distance(LocoTelem.closestStation[locomotive].Item1.CenterPoint, LocoTelem.CenterCar[locomotive].GetCenterPosition(Graph.Shared)) <= 15f) //StationManager.isTrainInStation(LocoTelem.CenterCar[locomotive]))
             {
+                RouteManager.logger.LogToDebug($"We're close", LogLevel.Debug);
 
                 while (!wasCurrentStopServed_dev(locomotive))
                 {
                     yield return new WaitForSeconds(1);
                 }
 
-                if (RouteManager.Settings.showDepartureMessage)
-                    RouteManager.logger.LogToConsole(String.Format("{0} has departed for {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
-
-                LocoTelem.clearedForDeparture[locomotive] = true;
+                RouteManager.logger.LogToDebug($"Stop Served", LogLevel.Debug);
             }
+
+
+            if (RouteManager.Settings.showDepartureMessage)
+                RouteManager.logger.LogToConsole(String.Format("{0} has departed for {1}", Hyperlink.To(locomotive), LocoTelem.currentDestination[locomotive].DisplayName.ToUpper()));
+
+            RouteManager.logger.LogToDebug($"Clearing", LogLevel.Debug);
+            LocoTelem.clearedForDeparture[locomotive] = true;
+            RouteManager.logger.LogToDebug($"Cleared", LogLevel.Debug);
+
+
+
+            /**************************************************
+             * 
+             * Initialisation complete, start main routines
+             * 
+            ***************************************************/
 
             //Feature Ehancement #30
             LocoTelem.initialSpeedSliderSet[locomotive] = false;
@@ -999,6 +916,7 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug("EXITING FUNCTION: AutoEngineerControlRoutine", LogLevel.Trace);
             yield break;
         }
+
 
         //Locomotive Enroute to Destination
         public IEnumerator locomotiveTransitControl_dev(Car locomotive)
@@ -1049,7 +967,7 @@ namespace RouteManager.v2.core
                  */
 
                 //get the first switch in the list
-                nextSwitch = LocoTelem.routeSwitchRequirements[locomotive].First();
+                nextSwitch = LocoTelem.routeSwitchRequirements[locomotive].FirstOrDefault();
                 nextSwitchIndex = 0;
 
                 if (nextSwitch != null)
@@ -1068,7 +986,7 @@ namespace RouteManager.v2.core
                         LocoTelem.routeSwitchRequirements[locomotive].Remove(nextSwitch);
 
                         //find the next switch and calculate the distance
-                        nextSwitch = LocoTelem.routeSwitchRequirements[locomotive].First();
+                        nextSwitch = LocoTelem.routeSwitchRequirements[locomotive].FirstOrDefault();
                         nextSwitchIndex = 0;
                         
                         //no more switches
