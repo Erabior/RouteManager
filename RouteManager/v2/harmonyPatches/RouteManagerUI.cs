@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using Microsoft.SqlServer.Server;
 using TriangleNet.Geometry;
 using KeyValue.Runtime;
+using Network;
 
 
 namespace RouteManager.v2.harmonyPatches
@@ -215,6 +216,7 @@ namespace RouteManager.v2.harmonyPatches
                     LocoTelem.RMMaxSpeed[car] = (int)(value * 5f);
                     SetOrdersValue(null, null, (int) LocoTelem.RMMaxSpeed[car], null);
                 }, 0f, num / 5, wholeNumbers: true);
+
                 builder.AddField("Max Speed", control);
 
                 /**********************************************************************************
@@ -255,7 +257,10 @@ namespace RouteManager.v2.harmonyPatches
                     {
                         RouteManagerWindow.Show(car);
                     });
-
+                    builder.AddButtonSelectable("Test Reachable", placeHolder, delegate
+                    {
+                        Multiplayer.Broadcast($"Leading End: {TrainManager.GetLeadingEnd(car)?.DisplayName}");
+                    });
                     /*
                     builder.AddButtonSelectable("Test Reachable", placeHolder, delegate
                     {

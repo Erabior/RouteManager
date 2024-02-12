@@ -14,6 +14,8 @@ using RouteManager.v2.dataStructures;
 using Model.Definition.Data;
 using RouteManager.v2.Logging;
 using RollingStock;
+using System.Runtime.CompilerServices;
+using Network;
 
 namespace RouteManager.v2.core
 {
@@ -131,6 +133,23 @@ namespace RouteManager.v2.core
             StateManager.ApplyLocal(new PropertyChange(locomotive.id, Control.Bell, IsBell));
         }
 
+        public static Car GetLeadingEnd(Car locomotive)
+        {
+            //int index = locomotive.set.IndexOfCar(locomotive).GetValueOrDefault(0);
+            bool right = LocoTelem.locoTravelingEastWard[locomotive];
+            bool forward = LocoTelem.locoTravelingForward[locomotive];
+
+            //!right && !forward || !right && forward **simplifies to** !right || !forward
+            if (!right || !forward) //locomotive.velocity < 0)
+            {
+                return locomotive.EnumerateCoupled(Car.LogicalEnd.A).Last();     
+            }
+            //right && forward || right && !forward **simplifies to** right
+            else
+            {
+                return locomotive.EnumerateCoupled(Car.LogicalEnd.A).First();
+            }
+        }
         public static Car GetCenterCoach(Car locomotive)
         {
             var graph = Graph.Shared;

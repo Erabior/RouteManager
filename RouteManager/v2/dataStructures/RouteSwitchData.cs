@@ -13,7 +13,7 @@ namespace RouteManager.v2.dataStructures
         public TrackSegment segmentFrom;    //track we're coming from
         public TrackSegment segmentTo;      //track we're going to
         public bool requiredStateNormal;    //switch state to make the traversal
-        public bool isDecision;             //this switch selects between two platforms
+        public bool isRoutable;             //we can ignore the state of this switch and route around it
 
 
         public RouteSwitchData(TrackNode trackSwitch, TrackSegment segmentFrom, TrackSegment segmentTo, bool requiredStateNormal)
@@ -26,7 +26,7 @@ namespace RouteManager.v2.dataStructures
 
         public override string ToString()
         {
-            return $"Switch ID: {this.trackSwitch.id}, From: {segmentFrom.id}, To: {segmentTo.id}, Is Decision: {this.isDecision}";
+            return $"Switch ID: {this.trackSwitch.id}, From: {segmentFrom.id}, To: {segmentTo.id}, Is Decision: {this.isRoutable}";
         }
     }
 

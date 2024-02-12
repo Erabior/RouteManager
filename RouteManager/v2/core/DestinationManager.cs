@@ -7,7 +7,7 @@ using System.Linq;
 using Track;
 using UnityEngine;
 using RouteManager.v2.Logging;
-using UnityEngine.Rendering;
+using Network;
 
 namespace RouteManager.v2.core
 {
@@ -239,17 +239,30 @@ namespace RouteManager.v2.core
 
             Graph trackGraph = Graph.Shared;
 
-            //ToDo: use end of train, rather than locomotive
-            Car centerCar = LocoTelem.CenterCar[locomotive];
-            
-            //centerCar.GetCenterPosition(trackGraph);
+            //use end of train, rather than centre car
+            Car leading = TrainManager.GetLeadingEnd(locomotive);
+
 
             Location swLocation = new Location(trackSwitch.segmentFrom, 0f, trackSwitch.segmentFrom.EndForNode(trackSwitch.trackSwitch));
 
-            float distanceA = trackGraph.FindDistance(centerCar.LocationA, swLocation);
-            float distanceB = trackGraph.FindDistance(centerCar.LocationB, swLocation);
+            float distanceA = trackGraph.FindDistance(leading.LocationA, swLocation);
+            float distanceB = trackGraph.FindDistance(leading.LocationB, swLocation);
+            float closestEndDistance = Math.Min(distanceA, distanceB);
 
-            return Math.Min(distanceA, distanceB);
+            float straightLineDistance = Vector3.Distance(leading.GetCenterPosition(trackGraph), swLocation.GetPosition());
+            Vector3 heading = swLocation.GetPosition() - leading.GetCenterPosition(trackGraph);
+
+            RouteManager.logger.LogToDebug($"Straight Line: {straightLineDistance}, Heading: {heading}, Heading.mag: {heading.magnitude}, Direction: {heading/heading.magnitude}");
+            RouteManager.logger.LogToDebug($"Heading sign: {(heading.x >0 && (heading.x > -heading.y && heading.x<heading.y))}");
+
+            //Once close enough, swap to using straight line distance since TrackSpan distance only goes from the edge of the car to the edge of the span
+            if (closestEndDistance <= 100 )
+            {
+                Vector3 direction = heading / heading.magnitude;
+                return straightLineDistance * (direction.x <0 ? 1: -1);
+            }
+
+            return closestEndDistance;
         }
 
         public static void PlanNextRoute(Location start,PassengerStop nextStation, ref List<RouteSwitchData> mainRoute)
@@ -275,7 +288,7 @@ namespace RouteManager.v2.core
                 if (commonPoint != null)
                 {
                     //common point between leaving the station and the current main route
-                    commonPoint.isDecision = true;
+                    commonPoint.isRoutable = true;
                     //new route from P2
                     mainRoute = requirementsP2;
                 }
@@ -316,11 +329,13 @@ namespace RouteManager.v2.core
 
                     index1++;
 
-                    //remove all elements between common points
-                    mainRoute.RemoveRange(index1, index2 - index1);
+                    if(index1 != index2) { 
+                        //remove all elements between common points
+                        mainRoute.RemoveRange(index1, index2 - index1);
 
-                    //insert any new elements
-                    mainRoute.InsertRange(index1, newRoute.Take(indexNewRoute));
+                        //insert any new elements
+                        mainRoute.InsertRange(index1, newRoute.Take(indexNewRoute));
+                    }
 
                     return true;
                 }
