@@ -1,5 +1,4 @@
-﻿using Game.Events;
-using Model;
+﻿using Model;
 using RollingStock;
 using RouteManager.v2.dataStructures;
 using RouteManager.v2.Logging;
@@ -655,7 +654,7 @@ namespace RouteManager.v2.core
         }
 
 
-        //Future use - try to avoid lag when calculating closest station
+        //Future use - try to avoid lag when calculating closest station by 
         public static IEnumerator<(PassengerStop, float)> CalculateDistanceToStation()
         {
             yield return (null, float.MaxValue);

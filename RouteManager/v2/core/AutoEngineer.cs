@@ -10,10 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using RouteManager.v2.Logging;
-using Network;
 using RollingStock;
 using Track;
-using static Game.Reputation.PassengerReputationCalculator;
 
 namespace RouteManager.v2.core
 {
@@ -828,12 +826,19 @@ namespace RouteManager.v2.core
 
             //get route info - what are the switches on our route and what state do they need to be in?
             List<RouteSwitchData> switchRequirements;
-            PassengerStop alarka = PassengerStop.FindAll().Where(stop => stop.identifier == "alarka").First();
 
+
+
+            //Dev/testing only to be replaced once logic is working
+            PassengerStop alarka = PassengerStop.FindAll().Where(stop => stop.identifier == "alarka").First();
+            //End dev/testing code
+
+
+            //get all switches on our route from current location to end of line/end of branch line
             if (DestinationManager.GetRouteSwitches(locomotive.LocationF, (Track.Location)alarka.TrackSpans.First().lower, out switchRequirements))
             {
                 //we have the total route to end of line/branch
-                // Check if the next station has multiple platforms and find the last common switch
+                // Check if the next station has multiple platforms and find the last common switch - this is used later if we find ourselves against a switch
                 DestinationManager.PlanNextRoute(locomotive.LocationF, LocoTelem.currentDestination[locomotive], ref switchRequirements);
             }
             else

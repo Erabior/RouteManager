@@ -15,11 +15,6 @@ using RouteManager.v2.dataStructures;
 using RouteManager.v2.Logging;
 using RouteManager.v2.UI;
 using UI.Common;
-using Track;
-using System.Collections.Generic;
-using Microsoft.SqlServer.Server;
-using TriangleNet.Geometry;
-using KeyValue.Runtime;
 using Network;
 
 

@@ -14,8 +14,6 @@ using RouteManager.v2.dataStructures;
 using Model.Definition.Data;
 using RouteManager.v2.Logging;
 using RollingStock;
-using System.Runtime.CompilerServices;
-using Network;
 
 namespace RouteManager.v2.core
 {
