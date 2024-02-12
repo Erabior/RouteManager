@@ -86,10 +86,13 @@ namespace RouteManager.v2
                         if (LocoTelem.locomotiveCoroutines[currentLoco] && !LocoTelem.RouteMode[currentLoco])
                         {
                             RouteManager.logger.LogToDebug($"loco {currentLoco.DisplayName} currently has called a coroutine but no longer has stations selected - Stopping Coroutine for {currentLoco.DisplayName}");
+
                             if (RouteManager.Settings.experimentalUI)
                             {
                                 StopCoroutine(Engineer.AutoEngineerControlRoutine_dev(currentLoco));
-                            }else{
+                            }
+                            else
+                            {
                                 StopCoroutine(Engineer.AutoEngineerControlRoutine(currentLoco));
                             }
                             LocoTelem.locomotiveCoroutines[currentLoco] = false;

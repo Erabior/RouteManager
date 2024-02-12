@@ -31,6 +31,21 @@ namespace RouteManager.v2.dataStructures
         public static Dictionary<Car, int?> nextPassengerPlatform { get; private set; } = new Dictionary<Car, int?>();
         public static Dictionary<Car, Dictionary<string, float>> lowFuelQuantities { get; private set; } = new Dictionary<Car, Dictionary<string, float>>();
 
+
+
+
+        /************************************************************************************************************
+         * 
+         * 
+         * 
+         *                  Experimental / Developement / Preview features. 
+         * 
+         * 
+         * 
+         ************************************************************************************************************/
+
+
+
         public static Dictionary<Car, Dictionary<string, bool>> UIPickupStationSelections { get; private set; } = new Dictionary<Car, Dictionary<string, bool>>();
         public static Dictionary<Car, Dictionary<string, bool>> UIStopStationSelections { get; private set; } = new Dictionary<Car, Dictionary<string, bool>>();
         public static Dictionary<Car, Dictionary<string, PassengerStop>> UITransferStationSelections { get; private set; } = new Dictionary<Car, Dictionary<string, PassengerStop>>();
