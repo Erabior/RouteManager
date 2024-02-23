@@ -148,6 +148,9 @@ namespace RouteManager.v2
             if (!LocoTelem.previousDestinations.ContainsKey(currentLoco))
                 LocoTelem.previousDestinations[currentLoco] = new List<PassengerStop>();
 
+            if (!LocoTelem.UIStationEntries.ContainsKey(currentLoco))
+                LocoTelem.UIStationEntries[currentLoco] = new List<PassengerStop>();
+
         }
 
         private void cleanDataStructures(Car currentLoco)

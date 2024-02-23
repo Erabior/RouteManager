@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using GalaSoft.MvvmLight.Messaging;
+using KeyValue.Runtime;
 using Model;
 using RollingStock;
 using RouteManager.v2.core;
@@ -14,7 +15,9 @@ using UI.Common;
 using UI.CompanyWindow;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
 using static Game.Reputation.PassengerReputationCalculator;
+using static UnityEngine.InputSystem.Layouts.InputControlLayout;
 
 namespace RouteManager.v2.UI
 {
@@ -46,6 +49,9 @@ namespace RouteManager.v2.UI
                 return;
 
             _instance._car = car;
+
+            if(!LocoTelem.UIStationEntries.ContainsKey(car))
+                LocoTelem.UIStationEntries[car] = new List<PassengerStop>();
 
             BuildPanel();
 
@@ -221,61 +227,132 @@ namespace RouteManager.v2.UI
 
 
         }
-private void PopulatePanel(UIPanelBuilder builder)
-{
-    builder.AddTitle(TitleForCar(_car), SubtitleForCar(_car));
-}
-private static string TitleForCar(Car car)
-{
-    return car.CarType + " " + car.DisplayName;
-}
-private static string SubtitleForCar(Car car)
-{
-    int num = Mathf.CeilToInt(car.Weight / 2000f);
-    string arg = (string.IsNullOrEmpty(car.DefinitionInfo.Metadata.Name) ? car.CarType : car.DefinitionInfo.Metadata.Name);
-    return $"{num}T {arg}";
-}
 
-private static void UpdateManagedTrainsStopStations(Car car)
-{
-    // Get the list of all selected stations
-    var allStops = PassengerStop.FindAll();
-    var selectedStations = allStops.Where(stop => DestinationManager.IsStopStationSelected(stop, car)).ToList();
+        private static void BuildPanelTesting()
+        {
+            //Determine valid stations
+            Dictionary<PassengerStop,int> validStations = validStationStops();
 
-    // Update the ManagedTrains with the selected stations for this car
-    DestinationManager.SetStopStations(car, selectedStations);
-}
+            RouteManager.logger.LogToDebug("Valid Station count was " + validStations.Count);
 
-private static void UpdateManagedTrainsPickupStations(Car car)
-{
-    // Get the list of all selected stations
-    var allStops = PassengerStop.FindAll();
-    var selectedStations = allStops.Where(stop => DestinationManager.IsPickupStationSelected(stop, car)).ToList();
+            //Set Visible Window Title
+            _instance._window.Title = "Route Manager Station Selection";
 
-    // Update the ManagedTrains with the selected stations for this car
-    DestinationManager.SetPickupStations(car, selectedStations);
-}
+            //Create UI Panel
+            UIPanel.Create(_instance._window.contentRectTransform, _instance.BuilderAssets, delegate (UIPanelBuilder builder)
+            {
+                //UI Design
+                builder.AddTitle(TitleForCar(_instance._car), "");
+                builder.AddLabel("Trains will board all passengers marked for pickup, but will only stop at marked stations.");
+                builder.AddLabel("Transfer stations are used when the train does not service the entire route.");
 
-private static void UpdateManagedTrainsTransferStations(Car car)
-{
-    // Get the list of all selected stations
-    var allStops = PassengerStop.FindAll();
+                //Formatting
+                builder.Spacer().Height(20f);
 
-    //filter to stops that have a transfer
-    var stationsWithTransfer = allStops.Where(stop => DestinationManager.IsTransferStationSelected(stop, car) != null);
+                //Table Headers
+                builder.HStack(delegate (UIPanelBuilder builder)
+                {
+                    builder.AddLabel("<b>Station</b>").Width(200f);
+                    builder.AddLabel("<b>Pickup</b>").Width(80f);
+                    builder.AddLabel("<b>Stop</b>").Width(80f);
+                    builder.AddLabel("<b>Transfer Station</b>").FlexibleWidth(200f);
+                }, 8f).Height(25f);
 
-    Dictionary<PassengerStop, PassengerStop> selectedStations = new Dictionary<PassengerStop, PassengerStop>();
+                //Create Scrollable view
+                builder.VScrollView(delegate (UIPanelBuilder builder) 
+                {
+                    foreach (PassengerStop currentSelection in LocoTelem.UIStationEntries[_instance._car])
+                    {
+                        int selInt = -1;
 
-    //build a dictionary of from -> to
-    foreach (var stop in stationsWithTransfer)
-    {
-        selectedStations.Add(stop, DestinationManager.IsTransferStationSelected(stop, car));
+                        builder.AddDropdown(validStations.Keys.Select(x => x.identifier).ToList(), 0, delegate (int i)
+                        {
 
-        RouteManager.logger.LogToDebug($"UpdateManagedTrainsTransferStations stationsWithTransfer: {stop.identifier} -> {selectedStations[stop].identifier}", LogLevel.Verbose);
-    }
+                            //really, really rebuild - possibly need to setup nested builders so we only trigger a rebuild on a smaller panel?
+                            _instance.Rebuild();
 
-    // Update the ManagedTrains with the selected stations for this car
-    DestinationManager.SetTransferStations(car, selectedStations);
-}
+                        }).Width(100f);
+                    }
+                }, new RectOffset(0, 4, 0, 0));
+
+
+
+                builder.AddButton("Add Stop", delegate
+                {
+                    RouteManager.logger.LogToDebug("Add Stop Clicked!");
+                    LocoTelem.UIStationEntries[_instance._car].Add(validStationStops().Keys.First());
+                    builder.Rebuild();
+                }).Height(25f);
+            });
+
+        }
+
+        private static Dictionary<PassengerStop,int> validStationStops()
+        {
+            Dictionary<String,PassengerStop> stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
+
+            List<PassengerStop> orderedStops = StationInformation.Stations.Keys.Select(id => stopsLookup[id])
+                .Where(ps => !ps.ProgressionDisabled)
+                .ToList();
+
+            return orderedStops.Zip(orderedStops.Select((PassengerStop st, int i) => i).ToList(),(k,v) => new { k, v }).ToDictionary(x=>x.k, x=> x.v);
+        }
+
+        private void PopulatePanel(UIPanelBuilder builder)
+        {
+            builder.AddTitle(TitleForCar(_car), SubtitleForCar(_car));
+        }
+        private static string TitleForCar(Car car)
+        {
+            return car.CarType + " " + car.DisplayName;
+        }
+        private static string SubtitleForCar(Car car)
+        {
+            int num = Mathf.CeilToInt(car.Weight / 2000f);
+            string arg = (string.IsNullOrEmpty(car.DefinitionInfo.Metadata.Name) ? car.CarType : car.DefinitionInfo.Metadata.Name);
+            return $"{num}T {arg}";
+        }
+
+        private static void UpdateManagedTrainsStopStations(Car car)
+        {
+            // Get the list of all selected stations
+            var allStops = PassengerStop.FindAll();
+            var selectedStations = allStops.Where(stop => DestinationManager.IsStopStationSelected(stop, car)).ToList();
+
+            // Update the ManagedTrains with the selected stations for this car
+            DestinationManager.SetStopStations(car, selectedStations);
+        }
+
+        private static void UpdateManagedTrainsPickupStations(Car car)
+        {
+            // Get the list of all selected stations
+            var allStops = PassengerStop.FindAll();
+            var selectedStations = allStops.Where(stop => DestinationManager.IsPickupStationSelected(stop, car)).ToList();
+
+            // Update the ManagedTrains with the selected stations for this car
+            DestinationManager.SetPickupStations(car, selectedStations);
+        }
+
+        private static void UpdateManagedTrainsTransferStations(Car car)
+        {
+            // Get the list of all selected stations
+            var allStops = PassengerStop.FindAll();
+
+            //filter to stops that have a transfer
+            var stationsWithTransfer = allStops.Where(stop => DestinationManager.IsTransferStationSelected(stop, car) != null);
+
+            Dictionary<PassengerStop, PassengerStop> selectedStations = new Dictionary<PassengerStop, PassengerStop>();
+
+            //build a dictionary of from -> to
+            foreach (var stop in stationsWithTransfer)
+            {
+                selectedStations.Add(stop, DestinationManager.IsTransferStationSelected(stop, car));
+
+                RouteManager.logger.LogToDebug($"UpdateManagedTrainsTransferStations stationsWithTransfer: {stop.identifier} -> {selectedStations[stop].identifier}", LogLevel.Verbose);
+            }
+
+            // Update the ManagedTrains with the selected stations for this car
+            DestinationManager.SetTransferStations(car, selectedStations);
+        }
     }
 }

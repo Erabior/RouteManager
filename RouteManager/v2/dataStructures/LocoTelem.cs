@@ -1,6 +1,8 @@
-﻿using Model;
+﻿using Game.Events;
+using Model;
 using RollingStock;
 using System.Collections.Generic;
+using UnityEngine.UIElements;
 
 
 namespace RouteManager.v2.dataStructures
@@ -42,13 +44,15 @@ namespace RouteManager.v2.dataStructures
          ************************************************************************************************************/
 
 
+        public static Dictionary<Car, List<PassengerStop>>                      UIStationEntries                {  get; private set; } = new Dictionary<Car, List<PassengerStop>>();
+        public static Dictionary<Car, Dictionary<string, bool>>                 UIPickupStationSelections       { get; private set; } = new Dictionary<Car, Dictionary<string, bool>>();
+        public static Dictionary<Car, Dictionary<string, bool>>                 UIStopStationSelections         { get; private set; } = new Dictionary<Car, Dictionary<string, bool>>();
+        public static Dictionary<Car, Dictionary<string, PassengerStop>>        UITransferStationSelections     { get; private set; } = new Dictionary<Car, Dictionary<string, PassengerStop>>();
+        public static Dictionary<Car, List<PassengerStop>>                      pickupStations                  { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
+        public static Dictionary<Car, List<PassengerStop>>                      stopStations                    { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
+        public static Dictionary<Car, Dictionary<PassengerStop, PassengerStop>> transferStations                { get; private set; } = new Dictionary<Car, Dictionary<PassengerStop, PassengerStop>>();
+        public static Dictionary<Car, List<string>>                             relevantPassengers              { get; set; } = new Dictionary<Car, List<string>> ();
 
-        public static Dictionary<Car, Dictionary<string, bool>> UIPickupStationSelections { get; private set; } = new Dictionary<Car, Dictionary<string, bool>>();
-        public static Dictionary<Car, Dictionary<string, bool>> UIStopStationSelections { get; private set; } = new Dictionary<Car, Dictionary<string, bool>>();
-        public static Dictionary<Car, Dictionary<string, PassengerStop>> UITransferStationSelections { get; private set; } = new Dictionary<Car, Dictionary<string, PassengerStop>>();
-        public static Dictionary<Car, List<PassengerStop>> pickupStations { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
-        public static Dictionary<Car, List<PassengerStop>> stopStations { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
-        public static Dictionary<Car, Dictionary<PassengerStop, PassengerStop>> transferStations { get; private set; } = new Dictionary<Car, Dictionary<PassengerStop, PassengerStop>>();
-        public static Dictionary<Car, List<string>> relevantPassengers { get; set; } = new Dictionary<Car, List<string>> ();
+        
     }
 }
