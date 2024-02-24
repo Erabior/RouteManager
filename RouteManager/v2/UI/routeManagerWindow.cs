@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using GalaSoft.MvvmLight.Messaging;
 using KeyValue.Runtime;
 using Model;
@@ -50,14 +51,28 @@ namespace RouteManager.v2.UI
 
             _instance._car = car;
 
-            if(!LocoTelem.UIStationEntries.ContainsKey(car))
-                LocoTelem.UIStationEntries[car] = new List<PassengerStop>();
+            ensureTelemetryObjectsExist();
 
             BuildPanel();
 
+            //_instance._window.SetContentWidth(700);
             _instance._window.SetPosition(Window.Position.Center);
             _instance._window.ShowWindow();
         }
+
+
+        private static void ensureTelemetryObjectsExist()
+        {
+            if (!LocoTelem.UIStationEntries.ContainsKey(_instance._car))
+                LocoTelem.UIStationEntries[_instance._car] = new List<PassengerStop>();
+            if (!LocoTelem.UIPickupStationSelections.ContainsKey(_instance._car))
+                LocoTelem.UIPickupStationSelections[_instance._car] = new Dictionary<string, bool>();
+            if (!LocoTelem.UIStopStationSelections.ContainsKey(_instance._car))
+                LocoTelem.UIStopStationSelections[_instance._car] = new Dictionary<string, bool>();
+            if (!LocoTelem.UITransferStationSelections.ContainsKey(_instance._car))
+                LocoTelem.UITransferStationSelections[_instance._car] = new Dictionary<string, PassengerStop>();
+        }
+
 
         private void Awake()
         {
@@ -228,15 +243,17 @@ namespace RouteManager.v2.UI
 
         }
 
-        private static void BuildPanelTesting()
+        private static void BuildPaneltest()
         {
             //Determine valid stations
-            Dictionary<PassengerStop,int> validStations = validStationStops();
+            Dictionary<PassengerStop,int>   validStations       = validStationStops();
+            List<string>                    stationIdentifiers  = validStations.Keys.Select(x => x.identifier).ToList();
+
 
             RouteManager.logger.LogToDebug("Valid Station count was " + validStations.Count);
 
             //Set Visible Window Title
-            _instance._window.Title = "Route Manager Station Selection";
+            _instance._window.Title = "Route Manager Orders";
 
             //Create UI Panel
             UIPanel.Create(_instance._window.contentRectTransform, _instance.BuilderAssets, delegate (UIPanelBuilder builder)
@@ -253,38 +270,112 @@ namespace RouteManager.v2.UI
                 builder.HStack(delegate (UIPanelBuilder builder)
                 {
                     builder.AddLabel("<b>Station</b>").Width(200f);
-                    builder.AddLabel("<b>Pickup</b>").Width(80f);
-                    builder.AddLabel("<b>Stop</b>").Width(80f);
+                    builder.AddLabel("<b>Load</b>").Width(80f);
+                    builder.AddLabel("<b>Unload</b>").Width(80f);
                     builder.AddLabel("<b>Transfer Station</b>").FlexibleWidth(200f);
                 }, 8f).Height(25f);
 
                 //Create Scrollable view
                 builder.VScrollView(delegate (UIPanelBuilder builder) 
                 {
-                    foreach (PassengerStop currentSelection in LocoTelem.UIStationEntries[_instance._car])
-                    {
-                        int selInt = -1;
+                    List<PassengerStop> stops = LocoTelem.UIStationEntries[_instance._car];
+                    //Foreach stop in the user defined list
+                    for (int i=0; i < stops.Count; i++) //(PassengerStop currentOrder in LocoTelem.UIStationEntries[_instance._car])
+                    {                       
 
-                        builder.AddDropdown(validStations.Keys.Select(x => x.identifier).ToList(), 0, delegate (int i)
+                        builder.HStack(delegate (UIPanelBuilder builder) 
                         {
 
-                            //really, really rebuild - possibly need to setup nested builders so we only trigger a rebuild on a smaller panel?
-                            _instance.Rebuild();
+                            RouteManager.logger.LogToDebug("Current Stop is: " + stops[i].identifier);
 
-                        }).Width(100f);
+                            //Add Column 1
+                            builder.AddDropdownIntPicker(validStations.Values.ToList(), validStations.Keys.ToList().IndexOf(stops[i]) < 0 ? 0 : validStations.Keys.ToList().IndexOf(stops[i]), (int j) => (j >= 0) ? validStations.Keys.ElementAt(j).DisplayName : "", true, delegate (int i)
+                            {
+                                _instance.Rebuild();
+                            }).Tooltip("Station", "Station / Passenger destination to service").Width(200f);
+
+                            //Add Column 2
+                            //Pickup passengers travelling to this station
+                            builder.AddToggle(() => DestinationManager.IsPickupStationSelected(stops[i], _instance._car), isOn => {
+                                RouteManager.logger.LogToDebug($"Pickup Toggled: {stops[i]?.identifier} State: {isOn}", LogLevel.Verbose);
+
+                                DestinationManager.SetPickupStationSelected(stops[i], _instance._car, isOn);
+
+                                // Update when checkbox state changes
+                                UpdateManagedTrainsPickupStations(_instance._car);
+
+                                if (LocoTelem.RouteMode[_instance._car])
+                                    TrainManager.CopyStationsFromLocoToCoaches_dev(_instance._car);
+
+                                builder.Rebuild();
+                            }).Tooltip("Pickup", $"This train will collect passengers heading to {stops[i].DisplayName}.<br>If passengers are collected for {stops[i].DisplayName} but the train does not stop at {stops[i].DisplayName}, then a Transfer station will need to be set.")
+                                .Width(80f);
+
+                            ////Add Column 3
+                            builder.AddToggle(() => DestinationManager.IsStopStationSelected(stops[i], _instance._car), isOn => {
+
+                                Dictionary<PassengerStop, PassengerStop> transferStations;
+                                LocoTelem.transferStations.TryGetValue(_instance._car, out transferStations);
+
+                                RouteManager.logger.LogToDebug($"Stop Toggled: {stops[i]?.identifier} State: {isOn} Is Transfer Station: {transferStations?.ContainsValue(stops[i])}", LogLevel.Verbose);
+
+                                //Ensure the stop is not also a transfer station when unticking!
+                                if (transferStations != null && transferStations.ContainsValue(stops[i]))
+                                {
+                                    isOn = true;
+                                }
+
+                                DestinationManager.SetStopStationSelected(stops[i], _instance._car, isOn);
+
+                                // Update when checkbox state changes
+                                UpdateManagedTrainsStopStations(_instance._car);
+
+                                if (LocoTelem.RouteMode[_instance._car])
+                                {
+                                    TrainManager.CopyStationsFromLocoToCoaches_dev(_instance._car);
+
+                                    //TODO: If we're already moving, we need to update our next station
+                                    //(or at least check if this station is between us and the next station or the next station has been removed)
+
+                                }
+
+                                builder.Rebuild();
+                            }).Width(80f);
+
+                            ////Add Column 4
+                            //builder.AddDropdownIntPicker(validStations.Values.ToList(), validStations.Keys.ToList().IndexOf(stops[i]) < 0 ? 0 : validStations.Keys.ToList().IndexOf(stops[i]), (int j) => (j >= 0) ? validStations.Keys.ElementAt(j).DisplayName : "", true, delegate (int i)
+                            //{
+                            //    _instance.Rebuild();
+                            //}).Tooltip("Station", "Station / Passenger destination to service").Width(200f);
+                        }, 10f); //.ChildAlignment(TextAnchor.MiddleLeft);
                     }
                 }, new RectOffset(0, 4, 0, 0));
 
-
-
-                builder.AddButton("Add Stop", delegate
+                builder.HStack(delegate (UIPanelBuilder builder)
                 {
-                    RouteManager.logger.LogToDebug("Add Stop Clicked!");
-                    LocoTelem.UIStationEntries[_instance._car].Add(validStationStops().Keys.First());
-                    builder.Rebuild();
-                }).Height(25f);
-            });
+                    //Define a button to add new tuples. 
+                    builder.AddButton("Remove Last Stop", delegate
+                    {
+                        RouteManager.logger.LogToDebug("Remove Stop Clicked!");
 
+                        if(LocoTelem.UIStationEntries[_instance._car].Count >=1)
+                            LocoTelem.UIStationEntries[_instance._car].RemoveAt(LocoTelem.UIStationEntries[_instance._car].Count-1);
+
+                        //Since this is an event, rebuild on the event completion.
+                        _instance.Rebuild();
+                    }).Height(30f);
+
+                    //Define a button to add new tuples. 
+                    builder.AddButton("Add New Stop", delegate
+                    {
+                        RouteManager.logger.LogToDebug("Add Stop Clicked!");
+                        LocoTelem.UIStationEntries[_instance._car].Add(validStations.Keys.First());
+
+                        //Since this is an event, rebuild on the event completion.
+                        _instance.Rebuild();
+                    }).Height(30f);
+                }, 10f).ChildAlignment(TextAnchor.MiddleLeft);
+            });
         }
 
         private static Dictionary<PassengerStop,int> validStationStops()
