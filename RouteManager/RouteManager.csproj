@@ -118,10 +118,12 @@
     <Compile Include="v2\core\StationManager.cs" />
     <Compile Include="v2\core\TrainManager.cs" />
     <Compile Include="v2\dataStructures\LocoTelem.cs" />
+    <Compile Include="v2\dataStructures\RouteSwitchData.cs" />
     <Compile Include="v2\dataStructures\SettingsData.cs" />
     <Compile Include="v2\dataStructures\StationMapData.cs" />
     <Compile Include="v2\dataStructures\StationInformation.cs" />
     <Compile Include="v2\Dispatcher.cs" />
+    <Compile Include="v2\harmonyPatches\GraphPatch.cs" />
     <Compile Include="v2\harmonyPatches\ProgrammaticWindowCreatorPatch.cs" />
     <Compile Include="v2\harmonyPatches\RouteManagerUI.cs" />
     <Compile Include="v2\helpers\DebugFunctions.cs" />
