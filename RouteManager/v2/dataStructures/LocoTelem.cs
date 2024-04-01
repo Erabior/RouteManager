@@ -4,7 +4,6 @@ using RollingStock;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 
-
 namespace RouteManager.v2.dataStructures
 {
     public class LocoTelem
@@ -28,6 +27,8 @@ namespace RouteManager.v2.dataStructures
         public static Dictionary<Car, PassengerStop> currentDestination { get; private set; } = new Dictionary<Car, PassengerStop>();
         public static Dictionary<Car, List<PassengerStop>> previousDestinations { get; private set; } = new Dictionary<Car, List<PassengerStop>>();
         public static Dictionary<Car, PassengerStop> previousDestination { get; private set; } = new Dictionary<Car, PassengerStop>();
+        public static Dictionary<Car, List<RouteSwitchData>> routeSwitchRequirements { get; private set; } = new Dictionary<Car, List<RouteSwitchData>>();
+        public static Dictionary<Car, int?> nextPassengerPlatform { get; private set; } = new Dictionary<Car, int?>();
         public static Dictionary<Car, Dictionary<string, float>> lowFuelQuantities { get; private set; } = new Dictionary<Car, Dictionary<string, float>>();
 
 
