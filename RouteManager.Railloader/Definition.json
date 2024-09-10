@@ -1,0 +1,9 @@
+{
+    "manifestVersion":  1,
+    "id":  "Erabior.Dispatcher",
+    "name":  "Dispatcher",
+    "version":  "2.1.0.0",
+    "assemblies":  [
+                       "RouteManager.Railloader"
+                   ]
+}

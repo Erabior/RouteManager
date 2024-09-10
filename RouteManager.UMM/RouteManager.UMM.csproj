@@ -9,9 +9,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RouteManager.UMM</RootNamespace>
     <AssemblyName>RouteManager.UMM</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -85,13 +86,12 @@
     <PostBuildEvent>copy /Y "$(TargetDir)$(ProjectName).dll" "$(UMMReferencePath)\$(ProjectName).dll"</PostBuildEvent>
   </PropertyGroup -->
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
-		<Output TaskParameter="Assemblies" ItemName="Targets" />
-	  </GetAssemblyIdentity>
-	  <ItemGroup>
-		<VersionNumber Include="@(Targets->'%(Version)')"/>
-	  </ItemGroup>
-  
+    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+      <Output TaskParameter="Assemblies" ItemName="Targets" />
+    </GetAssemblyIdentity>
+    <ItemGroup>
+      <VersionNumber Include="@(Targets->'%(Version)')" />
+    </ItemGroup>
     <Exec Condition="'$(OS)' == 'Windows_NT'" Command="powershell -executionpolicy bypass -Command &quot;(../post-build.ps1 -Type 'UMM' -SolnDir '$(SolutionDir)' -ProjDir '$(ProjectDir)' -Ver '@(VersionNumber)' -Config '$(ConfigurationName)' -Output '$(UMMReferencePath)')&quot;" />
   </Target>
 </Project>

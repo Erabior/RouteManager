@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RouteManager.BepInEx", "Rou
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RouteManager.UMM", "RouteManager.UMM\RouteManager.UMM.csproj", "{BD33CA70-24B9-4E80-908F-3E3A3C264904}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RouteManager.Railloader", "RouteManager.Railloader\RouteManager.Railloader.csproj", "{924D80F5-07B5-4D0C-A9BC-EB042CC5FAAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,16 +21,18 @@ Global
 		{65120CD8-2B84-4D1C-ABCE-BAC96AEC1180}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65120CD8-2B84-4D1C-ABCE-BAC96AEC1180}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65120CD8-2B84-4D1C-ABCE-BAC96AEC1180}.Release|Any CPU.Build.0 = Release|Any CPU
-		
 		{C6B9A4E0-4823-4528-A5B5-550EEE0801C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C6B9A4E0-4823-4528-A5B5-550EEE0801C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C6B9A4E0-4823-4528-A5B5-550EEE0801C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C6B9A4E0-4823-4528-A5B5-550EEE0801C9}.Release|Any CPU.Build.0 = Release|Any CPU
-		
 		{BD33CA70-24B9-4E80-908F-3E3A3C264904}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BD33CA70-24B9-4E80-908F-3E3A3C264904}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD33CA70-24B9-4E80-908F-3E3A3C264904}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD33CA70-24B9-4E80-908F-3E3A3C264904}.Release|Any CPU.Build.0 = Release|Any CPU
+		{924D80F5-07B5-4D0C-A9BC-EB042CC5FAAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{924D80F5-07B5-4D0C-A9BC-EB042CC5FAAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{924D80F5-07B5-4D0C-A9BC-EB042CC5FAAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{924D80F5-07B5-4D0C-A9BC-EB042CC5FAAE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
