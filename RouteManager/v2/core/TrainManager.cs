@@ -213,7 +213,7 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug(String.Format("Loco: {0} update coach station selection", locomotive.DisplayName), LogLevel.Verbose);
 
             string currentStation = LocoTelem.currentDestination[locomotive].identifier;
-            int currentStationIndex = DestinationManager.orderedStations.IndexOf(currentStation);
+            int currentStationIndex = StationInformation.OrderedStations.IndexOf(currentStation);
             bool isTravelingEastWard = LocoTelem.locoTravelingEastWard[locomotive]; // true if traveling East
 
             // Determine the range of stations to include based on travel direction
@@ -221,15 +221,15 @@ namespace RouteManager.v2.core
 
             if (StationManager.currentlyAtLastStation(locomotive))
             {
-                relevantStations = DestinationManager.orderedStations.Except(new List<String>() { LocoTelem.closestStation[locomotive].Item1.identifier });
+                relevantStations = StationInformation.OrderedStations.Except(new List<String>() { LocoTelem.closestStation[locomotive].Item1.identifier });
             }
             else if (isTravelingEastWard)
             {
-                relevantStations = DestinationManager.orderedStations.Take(currentStationIndex + 1).Reverse();
+                relevantStations = StationInformation.OrderedStations.Take(currentStationIndex + 1).Reverse();
             }
             else
             {
-                relevantStations = DestinationManager.orderedStations.Skip(currentStationIndex);
+                relevantStations = StationInformation.OrderedStations.Skip(currentStationIndex);
             }
 
             foreach (string identifier in relevantStations)
@@ -472,7 +472,7 @@ namespace RouteManager.v2.core
             RouteManager.logger.LogToDebug(String.Format("Loco: {0} update coach station selection", locomotive.DisplayName), LogLevel.Verbose);
 
             string currentStation = StationManager.GetClosestStation_dev(locomotive).Item1.identifier; //LocoTelem.currentDestination[locomotive].identifier;
-            int currentStationIndex = DestinationManager.orderedStations.IndexOf(currentStation);
+            int currentStationIndex = StationInformation.OrderedStations.IndexOf(currentStation);
             bool isTravelingEastWard = LocoTelem.locoTravelingEastWard[locomotive]; // true if traveling East
             IEnumerable<string> filteredStations;
 
@@ -480,7 +480,7 @@ namespace RouteManager.v2.core
 
             var stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
             RouteManager.logger.LogToDebug($"CopyStationsFromLocoToCoaches_dev() stopsLookup Complete");
-            List<PassengerStop> orderedStops = DestinationManager.orderedStations.Select(id => stopsLookup[id])
+            List<PassengerStop> orderedStops = StationInformation.OrderedStations.Select(id => stopsLookup[id])
                                                                                  .ToList();
             RouteManager.logger.LogToDebug($"CopyStationsFromLocoToCoaches_dev() orderedStops Complete");
             List<PassengerStop> stationsLeftOfMe = orderedStops.Skip(currentStationIndex + 1).ToList();

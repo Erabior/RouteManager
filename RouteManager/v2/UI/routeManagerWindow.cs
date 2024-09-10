@@ -112,7 +112,7 @@ namespace RouteManager.v2.UI
         private static void BuildPanel()
         {
             var stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
-            List<PassengerStop> orderedStops = new string[] { "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka", "almond", "nantahala", "topton", "rhodo", "andrews" }
+            List<PassengerStop> orderedStops = StationInformation.OrderedStations
                                .Select(id => stopsLookup[id])
                                .Where(ps => !ps.ProgressionDisabled)
                                .ToList();

@@ -12,11 +12,6 @@ namespace RouteManager.v2.core
 {
     public static class DestinationManager
     {
-        public static readonly List<string> orderedStations = new List<string>
-        {
-            "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka",
-            "almond", "nantahala", "topton", "rhodo", "andrews"
-        };
 
         //Update the list of stations to stop at.
         public static void SetStopStations(Car car, List<PassengerStop> selectedStops)

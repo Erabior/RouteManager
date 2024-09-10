@@ -29,6 +29,9 @@ namespace RouteManager.v2
             RouteManager.logger.LogToDebug("    Dispatcher Mod Manager".PadRight(30) + RouteManager.getModLoader());
             RouteManager.logger.LogToDebug("--------------------------------------------------------------------------------------------------");
 
+            //Hook the map load event to build route data at load. 
+            Messenger.Default.Register<MapDidLoadEvent>(this, GameMapLoaded);
+            
             //Hook the map unload event to gracefully stop all instances prior to map unload. 
             Messenger.Default.Register<MapDidUnloadEvent>(this, GameMapUnloaded);
 
@@ -249,6 +252,16 @@ namespace RouteManager.v2
 
                 clearDicts();
             }
+        }
+
+        private void GameMapLoaded(MapDidLoadEvent mapDidLoadEvent)
+        {
+            RouteManager.logger.LogToDebug("GAME MAP LOAD TRIGGERED");
+
+            StationInformation.BuildStationMap();
+            StationInformation.BuildOrderedList();
+
+            RouteManager.logger.LogToDebug("GAME MAP LOAD COMPLETE");
         }
     }
 }

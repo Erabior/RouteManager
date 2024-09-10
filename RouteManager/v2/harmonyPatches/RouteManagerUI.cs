@@ -257,7 +257,7 @@ namespace RouteManager.v2.harmonyPatches
                 {
                     //Define the list to bind to the vertical scroll bar.
                     var stopsLookup = PassengerStop.FindAll().ToDictionary(stop => stop.identifier, stop => stop);
-                    var orderedStops = new string[] { "sylva", "dillsboro", "wilmot", "whittier", "ela", "bryson", "hemingway", "alarkajct", "cochran", "alarka", "almond", "nantahala", "topton", "rhodo", "andrews" }
+                    var orderedStops = StationInformation.OrderedStations
                                        .Select(id => stopsLookup[id])
                                        .Where(ps => !ps.ProgressionDisabled)
                                        .ToList();

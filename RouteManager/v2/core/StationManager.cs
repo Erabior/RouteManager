@@ -79,7 +79,7 @@ namespace RouteManager.v2.core
                 .Distinct()
                 .ToList();
 
-            List<string> orderedStopStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
+            List<string> orderedStopStations = StationInformation.OrderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
 
             int currentIndex = orderedStopStations.IndexOf(LocoTelem.closestStation[locomotive].Item1.identifier);
 
@@ -227,7 +227,7 @@ namespace RouteManager.v2.core
                 .ToList();
 
             //Convert selected menu items into an ordered list of station stops
-            List<string> orderedstopStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
+            List<string> orderedstopStations = StationInformation.OrderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
 
             PassengerStop nextStop = calculateNextStation(orderedstopStations, LocoTelem.stopStations[locomotive], currentStation, locomotive);
 
@@ -573,7 +573,7 @@ namespace RouteManager.v2.core
                 .ToList();
 
             //Convert selected menu items into an ordered list of station stops
-            List<string> orderedstopStations = DestinationManager.orderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
+            List<string> orderedstopStations = StationInformation.OrderedStations.Where(item => selectedStationIdentifiers.Contains(item)).ToList();
 
             currentStationIndex = orderedstopStations.IndexOf(currentStation.identifier);
 
@@ -582,11 +582,11 @@ namespace RouteManager.v2.core
             if (currentStationIndex < 0)
             {
                 //find the current station index
-                int closestIndex = DestinationManager.orderedStations.FindIndex(stop => stop.Equals(currentStation.identifier));
+                int closestIndex = StationInformation.OrderedStations.FindIndex(stop => stop.Equals(currentStation.identifier));
                 if (LocoTelem.locoTravelingEastWard[locomotive])
                 {
                     //what are the stops after this point?
-                    string nextStopStation = DestinationManager.orderedStations.Take(closestIndex - 1).Where(station => orderedstopStations.Contains(station)).Last();
+                    string nextStopStation = StationInformation.OrderedStations.Take(closestIndex - 1).Where(station => orderedstopStations.Contains(station)).Last();
 
                     if (nextStopStation != null)
                     {
@@ -603,7 +603,7 @@ namespace RouteManager.v2.core
                 else
                 {
                     //what are the stops after this point?
-                    string nextStopStation = DestinationManager.orderedStations.Skip(closestIndex + 1).Where(station => orderedstopStations.Contains(station)).First();
+                    string nextStopStation = StationInformation.OrderedStations.Skip(closestIndex + 1).Where(station => orderedstopStations.Contains(station)).First();
 
                     if (nextStopStation != null)
                     {
